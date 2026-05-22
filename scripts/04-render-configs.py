@@ -134,7 +134,7 @@ copy_file(
     DATA_DIR / "marzban" / "templates" / "clash" / "default.yml",
 )
 
-print("\n── Copying portal placeholder ───────────────────────────────────────────")
+print("\n── Copying VPN portal ───────────────────────────────────────────────────")
 portal_src = REPO_DIR / "portal" / "html"
 portal_dst = DATA_DIR / "portal" / "html"
 if portal_src.exists():
@@ -142,6 +142,16 @@ if portal_src.exists():
         copy_file(f, portal_dst / f.name)
 else:
     print(f"[WARN] portal/html/ not found in repo — skipping")
+
+print("\n── Copying ruyin.ai landing page ────────────────────────────────────────")
+landing_src = REPO_DIR / "landing" / "html"
+if landing_src.exists():
+    for dst_dir in [DATA_DIR / "nginx" / "html" / "ruyin-landing",
+                    DATA_DIR / "nginx" / "html" / "www-ruyin"]:
+        for f in landing_src.iterdir():
+            copy_file(f, dst_dir / f.name)
+else:
+    print(f"[WARN] landing/html/ not found in repo — skipping")
 
 print("\n── Copying docs placeholder ─────────────────────────────────────────────")
 docs_src = REPO_DIR / "docs-site" / "html"

@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>如影随形 · Ruyin</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --accent:   #3a8fb5;
+      --accent2:  #5bbfaa;
+      --text:     #1a2c3d;
+      --muted:    #5a7080;
+      --glass-bg: rgba(255, 255, 255, 0.68);
+      --glass-bd: rgba(255, 255, 255, 0.92);
+    }
+
+    html, body {
+      height: 100%;
+      overflow: hidden;
+      font-family: -apple-system, 'PingFang SC', 'Microsoft YaHei', system-ui, sans-serif;
+    }
+
+    /* ── Sky gradient background ─────────────────────────────────────────────── */
+    body {
+      background: linear-gradient(175deg,
+        #c9e8f2 0%,
+        #ddf0f7 25%,
+        #eef7fb 55%,
+        #f6fbfd 80%,
+        #fbfdfe 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+
+    /* ── Subtle dot grid (tech texture) ─────────────────────────────────────── */
+    body::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image: radial-gradient(circle, rgba(80, 150, 195, 0.13) 1px, transparent 1px);
+      background-size: 36px 36px;
+      pointer-events: none;
+    }
+
+    /* ── Mountain layers ─────────────────────────────────────────────────────── */
+    .landscape {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .mt {
+      position: absolute;
+      bottom: 0;
+      width: 100%;
+    }
+
+    .mt-far {
+      height: 52vh;
+      background: linear-gradient(180deg, rgba(148, 198, 228, 0.28) 0%, rgba(170, 212, 235, 0.12) 100%);
+      clip-path: polygon(
+        0% 100%, 0% 58%, 6% 42%, 12% 55%, 19% 30%, 27% 48%,
+        34% 18%, 41% 38%, 49% 10%, 56% 34%, 63% 20%, 70% 40%,
+        77% 25%, 85% 45%, 92% 32%, 100% 50%, 100% 100%);
+    }
+
+    .mt-mid {
+      height: 38vh;
+      background: linear-gradient(180deg, rgba(170, 215, 238, 0.35) 0%, rgba(190, 225, 242, 0.18) 100%);
+      clip-path: polygon(
+        0% 100%, 0% 72%, 7% 58%, 14% 70%, 22% 48%, 30% 63%,
+        37% 42%, 45% 60%, 52% 35%, 59% 55%, 66% 42%, 74% 58%,
+        81% 40%, 88% 62%, 95% 50%, 100% 65%, 100% 100%);
+    }
+
+    .mt-near {
+      height: 24vh;
+      background: linear-gradient(180deg, rgba(195, 228, 245, 0.42) 0%, rgba(215, 238, 250, 0.22) 100%);
+      clip-path: polygon(
+        0% 100%, 0% 82%, 8% 68%, 17% 80%, 26% 62%, 35% 75%,
+        44% 58%, 53% 72%, 62% 60%, 71% 74%, 80% 64%, 89% 76%,
+        95% 68%, 100% 78%, 100% 100%);
+    }
+
+    /* ── Mist fade at bottom ─────────────────────────────────────────────────── */
+    .mist {
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      height: 32vh;
+      background: linear-gradient(0deg,
+        rgba(246, 252, 255, 0.96) 0%,
+        rgba(246, 252, 255, 0.0) 100%);
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    /* ── Floating particles ──────────────────────────────────────────────────── */
+    .particles { position: absolute; inset: 0; z-index: 1; overflow: hidden; pointer-events: none; }
+
+    .p {
+      position: absolute;
+      border-radius: 50%;
+      background: rgba(80, 160, 210, 0.35);
+      animation: rise linear infinite;
+    }
+
+    @keyframes rise {
+      0%   { transform: translateY(100vh) scale(0.2); opacity: 0; }
+      8%   { opacity: 1; }
+      92%  { opacity: 0.4; }
+      100% { transform: translateY(-8vh) scale(1); opacity: 0; }
+    }
+
+    /* ── Pulsing rings around card ───────────────────────────────────────────── */
+    .rings { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; pointer-events: none; z-index: 2; }
+
+    .ring {
+      position: absolute;
+      border-radius: 50%;
+      border: 1px solid rgba(58, 143, 181, 0.14);
+      animation: ring-pulse 5s ease-in-out infinite;
+    }
+
+    .ring:nth-child(2) { animation-delay: 1.8s; }
+    .ring:nth-child(3) { animation-delay: 3.2s; }
+
+    @keyframes ring-pulse {
+      0%, 100% { opacity: 0.2; transform: scale(1); }
+      50%       { opacity: 0.5; transform: scale(1.04); }
+    }
+
+    /* ── Content ─────────────────────────────────────────────────────────────── */
+    .content {
+      position: relative;
+      z-index: 10;
+      text-align: center;
+      padding: 24px;
+    }
+
+    .card {
+      background: var(--glass-bg);
+      backdrop-filter: blur(28px);
+      -webkit-backdrop-filter: blur(28px);
+      border: 1px solid var(--glass-bd);
+      border-radius: 28px;
+      padding: 60px 80px;
+      box-shadow:
+        0 12px 48px rgba(80, 150, 200, 0.12),
+        0 2px 8px  rgba(80, 150, 200, 0.08),
+        inset 0 1px 0 rgba(255, 255, 255, 0.95);
+      animation: appear 1.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+      position: relative;
+    }
+
+    /* Corner brackets */
+    .card::before,
+    .card::after {
+      content: '';
+      position: absolute;
+      width: 18px; height: 18px;
+      opacity: 0.4;
+    }
+    .card::before {
+      top: 16px; left: 16px;
+      border-top: 1.5px solid var(--accent);
+      border-left: 1.5px solid var(--accent);
+    }
+    .card::after {
+      bottom: 16px; right: 16px;
+      border-bottom: 1.5px solid var(--accent);
+      border-right: 1.5px solid var(--accent);
+    }
+
+    @keyframes appear {
+      from { opacity: 0; transform: translateY(28px) scale(0.97); }
+      to   { opacity: 1; transform: translateY(0)   scale(1); }
+    }
+
+    /* Brand label */
+    .label {
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 4px;
+      text-transform: uppercase;
+      color: var(--accent);
+      opacity: 0.75;
+      margin-bottom: 28px;
+    }
+
+    /* Main headline */
+    .headline {
+      font-size: clamp(56px, 10vw, 96px);
+      font-weight: 200;
+      letter-spacing: 0.25em;
+      line-height: 1;
+      margin-bottom: 20px;
+      background: linear-gradient(140deg, #1a2c3d 0%, #2a5070 45%, #1a3a50 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    /* Divider */
+    .divider {
+      margin: 0 auto 22px;
+      width: 40px; height: 1px;
+      background: linear-gradient(90deg, transparent, var(--accent), var(--accent2), transparent);
+    }
+
+    /* Subtitle */
+    .sub {
+      font-size: 14px;
+      color: var(--muted);
+      letter-spacing: 0.2em;
+      line-height: 2;
+      margin-bottom: 44px;
+    }
+
+    .sub em {
+      font-style: normal;
+      font-size: 11px;
+      letter-spacing: 3px;
+      opacity: 0.6;
+      display: block;
+      margin-top: 2px;
+    }
+
+    /* CTA button */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 13px 32px;
+      border-radius: 40px;
+      border: 1px solid rgba(58, 143, 181, 0.35);
+      color: var(--accent);
+      text-decoration: none;
+      font-size: 13px;
+      letter-spacing: 2px;
+      background: rgba(58, 143, 181, 0.06);
+      transition: all 0.3s ease;
+    }
+
+    .btn:hover {
+      background: rgba(58, 143, 181, 0.13);
+      border-color: rgba(58, 143, 181, 0.65);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(58, 143, 181, 0.18);
+    }
+
+    .btn svg { transition: transform 0.3s ease; }
+    .btn:hover svg { transform: translateX(4px); }
+
+    .btn-brand {
+      font-size: 15px;
+      font-weight: 600;
+      letter-spacing: 1px;
+      color: var(--accent);
+    }
+
+    .btn-sep {
+      display: inline-block;
+      width: 1px;
+      height: 14px;
+      background: rgba(58, 143, 181, 0.3);
+      margin: 0 2px;
+    }
+
+    /* Footer */
+    footer {
+      position: absolute;
+      bottom: 20px; left: 0; right: 0;
+      text-align: center;
+      font-size: 11px;
+      letter-spacing: 2px;
+      color: var(--muted);
+      opacity: 0.4;
+      z-index: 10;
+    }
+
+    /* Responsive */
+    @media (max-width: 560px) {
+      .card { padding: 44px 32px; }
+      .headline { letter-spacing: 0.18em; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Landscape -->
+  <div class="landscape">
+    <div class="mt mt-far"></div>
+    <div class="mt mt-mid"></div>
+    <div class="mt mt-near"></div>
+  </div>
+  <div class="mist"></div>
+
+  <!-- Particles -->
+  <div class="particles" id="pts"></div>
+
+  <!-- Rings -->
+  <div class="rings">
+    <div class="ring" style="width:360px;height:360px"></div>
+    <div class="ring" style="width:560px;height:560px"></div>
+    <div class="ring" style="width:760px;height:760px"></div>
+  </div>
+
+  <!-- Card -->
+  <div class="content">
+    <div class="card">
+      <div class="label">Ruyin · Private Network</div>
+      <div class="headline">如影随形</div>
+      <div class="divider"></div>
+      <div class="sub">
+        私密 &nbsp;·&nbsp; 稳定 &nbsp;·&nbsp; 无感知
+        <em>PRIVATE &nbsp;·&nbsp; STABLE &nbsp;·&nbsp; INVISIBLE</em>
+      </div>
+      <a class="btn" href="https://vpn.ruyin.ai">
+        <span class="btn-brand">ruyin</span>
+        <span class="btn-sep"></span>
+        进入服务
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M5 12h14"/><path d="M12 5l7 7-7 7"/>
+        </svg>
+      </a>
+    </div>
+  </div>
+
+  <footer>ruyin.ai &nbsp;·&nbsp; Private Edge Network</footer>
+
+  <script>
+    (function () {
+      var c = document.getElementById('pts');
+      for (var i = 0; i < 20; i++) {
+        var el = document.createElement('div');
+        el.className = 'p';
+        var s = Math.random() * 3 + 2;
+        el.style.cssText = [
+          'width:'  + s + 'px',
+          'height:' + s + 'px',
+          'left:'   + (Math.random() * 100) + '%',
+          'animation-duration:' + (Math.random() * 14 + 10) + 's',
+          'animation-delay:'    + (Math.random() * 12) + 's',
+          'opacity:' + (Math.random() * 0.35 + 0.1)
+        ].join(';');
+        c.appendChild(el);
+      }
+    })();
+  </script>
+
+</body>
+</html>
