@@ -42,7 +42,7 @@ check_http() {
 log_step "Container health..."
 
 CONTAINERS=(
-  umbra-nginx umbra-marzban umbra-postgres
+  umbra-nginx umbra-marzban
   umbra-vaultwarden umbra-uptime umbra-portal umbra-docs umbra-shortlink
 )
 
@@ -100,24 +100,23 @@ else
   (( ++FAIL ))
 fi
 
-# ── PostgreSQL ────────────────────────────────────────────────────────────────
+# ── SQLite databases ──────────────────────────────────────────────────────────
 log_step "Database check..."
-if docker exec umbra-postgres pg_isready -U marzban -d marzban -q 2>/dev/null; then
-  log_ok "PostgreSQL: marzban database ready"
-  (( ++PASS ))
-else
-  log_fail "PostgreSQL not ready"
-  (( ++FAIL ))
-fi
 
-# Check vaultwarden and shlink databases exist
-for db in vaultwarden shlink; do
-  if docker exec umbra-postgres psql -U marzban -lqt 2>/dev/null | cut -d '|' -f 1 | grep -qw "$db"; then
-    log_ok "PostgreSQL: $db database exists"
+declare -A SQLITE_DBS=(
+  ["marzban"]="$DATA_DIR/marzban/db.sqlite3"
+  ["vaultwarden"]="$DATA_DIR/vaultwarden/data/db.sqlite3"
+  ["shlink"]="$DATA_DIR/shortlink/data/database.sqlite"
+)
+
+for label in marzban vaultwarden shlink; do
+  db_path="${SQLITE_DBS[$label]}"
+  if [[ -f "$db_path" ]]; then
+    size=$(du -sh "$db_path" 2>/dev/null | cut -f1 || echo "?")
+    log_ok "SQLite $label: $db_path ($size)"
     (( ++PASS ))
   else
-    log_fail "PostgreSQL: $db database missing"
-    (( ++FAIL ))
+    log_warn "SQLite $label: not yet initialized ($db_path) — normal on first run"
   fi
 done
 

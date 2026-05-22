@@ -59,42 +59,9 @@ services:
       - ${DATA_DIR}/marzban:/var/lib/marzban
     networks:
       - umbra-net
-    depends_on:
-      umbra-postgres:
-        condition: service_healthy
-
-  # ── PostgreSQL: Shared database (Marzban + Vaultwarden + Shlink) ─────────────
-  umbra-postgres:
-    image: postgres:16-alpine
-    container_name: umbra-postgres
-    restart: always
-    environment:
-      POSTGRES_USER: marzban
-      POSTGRES_PASSWORD: ${POSTGRES_MARZBAN_PASSWORD}
-      POSTGRES_DB: marzban
-      PGDATA: /var/lib/postgresql/data/pgdata
-      # Passed to init script for creating extra databases
-      POSTGRES_VAULTWARDEN_PASSWORD: ${POSTGRES_VAULTWARDEN_PASSWORD}
-      POSTGRES_SHLINK_PASSWORD: ${POSTGRES_SHLINK_PASSWORD}
-    command: >
-      postgres
-      -c shared_buffers=128MB
-      -c effective_cache_size=256MB
-      -c work_mem=4MB
-      -c maintenance_work_mem=32MB
-      -c max_connections=50
-    volumes:
-      - ${DATA_DIR}/postgres/data:/var/lib/postgresql/data
-      - ${REPO_DIR}/scripts/lib/init-postgres.sh:/docker-entrypoint-initdb.d/init-postgres.sh:ro
-    networks:
-      - umbra-net
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U marzban -d marzban"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
 
   # ── Vaultwarden: Password manager ────────────────────────────────────────────
+  # Uses SQLite by default — database stored in the /data volume.
   umbra-vaultwarden:
     image: vaultwarden/server:latest
     container_name: umbra-vaultwarden
@@ -103,15 +70,11 @@ services:
       DOMAIN: "https://${VAULT_DOMAIN}"
       SIGNUPS_ALLOWED: "false"
       ADMIN_TOKEN: "${VAULTWARDEN_ADMIN_TOKEN}"
-      DATABASE_URL: "postgresql://vaultwarden:${POSTGRES_VAULTWARDEN_PASSWORD}@umbra-postgres:5432/vaultwarden"
       LOG_LEVEL: "warn"
     volumes:
       - ${DATA_DIR}/vaultwarden/data:/data
     networks:
       - umbra-net
-    depends_on:
-      umbra-postgres:
-        condition: service_healthy
 
   # ── Uptime Kuma: Status monitoring ───────────────────────────────────────────
   umbra-uptime:
@@ -144,6 +107,7 @@ services:
       - umbra-net
 
   # ── Shlink: Short link / redirect service ─────────────────────────────────────
+  # Uses SQLite — database stored in the /app/data volume.
   umbra-shortlink:
     image: shlinkio/shlink:stable
     container_name: umbra-shortlink
@@ -151,15 +115,9 @@ services:
     environment:
       DEFAULT_DOMAIN: "${SHORTLINK_DOMAIN}"
       IS_HTTPS_ENABLED: "true"
-      DB_DRIVER: "postgres"
-      DB_NAME: "shlink"
-      DB_USER: "shlink"
-      DB_PASSWORD: "${POSTGRES_SHLINK_PASSWORD}"
-      DB_HOST: "umbra-postgres"
-      DB_PORT: "5432"
+      DB_DRIVER: "sqlite"
       INITIAL_API_KEY: "${SHLINK_INITIAL_API_KEY:-}"
+    volumes:
+      - ${DATA_DIR}/shortlink/data:/app/data
     networks:
       - umbra-net
-    depends_on:
-      umbra-postgres:
-        condition: service_healthy

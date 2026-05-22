@@ -11,17 +11,24 @@ log_banner "Umbra — Backup"
 TIMESTAMP=$(date +%Y%m%d-%H%M%S)
 ARCHIVE="$BACKUP_DIR/umbra-config-${TIMESTAMP}.tar.gz"
 
-# ── Database dumps ─────────────────────────────────────────────────────────────
-log_step "Dumping PostgreSQL databases..."
+# ── SQLite database copies ────────────────────────────────────────────────────
+log_step "Backing up SQLite databases..."
 
-for db in marzban vaultwarden shlink; do
-  dump_file="$BACKUP_DIR/${db}-db-${TIMESTAMP}.sql.gz"
-  if docker exec umbra-postgres pg_dump -U "$db" "$db" 2>/dev/null \
-      | gzip > "$dump_file"; then
-    chmod 600 "$dump_file"
-    log_ok "Dumped $db → $(basename "$dump_file")"
+declare -A SQLITE_DBS=(
+  ["marzban"]="$DATA_DIR/marzban/db.sqlite3"
+  ["vaultwarden"]="$DATA_DIR/vaultwarden/data/db.sqlite3"
+  ["shlink"]="$DATA_DIR/shortlink/data/database.sqlite"
+)
+
+for label in marzban vaultwarden shlink; do
+  db_path="${SQLITE_DBS[$label]}"
+  dest="$BACKUP_DIR/${label}-db-${TIMESTAMP}.sqlite3"
+  if [[ -f "$db_path" ]]; then
+    cp "$db_path" "$dest"
+    chmod 600 "$dest"
+    log_ok "Backed up $label → $(basename "$dest")"
   else
-    log_warn "Could not dump $db (service may not be running)"
+    log_warn "$label database not found at $db_path — skipping"
   fi
 done
 

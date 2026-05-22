@@ -11,7 +11,7 @@ log_banner "Umbra — Environment Check"
 ERRORS=0
 fail() { log_fail "$1"; (( ++ERRORS )); }
 
-# ── Required variables ────────────────────────────────────────────────────────
+# ── Required variables ──────────────────────────���─────────────────────────────
 log_step "Checking required environment variables..."
 
 REQUIRED_VARS=(
@@ -22,8 +22,6 @@ REQUIRED_VARS=(
   REALITY_SNI REALITY_DEST XRAY_INTERNAL_PORT
   MARZBAN_ADMIN_USER MARZBAN_ADMIN_PASSWORD CONSOLE_HTPASSWD_PASSWORD
   SUBSCRIPTION_URL_PREFIX
-  POSTGRES_PASSWORD POSTGRES_MARZBAN_PASSWORD
-  POSTGRES_VAULTWARDEN_PASSWORD POSTGRES_SHLINK_PASSWORD
   VAULTWARDEN_ADMIN_TOKEN
   CERTBOT_EMAIL
 )
@@ -52,7 +50,7 @@ else
   log_ok "docker compose v2: $(docker compose version --short)"
 fi
 
-# ── DNS resolution ────────────────────────────────────────────────────────────
+# ── DNS resolution ──────────────────────���────────────────────────��────────────
 log_step "Checking DNS resolution..."
 
 PUBLIC_IP=$(curl -sf --max-time 5 https://api.ipify.org 2>/dev/null \
@@ -81,7 +79,7 @@ else
   done
 fi
 
-# ── Port availability ─────────────────────────────────────────────────────────
+# ── Port availability ────────────────────────────────────────────────────��────
 log_step "Checking port availability..."
 
 NGINX_CONTAINER="${NGINX_CONTAINER:-umbra-nginx}"
@@ -98,7 +96,7 @@ for port in 80 443; do
   fi
 done
 
-# ── Result ────────────────────────────────────────────────────────────────────
+# ── Result ─────────────────────────────────────���──────────────────────────────
 echo ""
 if [[ $ERRORS -gt 0 ]]; then
   log_error "$ERRORS check(s) failed. Fix the issues above, then re-run."

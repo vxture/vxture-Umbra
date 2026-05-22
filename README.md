@@ -2,7 +2,7 @@
 
 Production overseas edge entry node — SNI routing, VLESS+REALITY proxy, subscription delivery, password management, status monitoring.
 
-**Stack:** Nginx · Xray REALITY · Marzban · PostgreSQL · Vaultwarden · Uptime Kuma · Shlink
+**Stack:** Nginx · Xray REALITY · Marzban · Vaultwarden · Uptime Kuma · Shlink
 
 ---
 
@@ -58,10 +58,6 @@ Fill in all required values:
 MARZBAN_ADMIN_USER=admin
 MARZBAN_ADMIN_PASSWORD=<strong-password>
 CONSOLE_HTPASSWD_PASSWORD=<strong-password>
-POSTGRES_PASSWORD=<strong-password>
-POSTGRES_MARZBAN_PASSWORD=<strong-password>
-POSTGRES_VAULTWARDEN_PASSWORD=<strong-password>
-POSTGRES_SHLINK_PASSWORD=<strong-password>
 
 # Admin token — generate with: openssl rand -base64 48
 VAULTWARDEN_ADMIN_TOKEN=<token>

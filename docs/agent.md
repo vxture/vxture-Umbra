@@ -34,7 +34,6 @@ Purpose:    Production overseas edge entry node
 | Nginx | `umbra-nginx` | gateway | SNI stream + HTTP virtual hosts |
 | Xray-core | `umbra-xray` | — | VLESS + REALITY + Vision proxy |
 | Marzban | `umbra-marzban` | sub.ruyin.ai, console.ruyin.ai | VPN user management + subscription |
-| PostgreSQL | `umbra-postgres` | internal | Marzban + Vaultwarden + Shlink database |
 | VPN Portal | `umbra-portal` | vpn.ruyin.ai | User onboarding, client downloads, docs |
 | Vaultwarden | `umbra-vaultwarden` | vault.ruyin.ai | Password manager |
 | Uptime Kuma | `umbra-uptime` | status.ruyin.ai | Status monitoring |
@@ -68,14 +67,13 @@ Deploy order (dependencies drive sequence):
 
 ```
 Phase 1 — Infrastructure
-  [ ] PostgreSQL
   [ ] Nginx (base config, HTTP only)
   [ ] Certbot (issue all certs)
   [ ] Nginx (HTTPS + SNI stream)
 
 Phase 2 — Core Services
   [ ] Xray-core (VLESS + REALITY)
-  [ ] Marzban (connect to PostgreSQL)
+  [ ] Marzban
   [ ] VPN Portal (static site)
 
 Phase 3 — Supporting Services
@@ -111,7 +109,7 @@ Phase 4 — Hardening
 
 1. **Edge Mode only** — no Simple Mode. Xray runs on internal port, never public.
 2. **All traffic enters on 443** — Nginx SNI stream routes to correct internal service.
-3. **PostgreSQL** — Marzban uses PostgreSQL, not SQLite.
+3. **SQLite** — all services (Marzban, Vaultwarden, Shlink) use SQLite for data storage.
 4. **Secrets never in Git** — `.env`, keys, certs, DB passwords all stay in `DATA_DIR/private/`.
 5. **console.ruyin.ai has three access layers** — see Security Model in `design.md`.
 6. **All containers in one Docker network** — `umbra-net`, internal service discovery by container name.
@@ -127,7 +125,7 @@ Phase 4 — Hardening
 ## v1.0 Success Criteria
 
 ```
-[ ] All containers running: nginx, xray, marzban, postgres, vaultwarden, uptime, portal, docs, shortlink
+[ ] All containers running: nginx, xray, marzban, vaultwarden, uptime, portal, docs, shortlink
 [ ] HTTPS working on all 9 domains
 [ ] Xray REALITY connection functional (test with Clash Verge)
 [ ] Marzban admin accessible at console.ruyin.ai only when VPN-connected
