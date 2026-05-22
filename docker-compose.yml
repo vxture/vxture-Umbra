@@ -45,7 +45,7 @@ services:
     environment:
       UVICORN_HOST: "0.0.0.0"
       UVICORN_PORT: "8000"
-      SQLALCHEMY_DATABASE_URL: "postgresql://marzban:${POSTGRES_MARZBAN_PASSWORD}@umbra-postgres:5432/marzban"
+      SQLALCHEMY_DATABASE_URL: "sqlite:////var/lib/marzban/db.sqlite3"
       XRAY_JSON: "/var/lib/marzban/xray_config.json"
       XRAY_EXECUTABLE_PATH: "/usr/local/bin/xray"
       XRAY_ASSETS_PATH: "/usr/local/share/xray"
