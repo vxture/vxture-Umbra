@@ -1,0 +1,305 @@
+# Umbra — Operations
+
+Ongoing maintenance for a live Umbra edge node.
+
+---
+
+## Backup
+
+### Automated Backup
+
+Runs automatically:
+- After every successful `deploy-all.sh`
+- Daily via cron at 02:00
+
+```cron
+0 2 * * * /srv/vxture/repo/umbra/scripts/07-backup.sh >> /var/log/umbra-backup.log 2>&1
+```
+
+### What Gets Backed Up
+
+```bash
+# Config files
+DATA_DIR/nginx/conf.d/
+DATA_DIR/nginx/stream.d/
+DATA_DIR/marzban/templates/
+DATA_DIR/private/               ← REALITY keys, postgres passwords
+
+# Database dump (pg_dump — consistent snapshot)
+pg_dump marzban    → backup/marzban-<ts>.sql.gz
+pg_dump vaultwarden → backup/vaultwarden-<ts>.sql.gz
+pg_dump shlink     → backup/shlink-<ts>.sql.gz
+
+# Certs
+DATA_DIR/letsencrypt/
+
+# System state
+crontab -l → backup/root-crontab-<ts>.txt
+docker inspect → backup/compose-state-<ts>.json
+```
+
+### Backup Output
+
+```
+BACKUP_DIR/umbra-config-<YYYYMMDD-HHMMSS>.tar.gz    permissions: 600
+BACKUP_DIR/marzban-db-<YYYYMMDD-HHMMSS>.sql.gz      permissions: 600
+BACKUP_DIR/vaultwarden-db-<YYYYMMDD-HHMMSS>.sql.gz  permissions: 600
+BACKUP_DIR/shlink-db-<YYYYMMDD-HHMMSS>.sql.gz       permissions: 600
+BACKUP_DIR/root-crontab-<YYYYMMDD-HHMMSS>.txt       permissions: 600
+BACKUP_DIR/                                           permissions: 700
+```
+
+### Backup Retention
+
+```bash
+# Keep last 30 days, delete older
+find BACKUP_DIR/ -name "*.tar.gz" -mtime +30 -delete
+find BACKUP_DIR/ -name "*.sql.gz" -mtime +30 -delete
+```
+
+Add to cron (runs after backup):
+
+```cron
+30 2 * * * find /srv/vxture/backup/umbra -mtime +30 -delete
+```
+
+---
+
+## Rollback
+
+### Full Rollback from Backup
+
+```bash
+# 1. Stop services
+docker compose down
+
+# 2. Restore config files
+tar -xzf BACKUP_DIR/umbra-config-<timestamp>.tar.gz -C DATA_DIR/
+
+# 3. Restore database
+docker compose up -d umbra-postgres
+
+# Marzban DB
+gunzip -c BACKUP_DIR/marzban-db-<timestamp>.sql.gz \
+  | docker exec -i umbra-postgres psql -U marzban marzban
+
+# Vaultwarden DB
+gunzip -c BACKUP_DIR/vaultwarden-db-<timestamp>.sql.gz \
+  | docker exec -i umbra-postgres psql -U vaultwarden vaultwarden
+
+# 4. Restore crontab
+crontab BACKUP_DIR/root-crontab-<timestamp>.txt
+
+# 5. Start all services
+docker compose up -d
+
+# 6. Verify
+bash scripts/06-verify.sh
+```
+
+---
+
+## Certificate Management
+
+### Renewal Script
+
+```bash
+bash scripts/renew-cert.sh
+```
+
+What it does:
+
+```bash
+certbot renew --quiet --webroot --webroot-path DATA_DIR/certbot
+docker exec umbra-nginx nginx -s reload
+```
+
+### Cron
+
+```cron
+17 3 * * * /srv/vxture/repo/umbra/scripts/renew-cert.sh >> /var/log/umbra-cert-renew.log 2>&1
+```
+
+### Manual Cert Check
+
+```bash
+# Check all cert expiries
+for d in ruyin.ai www.ruyin.ai vpn.ruyin.ai sub.ruyin.ai console.ruyin.ai vault.ruyin.ai status.ruyin.ai docs.ruyin.ai go.ruyin.ai; do
+  expiry=$(echo | openssl s_client -connect $d:443 -servername $d 2>/dev/null \
+    | openssl x509 -noout -enddate 2>/dev/null | cut -d= -f2)
+  echo "$d: $expiry"
+done
+```
+
+### Wildcard Cert (Future Option)
+
+If managing 9 separate certs becomes burdensome, migrate to wildcard:
+
+```bash
+certbot certonly --dns-cloudflare \
+  --dns-cloudflare-credentials /srv/vxture/data/umbra/private/cloudflare.ini \
+  -d "ruyin.ai" -d "*.ruyin.ai"
+```
+
+Requires Cloudflare API token. Consider in v1.1.
+
+---
+
+## Marzban User Management
+
+### Access
+
+Marzban admin panel: `https://console.ruyin.ai`
+Access requires: operator IP in `CONSOLE_HTPASSWD`
+
+### Common Operations (via Marzban UI or API)
+
+| Operation | UI Path | API |
+|-----------|---------|-----|
+| Add user | Users → Add User | `POST /api/user` |
+| View subscription URL | Users → click user | `GET /api/user/{username}/subscription` |
+| Reset traffic | Users → Reset Traffic | `POST /api/user/{username}/reset` |
+| Disable user | Users → Edit → disable | `PUT /api/user/{username}` |
+| Delete user | Users → Delete | `DELETE /api/user/{username}` |
+| View traffic stats | Dashboard | `GET /api/users` |
+
+### Subscription URL Format
+
+```
+https://sub.ruyin.ai/sub/<marzban-token>
+```
+
+Users configure this URL in Clash Verge / V2RayN once. Refreshing the subscription gets the latest config including any node updates.
+
+### Adding a New Node (Multi-node, v1.1+)
+
+Marzban supports connecting multiple Xray nodes. Future edge nodes (edge-02, etc.) can be added via:
+- Marzban admin → Nodes → Add Node
+- Install `marzban-node` on the new server
+- Connect via API cert
+
+---
+
+## Service Management
+
+### Restart individual service
+
+```bash
+docker compose restart umbra-nginx
+docker compose restart umbra-marzban
+docker compose restart umbra-postgres
+docker compose restart umbra-vaultwarden
+```
+
+### Reload Nginx config (no downtime)
+
+```bash
+docker exec umbra-nginx nginx -s reload
+```
+
+### Check logs
+
+```bash
+docker compose logs umbra-nginx --tail=100
+docker compose logs umbra-marzban --tail=100
+docker compose logs umbra-postgres --tail=50
+```
+
+### Full restart
+
+```bash
+docker compose down && docker compose up -d
+```
+
+---
+
+## Log Management
+
+### Log Locations
+
+```
+DATA_DIR/nginx/logs/access.log
+DATA_DIR/nginx/logs/error.log
+DATA_DIR/marzban/logs/access.log
+DATA_DIR/marzban/logs/error.log
+/var/log/umbra-backup.log
+/var/log/umbra-cert-renew.log
+```
+
+### Logrotate Config
+
+```
+/srv/vxture/data/umbra/nginx/logs/*.log
+/srv/vxture/data/umbra/marzban/logs/*.log {
+    daily
+    rotate 14
+    compress
+    delaycompress
+    missingok
+    notifempty
+    sharedscripts
+    postrotate
+        docker exec umbra-nginx nginx -s reopen 2>/dev/null || true
+    endscript
+}
+```
+
+Place at `/etc/logrotate.d/umbra`.
+
+---
+
+## Monitoring (Uptime Kuma)
+
+### Access
+
+`https://status.ruyin.ai`
+
+### Required Monitors
+
+Configure these on first access:
+
+| Name | Type | Target | Interval |
+|------|------|--------|----------|
+| ruyin.ai | HTTPS | https://ruyin.ai | 60s |
+| VPN Portal | HTTPS | https://vpn.ruyin.ai | 60s |
+| Subscription | HTTPS | https://sub.ruyin.ai | 60s |
+| Vaultwarden | HTTPS | https://vault.ruyin.ai | 60s |
+| Docs | HTTPS | https://docs.ruyin.ai | 60s |
+| Short Link | HTTPS | https://go.ruyin.ai | 60s |
+| Xray 443 | TCP | vpn.ruyin.ai:443 | 30s |
+| PostgreSQL | TCP | localhost:5432 (or umbra-postgres:5432) | 60s |
+| Marzban API | HTTPS | https://console.ruyin.ai | 60s |
+
+---
+
+## Uptime Kuma → Prometheus Bridge (v1.1)
+
+Future: Uptime Kuma can push metrics to Prometheus on worker-01.
+
+Enable in Uptime Kuma: Settings → Prometheus → set endpoint.
+
+Configure Prometheus scrape on worker-01:
+
+```yaml
+scrape_configs:
+  - job_name: 'umbra-edge-01'
+    static_configs:
+      - targets: ['status.ruyin.ai:80']
+    metrics_path: '/metrics'
+    scheme: https
+```
+
+---
+
+## Node Decommission
+
+```
+1. Deploy new node, verify fully
+2. Switch DNS to new node
+3. Wait 24–72h for clients to refresh
+4. Run final backup on old node
+5. Download backup to safe storage
+6. Verify backup integrity: tar -tzf <archive>
+7. Confirm no significant traffic on old node
+8. Destroy old VPS
+```

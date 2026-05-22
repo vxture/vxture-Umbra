@@ -1,0 +1,49 @@
+# Environment — never commit real secrets
+.env
+*.env
+.env.*
+!.env.example
+
+# Runtime data and generated configs
+data/
+backup/
+private/
+runtime/
+generated/
+
+# TLS / certificates
+*.pem
+*.key
+*.crt
+*.csr
+*.p12
+*.pfx
+
+# Logs
+*.log
+logs/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+.pytest_cache/
+
+# Node (if any tooling added later)
+node_modules/
+
+# OS / editor
+.DS_Store
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Claude Code memory (local only)
+.claude/
+
+# Portal / docs build artifacts (source stays in repo, built output goes to DATA_DIR)
+portal/build/
+docs-site/build/

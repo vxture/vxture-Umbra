@@ -1,0 +1,29 @@
+# vault.ruyin.ai — Vaultwarden password manager
+server {
+    listen 8443 ssl;
+    server_name {{ VAULT_DOMAIN }};
+
+    ssl_certificate     /etc/letsencrypt/live/{{ VAULT_DOMAIN }}/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/{{ VAULT_DOMAIN }}/privkey.pem;
+    include /etc/nginx/snippets/ssl-params.conf;
+    include /etc/nginx/snippets/security-headers.conf;
+
+    # Vaultwarden needs larger client body for attachments
+    client_max_body_size 525M;
+
+    location / {
+        proxy_pass http://umbra-vaultwarden:80;
+        include /etc/nginx/snippets/proxy-headers.conf;
+    }
+
+    # Vaultwarden WebSocket for live sync
+    location /notifications/hub {
+        proxy_pass http://umbra-vaultwarden:3012;
+        include /etc/nginx/snippets/proxy-headers.conf;
+    }
+
+    location /notifications/hub/negotiate {
+        proxy_pass http://umbra-vaultwarden:80;
+        include /etc/nginx/snippets/proxy-headers.conf;
+    }
+}

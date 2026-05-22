@@ -1,0 +1,15 @@
+# vpn.ruyin.ai — VPN Portal (user onboarding, client downloads)
+server {
+    listen 8443 ssl;
+    server_name {{ EDGE_DOMAIN }};
+
+    ssl_certificate     /etc/letsencrypt/live/{{ EDGE_DOMAIN }}/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/{{ EDGE_DOMAIN }}/privkey.pem;
+    include /etc/nginx/snippets/ssl-params.conf;
+    include /etc/nginx/snippets/security-headers.conf;
+
+    location / {
+        proxy_pass http://umbra-portal:80;
+        include /etc/nginx/snippets/proxy-headers.conf;
+    }
+}

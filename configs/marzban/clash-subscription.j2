@@ -1,0 +1,135 @@
+mixed-port: 7890
+allow-lan: true
+mode: rule
+log-level: info
+ipv6: false
+find-process-mode: strict
+external-controller: 127.0.0.1:9090
+
+dns:
+  enable: true
+  ipv6: false
+  enhanced-mode: fake-ip
+  fake-ip-range: 198.18.0.1/16
+  fake-ip-filter:
+    - "*.lan"
+    - "*.local"
+    - localhost.ptlogin2.qq.com
+  nameserver:
+    - 223.5.5.5
+    - 119.29.29.29
+  fallback:
+    - 8.8.8.8
+    - 1.1.1.1
+    - tls://dns.google
+  fallback-filter:
+    geoip: true
+    geoip-code: CN
+    ipcidr:
+      - 240.0.0.0/4
+
+proxies:
+{{ proxies | indent(2, first=True) }}
+
+proxy-groups:
+  - name: PROXY
+    type: select
+    proxies:
+{% for tag in proxy_tags %}
+      - {{ tag }}
+{% endfor %}
+      - DIRECT
+
+  - name: DIRECT
+    type: select
+    proxies:
+      - DIRECT
+      - PROXY
+
+  - name: REJECT
+    type: select
+    proxies:
+      - REJECT
+      - DIRECT
+
+rules:
+  # ── 0. Subscription domain → DIRECT ──────────────────────────────────────────
+  - DOMAIN-SUFFIX,sub.ruyin.ai,DIRECT
+
+  # ── 1. Loopback / LAN / fake-ip → DIRECT ─────────────────────────────────────
+  - IP-CIDR,127.0.0.0/8,DIRECT,no-resolve
+  - IP-CIDR,10.0.0.0/8,DIRECT,no-resolve
+  - IP-CIDR,172.16.0.0/12,DIRECT,no-resolve
+  - IP-CIDR,192.168.0.0/16,DIRECT,no-resolve
+  - IP-CIDR,169.254.0.0/16,DIRECT,no-resolve
+  - IP-CIDR,198.18.0.0/15,DIRECT,no-resolve
+
+  # ── 2. AI model services → PROXY ─────────────────────────────────────────────
+  - DOMAIN-SUFFIX,openai.com,PROXY
+  - DOMAIN-SUFFIX,chatgpt.com,PROXY
+  - DOMAIN-SUFFIX,oaistatic.com,PROXY
+  - DOMAIN-SUFFIX,oaiusercontent.com,PROXY
+  - DOMAIN-SUFFIX,ai.com,PROXY
+  - DOMAIN-SUFFIX,anthropic.com,PROXY
+  - DOMAIN-SUFFIX,claude.ai,PROXY
+  - DOMAIN-SUFFIX,gemini.google.com,PROXY
+  - DOMAIN-SUFFIX,aistudio.google.com,PROXY
+  - DOMAIN-SUFFIX,generativelanguage.googleapis.com,PROXY
+  - DOMAIN-SUFFIX,x.ai,PROXY
+  - DOMAIN-SUFFIX,api.x.ai,PROXY
+  - DOMAIN-SUFFIX,perplexity.ai,PROXY
+  - DOMAIN-SUFFIX,mistral.ai,PROXY
+  - DOMAIN-SUFFIX,api.mistral.ai,PROXY
+  - DOMAIN-SUFFIX,groq.com,PROXY
+  - DOMAIN-SUFFIX,groqcloud.com,PROXY
+  - DOMAIN-SUFFIX,api.groq.com,PROXY
+  - DOMAIN-SUFFIX,deepseek.com,PROXY
+  - DOMAIN-SUFFIX,deepseek.ai,PROXY
+  - DOMAIN-SUFFIX,api.deepseek.com,PROXY
+  - DOMAIN-SUFFIX,openrouter.ai,PROXY
+
+  # ── 3. Model aggregation platforms → PROXY ───────────────────────────────────
+  - DOMAIN-SUFFIX,huggingface.co,PROXY
+  - DOMAIN-SUFFIX,hf.co,PROXY
+  - DOMAIN-SUFFIX,replicate.com,PROXY
+  - DOMAIN-SUFFIX,together.ai,PROXY
+  - DOMAIN-SUFFIX,fireworks.ai,PROXY
+  - DOMAIN-SUFFIX,poe.com,PROXY
+
+  # ── 4. Figma / design tools → PROXY ─────────────────────────────────────────
+  - DOMAIN-SUFFIX,figma.com,PROXY
+  - DOMAIN-SUFFIX,figma.site,PROXY
+  - DOMAIN-SUFFIX,figma.app,PROXY
+  - DOMAIN-SUFFIX,makeproxy-c.figma.site,PROXY
+  - DOMAIN-SUFFIX,makeproxy-m.figma.site,PROXY
+  - DOMAIN-SUFFIX,jsdelivr.net,PROXY
+  - DOMAIN-SUFFIX,esm.sh,PROXY
+
+  # ── 5. Dev toolchain: GitHub / Docker / npm → PROXY ─────────────────────────
+  - DOMAIN-SUFFIX,github.com,PROXY
+  - DOMAIN-SUFFIX,githubusercontent.com,PROXY
+  - DOMAIN-SUFFIX,githubassets.com,PROXY
+  - DOMAIN-SUFFIX,github.io,PROXY
+  - DOMAIN-SUFFIX,ghcr.io,PROXY
+  - DOMAIN-SUFFIX,docker.com,PROXY
+  - DOMAIN-SUFFIX,docker.io,PROXY
+  - DOMAIN-SUFFIX,registry-1.docker.io,PROXY
+  - DOMAIN-SUFFIX,npmjs.org,PROXY
+  - DOMAIN-SUFFIX,npmjs.com,PROXY
+  - DOMAIN-SUFFIX,pnpm.io,PROXY
+  - DOMAIN-SUFFIX,nodejs.org,PROXY
+
+  # ── 6. Foreign social / comms → PROXY ────────────────────────────────────────
+  - DOMAIN-SUFFIX,reddit.com,PROXY
+  - DOMAIN-SUFFIX,x.com,PROXY
+  - DOMAIN-SUFFIX,twitter.com,PROXY
+  - DOMAIN-SUFFIX,telegram.org,PROXY
+  - DOMAIN-SUFFIX,t.me,PROXY
+  - DOMAIN-SUFFIX,discord.com,PROXY
+  - DOMAIN-SUFFIX,medium.com,PROXY
+
+  # ── 7. China IP → DIRECT ─────────────────────────────────────────────────────
+  - GEOIP,CN,DIRECT
+
+  # ── 8. Fallback → PROXY ──────────────────────────────────────────────────────
+  - MATCH,PROXY

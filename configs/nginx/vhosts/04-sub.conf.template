@@ -1,0 +1,20 @@
+# sub.ruyin.ai — Marzban subscription endpoint (public, path-restricted)
+server {
+    listen 8443 ssl;
+    server_name {{ SUB_DOMAIN }};
+
+    ssl_certificate     /etc/letsencrypt/live/{{ SUB_DOMAIN }}/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/{{ SUB_DOMAIN }}/privkey.pem;
+    include /etc/nginx/snippets/ssl-params.conf;
+
+    # Only expose subscription paths — no admin UI leaked here
+    location ~ ^/sub/ {
+        proxy_pass http://umbra-marzban:8000;
+        include /etc/nginx/snippets/proxy-headers.conf;
+    }
+
+    # Block all other paths (including /dashboard, /api/admin, etc.)
+    location / {
+        return 404;
+    }
+}

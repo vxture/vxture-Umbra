@@ -1,0 +1,165 @@
+networks:
+  umbra-net:
+    driver: bridge
+
+services:
+
+  # ── Nginx: Public SNI gateway + HTTP virtual hosts ───────────────────────────
+  umbra-nginx:
+    image: nginx:alpine
+    container_name: umbra-nginx
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ${DATA_DIR}/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ${DATA_DIR}/nginx/conf.d:/etc/nginx/conf.d:ro
+      - ${DATA_DIR}/nginx/stream.d:/etc/nginx/stream.d:ro
+      - ${DATA_DIR}/nginx/snippets:/etc/nginx/snippets:ro
+      - ${DATA_DIR}/nginx/html:/usr/share/nginx/html:ro
+      - ${DATA_DIR}/nginx/private:/etc/nginx/private:ro
+      - ${DATA_DIR}/letsencrypt:/etc/letsencrypt:ro
+      - ${DATA_DIR}/certbot/www:/var/www/certbot:ro
+      - ${DATA_DIR}/nginx/logs:/var/log/nginx
+    networks:
+      - umbra-net
+    depends_on:
+      - umbra-marzban
+      - umbra-vaultwarden
+      - umbra-uptime
+      - umbra-portal
+      - umbra-docs
+      - umbra-shortlink
+    healthcheck:
+      test: ["CMD", "nginx", "-t"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # ── Marzban: VPN manager (includes Xray-core subprocess) ─────────────────────
+  umbra-marzban:
+    image: gozargah/marzban:latest
+    container_name: umbra-marzban
+    restart: always
+    environment:
+      UVICORN_HOST: "0.0.0.0"
+      UVICORN_PORT: "8000"
+      SQLALCHEMY_DATABASE_URL: "postgresql://marzban:${POSTGRES_MARZBAN_PASSWORD}@umbra-postgres:5432/marzban"
+      XRAY_JSON: "/var/lib/marzban/xray_config.json"
+      XRAY_EXECUTABLE_PATH: "/usr/local/bin/xray"
+      XRAY_ASSETS_PATH: "/usr/local/share/xray"
+      SUDO_USERNAME: "${MARZBAN_ADMIN_USER}"
+      SUDO_PASSWORD: "${MARZBAN_ADMIN_PASSWORD}"
+      SUBSCRIPTION_URL_PREFIX: "${SUBSCRIPTION_URL_PREFIX}"
+      CUSTOM_TEMPLATES_DIRECTORY: "/var/lib/marzban/templates"
+      CLASH_SUBSCRIPTION_TEMPLATE: "clash/default.yml"
+      VLESS_SUBSCRIPTION_TEMPLATE: "v2ray/default.json"
+    volumes:
+      - ${DATA_DIR}/marzban:/var/lib/marzban
+    networks:
+      - umbra-net
+    depends_on:
+      umbra-postgres:
+        condition: service_healthy
+
+  # ── PostgreSQL: Shared database (Marzban + Vaultwarden + Shlink) ─────────────
+  umbra-postgres:
+    image: postgres:16-alpine
+    container_name: umbra-postgres
+    restart: always
+    environment:
+      POSTGRES_USER: marzban
+      POSTGRES_PASSWORD: ${POSTGRES_MARZBAN_PASSWORD}
+      POSTGRES_DB: marzban
+      PGDATA: /var/lib/postgresql/data/pgdata
+      # Passed to init script for creating extra databases
+      POSTGRES_VAULTWARDEN_PASSWORD: ${POSTGRES_VAULTWARDEN_PASSWORD}
+      POSTGRES_SHLINK_PASSWORD: ${POSTGRES_SHLINK_PASSWORD}
+    command: >
+      postgres
+      -c shared_buffers=128MB
+      -c effective_cache_size=256MB
+      -c work_mem=4MB
+      -c maintenance_work_mem=32MB
+      -c max_connections=50
+    volumes:
+      - ${DATA_DIR}/postgres/data:/var/lib/postgresql/data
+      - ${REPO_DIR}/scripts/lib/init-postgres.sh:/docker-entrypoint-initdb.d/init-postgres.sh:ro
+    networks:
+      - umbra-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U marzban -d marzban"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── Vaultwarden: Password manager ────────────────────────────────────────────
+  umbra-vaultwarden:
+    image: vaultwarden/server:latest
+    container_name: umbra-vaultwarden
+    restart: always
+    environment:
+      DOMAIN: "https://${VAULT_DOMAIN}"
+      SIGNUPS_ALLOWED: "false"
+      ADMIN_TOKEN: "${VAULTWARDEN_ADMIN_TOKEN}"
+      DATABASE_URL: "postgresql://vaultwarden:${POSTGRES_VAULTWARDEN_PASSWORD}@umbra-postgres:5432/vaultwarden"
+      LOG_LEVEL: "warn"
+    volumes:
+      - ${DATA_DIR}/vaultwarden/data:/data
+    networks:
+      - umbra-net
+    depends_on:
+      umbra-postgres:
+        condition: service_healthy
+
+  # ── Uptime Kuma: Status monitoring ───────────────────────────────────────────
+  umbra-uptime:
+    image: louislam/uptime-kuma:1
+    container_name: umbra-uptime
+    restart: always
+    volumes:
+      - ${DATA_DIR}/uptime-kuma/data:/app/data
+    networks:
+      - umbra-net
+
+  # ── VPN Portal: User onboarding static site ───────────────────────────────────
+  umbra-portal:
+    image: nginx:alpine
+    container_name: umbra-portal
+    restart: always
+    volumes:
+      - ${DATA_DIR}/portal/html:/usr/share/nginx/html:ro
+    networks:
+      - umbra-net
+
+  # ── Docs: Static documentation site ─────────────────────────────────────────
+  umbra-docs:
+    image: nginx:alpine
+    container_name: umbra-docs
+    restart: always
+    volumes:
+      - ${DATA_DIR}/docs/site:/usr/share/nginx/html:ro
+    networks:
+      - umbra-net
+
+  # ── Shlink: Short link / redirect service ─────────────────────────────────────
+  umbra-shortlink:
+    image: shlinkio/shlink:stable
+    container_name: umbra-shortlink
+    restart: always
+    environment:
+      DEFAULT_DOMAIN: "${SHORTLINK_DOMAIN}"
+      IS_HTTPS_ENABLED: "true"
+      DB_DRIVER: "postgres"
+      DB_NAME: "shlink"
+      DB_USER: "shlink"
+      DB_PASSWORD: "${POSTGRES_SHLINK_PASSWORD}"
+      DB_HOST: "umbra-postgres"
+      DB_PORT: "5432"
+      INITIAL_API_KEY: "${SHLINK_INITIAL_API_KEY:-}"
+    networks:
+      - umbra-net
+    depends_on:
+      umbra-postgres:
+        condition: service_healthy

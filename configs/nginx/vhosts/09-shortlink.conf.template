@@ -1,0 +1,15 @@
+# go.ruyin.ai — Shlink short link service
+server {
+    listen 8443 ssl;
+    server_name {{ SHORTLINK_DOMAIN }};
+
+    ssl_certificate     /etc/letsencrypt/live/{{ SHORTLINK_DOMAIN }}/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/{{ SHORTLINK_DOMAIN }}/privkey.pem;
+    include /etc/nginx/snippets/ssl-params.conf;
+    include /etc/nginx/snippets/security-headers.conf;
+
+    location / {
+        proxy_pass http://umbra-shortlink:8080;
+        include /etc/nginx/snippets/proxy-headers.conf;
+    }
+}

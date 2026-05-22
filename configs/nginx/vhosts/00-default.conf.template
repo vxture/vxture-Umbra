@@ -1,0 +1,17 @@
+# Catch-all: reject unknown hosts with 444 (no response)
+# Must be loaded first (00-) so named vhosts take precedence
+map $http_upgrade $connection_upgrade {
+    default upgrade;
+    ''      close;
+}
+
+server {
+    listen 8443 ssl default_server;
+    server_name _;
+
+    ssl_certificate     /etc/letsencrypt/live/{{ APEX_DOMAIN }}/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/{{ APEX_DOMAIN }}/privkey.pem;
+    include /etc/nginx/snippets/ssl-params.conf;
+
+    return 444;
+}
