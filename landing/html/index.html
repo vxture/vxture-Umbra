@@ -212,22 +212,68 @@
       background: linear-gradient(90deg, transparent, var(--accent), var(--accent2), transparent);
     }
 
-    /* Subtitle */
-    .sub {
-      font-size: 14px;
-      color: var(--muted);
-      letter-spacing: 0.2em;
-      line-height: 2;
-      margin-bottom: 44px;
+    /* Three pillars */
+    .pillars {
+      display: flex;
+      justify-content: center;
+      gap: 32px;
+      margin-bottom: 36px;
     }
 
-    .sub em {
-      font-style: normal;
-      font-size: 11px;
+    .pillar {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .pillar-zh {
+      font-size: 18px;
+      font-weight: 300;
+      letter-spacing: 0.25em;
+      color: var(--text);
+    }
+
+    .pillar-en {
+      font-size: 9px;
       letter-spacing: 3px;
+      color: var(--accent);
       opacity: 0.6;
+      text-transform: uppercase;
+    }
+
+    .pillar-dot {
+      width: 4px; height: 4px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      margin-bottom: 2px;
+    }
+
+    .pillar-divider {
+      width: 1px;
+      height: 36px;
+      background: linear-gradient(180deg, transparent, rgba(58,143,181,0.25), transparent);
+      align-self: center;
+    }
+
+    /* Tagline below pillars */
+    .tagline {
+      font-size: 13px;
+      color: var(--muted);
+      letter-spacing: 0.15em;
+      line-height: 1.8;
+      margin-bottom: 40px;
+      opacity: 0.8;
+    }
+
+    .tagline em {
+      font-style: normal;
+      font-size: 10px;
+      letter-spacing: 3px;
+      opacity: 0.55;
       display: block;
-      margin-top: 2px;
+      margin-top: 4px;
+      text-transform: uppercase;
     }
 
     /* CTA button */
@@ -316,11 +362,30 @@
       <div class="label">Ruyin · Private Network</div>
       <div class="headline">如影随形</div>
       <div class="divider"></div>
-      <div class="sub">
-        私密 &nbsp;·&nbsp; 稳定 &nbsp;·&nbsp; 无感知
-        <em>PRIVATE &nbsp;·&nbsp; STABLE &nbsp;·&nbsp; INVISIBLE</em>
+      <div class="pillars">
+        <div class="pillar">
+          <div class="pillar-dot"></div>
+          <div class="pillar-zh">随时</div>
+          <div class="pillar-en">Anytime</div>
+        </div>
+        <div class="pillar-divider"></div>
+        <div class="pillar">
+          <div class="pillar-dot"></div>
+          <div class="pillar-zh">随地</div>
+          <div class="pillar-en">Anywhere</div>
+        </div>
+        <div class="pillar-divider"></div>
+        <div class="pillar">
+          <div class="pillar-dot"></div>
+          <div class="pillar-zh">随身</div>
+          <div class="pillar-en">With You</div>
+        </div>
       </div>
-      <a class="btn" href="https://vpn.ruyin.ai">
+      <div class="tagline">
+        你的智能影子，形影不离
+        <em>Your intelligent shadow · Always beside you</em>
+      </div>
+      <a class="btn" href="https://ruyin.vxture.com">
         <span class="btn-brand">ruyin</span>
         <span class="btn-sep"></span>
         进入服务
