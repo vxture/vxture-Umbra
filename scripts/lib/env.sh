@@ -3,8 +3,8 @@
 
 _ENV_LOADED="${_UMBRA_ENV_LOADED:-0}"
 if [[ "$_ENV_LOADED" == "0" ]]; then
-  SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-  PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+  _UMBRA_LIB_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+  PROJECT_ROOT="$(cd "$_UMBRA_LIB_DIR/../.." && pwd)"
 
   if [[ -f "$PROJECT_ROOT/.env" ]]; then
     set -a
