@@ -67,7 +67,15 @@ check_http "vpn.ruyin.ai"      "https://$EDGE_DOMAIN"
 check_http "vault.ruyin.ai"    "https://$VAULT_DOMAIN"
 check_http "status.ruyin.ai"   "https://$STATUS_DOMAIN"
 check_http "docs.ruyin.ai"     "https://$DOCS_DOMAIN"
-check_http "go.ruyin.ai"       "https://$SHORTLINK_DOMAIN"
+# go.ruyin.ai — Shlink returns 404 on root when no links exist (normal on first run)
+GO_CODE=$(curl -sk --max-time 10 -o /dev/null -w "%{http_code}" "https://$SHORTLINK_DOMAIN/" || echo "000")
+if [[ "$GO_CODE" =~ ^(200|301|302|404)$ ]]; then
+  log_ok "go.ruyin.ai responding ($GO_CODE)"
+  (( ++PASS ))
+else
+  log_fail "go.ruyin.ai not responding (got $GO_CODE)"
+  (( ++FAIL ))
+fi
 
 # sub.ruyin.ai — random path should 404, but domain should respond
 SUB_CODE=$(curl -sk --max-time 10 -o /dev/null -w "%{http_code}" "https://$SUB_DOMAIN/" || echo "000")
