@@ -3,13 +3,13 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-source "$SCRIPT_DIR/lib/env.sh"
-source "$SCRIPT_DIR/lib/log.sh"
+source "$SCRIPT_DIR/../lib/env.sh"
+source "$SCRIPT_DIR/../lib/log.sh"
 
 log_banner "Umbra — Environment Check"
 
 ERRORS=0
-fail() { log_fail "$1"; ((ERRORS++)); }
+fail() { log_fail "$1"; (( ++ERRORS )); }
 
 # ── Required variables ────────────────────────────────────────────────────────
 log_step "Checking required environment variables..."

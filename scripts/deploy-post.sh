@@ -1,0 +1,253 @@
+#!/usr/bin/env bash
+# Post-deployment wizard. Run after deploy-all.sh completes.
+# Interactive: guides through Marzban user creation, DNS check, and account setup.
+#
+# Usage:
+#   bash scripts/deploy-post.sh
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/lib/env.sh"
+source "$SCRIPT_DIR/lib/log.sh"
+
+# ── Helpers ───────────────────────────────────────────────────────────────────
+prompt() {
+  local question="$1"
+  local default="$2"
+  local answer=""
+  if [[ -t 0 ]]; then
+    read -r -p "  $question [$default]: " answer
+  fi
+  echo "${answer:-$default}"
+}
+
+confirm() {
+  local question="$1"
+  local answer=""
+  if [[ -t 0 ]]; then
+    read -r -p "  $question [y/N]: " answer
+  fi
+  [[ "${answer,,}" == "y" ]]
+}
+
+log_banner "Umbra — Post-Deploy Wizard"
+log_info "Node: $NODE_NAME  ($EDGE_DOMAIN)"
+echo ""
+
+# ── [1/4] Marzban Users ───────────────────────────────────────────────────────
+log_step "[1/4] Create Marzban Users"
+echo ""
+
+USER_COUNT=$(prompt "Number of users to create" "${USER_COUNT:-10}")
+USER_PREFIX=$(prompt "Username prefix" "${USER_PREFIX:-user}")
+
+echo ""
+log_info "Creating $USER_COUNT users with prefix '$USER_PREFIX'..."
+echo ""
+
+# Authenticate with Marzban API
+MARZBAN_TOKEN=$(docker exec umbra-marzban python3 - <<PYEOF
+import urllib.request, urllib.parse, json, sys
+
+data = urllib.parse.urlencode({
+    'username': '${MARZBAN_ADMIN_USER}',
+    'password': '${MARZBAN_ADMIN_PASSWORD}'
+}).encode()
+
+try:
+    req = urllib.request.Request('http://localhost:8000/api/admin/token', data=data)
+    with urllib.request.urlopen(req, timeout=10) as r:
+        print(json.loads(r.read())['access_token'])
+except Exception as e:
+    print('ERROR: ' + str(e), file=sys.stderr)
+    sys.exit(1)
+PYEOF
+)
+
+if [[ -z "$MARZBAN_TOKEN" ]]; then
+  log_error "Could not authenticate with Marzban API"
+  log_info  "Is umbra-marzban running? Check: docker compose ps"
+  exit 1
+fi
+
+log_ok "Marzban API authenticated"
+
+CREATED=0
+SKIPPED=0
+declare -A SUB_URLS
+
+for i in $(seq -w 1 "$USER_COUNT"); do
+  username="${USER_PREFIX}${i}"
+
+  exists=$(docker exec umbra-marzban python3 - <<PYEOF
+import urllib.request, json, sys
+
+req = urllib.request.Request(
+    'http://localhost:8000/api/user/${username}',
+    headers={'Authorization': 'Bearer ${MARZBAN_TOKEN}'}
+)
+try:
+    with urllib.request.urlopen(req, timeout=5) as r:
+        data = json.loads(r.read())
+        print(data.get('subscription_url', ''))
+except urllib.error.HTTPError as e:
+    if e.code == 404:
+        print('NOT_FOUND')
+    else:
+        print('ERROR', file=sys.stderr)
+        sys.exit(1)
+PYEOF
+)
+
+  if [[ "$exists" != "NOT_FOUND" ]]; then
+    log_info "User $username already exists — skipping"
+    SUB_URLS[$username]="${SUBSCRIPTION_URL_PREFIX}${exists}"
+    (( ++SKIPPED ))
+    continue
+  fi
+
+  sub_url=$(docker exec umbra-marzban python3 - <<PYEOF
+import urllib.request, json, sys
+
+payload = json.dumps({
+    "username": "${username}",
+    "proxies": {"vless": {}},
+    "data_limit": 0,
+    "expire": None,
+    "data_limit_reset_strategy": "no_reset",
+    "status": "active"
+}).encode()
+
+req = urllib.request.Request(
+    'http://localhost:8000/api/user',
+    data=payload,
+    headers={
+        'Authorization': 'Bearer ${MARZBAN_TOKEN}',
+        'Content-Type': 'application/json'
+    }
+)
+try:
+    with urllib.request.urlopen(req, timeout=10) as r:
+        data = json.loads(r.read())
+        print(data.get('subscription_url', ''))
+except Exception as e:
+    print('ERROR: ' + str(e), file=sys.stderr)
+    sys.exit(1)
+PYEOF
+)
+
+  SUB_URLS[$username]="${SUBSCRIPTION_URL_PREFIX}${sub_url}"
+  log_ok "Created: $username"
+  (( ++CREATED ))
+done
+
+echo ""
+log_info "Users: created=$CREATED  skipped=$SKIPPED"
+
+# ── [2/4] Subscription URLs ───────────────────────────────────────────────────
+echo ""
+log_step "[2/4] Subscription URLs"
+echo "  ┌─────────────────────────────────────────────────────────────────────"
+for i in $(seq -w 1 "$USER_COUNT"); do
+  username="${USER_PREFIX}${i}"
+  echo "  │  $username"
+  echo "  │    ${SUB_URLS[$username]}"
+  echo "  │"
+done
+echo "  └─────────────────────────────────────────────────────────────────────"
+
+# Save to file
+SUB_FILE="$BACKUP_DIR/subscription-urls-$(date +%Y%m%d).txt"
+{
+  echo "# Subscription URLs — generated $(date)"
+  echo "# Server: $NODE_NAME ($EDGE_DOMAIN)"
+  echo ""
+  for i in $(seq -w 1 "$USER_COUNT"); do
+    username="${USER_PREFIX}${i}"
+    echo "$username  ${SUB_URLS[$username]}"
+  done
+} > "$SUB_FILE"
+chmod 600 "$SUB_FILE"
+log_ok "Saved to: $SUB_FILE"
+
+# ── [3/4] DNS Checklist ───────────────────────────────────────────────────────
+echo ""
+log_step "[3/4] DNS Status"
+
+SERVER_IP=$(curl -sf --max-time 5 https://api.ipify.org 2>/dev/null || echo "unknown")
+echo ""
+echo "  Server IP: $SERVER_IP"
+echo ""
+echo "  A records that should point to $SERVER_IP:"
+echo ""
+
+ALL_DOMAINS=(
+  "$APEX_DOMAIN" "$WWW_DOMAIN" "$EDGE_DOMAIN" "$SUB_DOMAIN"
+  "$CONSOLE_DOMAIN" "$VAULT_DOMAIN" "$STATUS_DOMAIN" "$DOCS_DOMAIN" "$SHORTLINK_DOMAIN"
+)
+
+DNS_OK=true
+for domain in "${ALL_DOMAINS[@]}"; do
+  resolved=$(dig +short "$domain" 2>/dev/null | grep -E '^[0-9]+\.' | tail -1 || echo "?")
+  if [[ "$resolved" == "$SERVER_IP" ]]; then
+    echo "  ✓  $domain  →  $resolved"
+  else
+    echo "  ✗  $domain  →  $resolved  (needs update)"
+    DNS_OK=false
+  fi
+done
+
+echo ""
+if $DNS_OK; then
+  log_ok "All domains point to this server."
+  echo ""
+  echo "  Run the following to replace self-signed certs with real TLS:"
+  echo "  $ bash scripts/deploy-certs.sh --upgrade"
+else
+  log_warn "Some domains are not yet pointing to this server."
+  echo ""
+  echo "  After updating DNS, run:"
+  echo "  $ bash scripts/deploy-certs.sh --upgrade"
+fi
+
+# ── [4/4] Vaultwarden Account Setup ──────────────────────────────────────────
+echo ""
+log_step "[4/4] Vaultwarden Account Setup"
+echo ""
+echo "  Vaultwarden is running at https://$VAULT_DOMAIN"
+echo ""
+echo "  Steps to complete:"
+echo "    1. Open https://$VAULT_DOMAIN in your browser"
+echo "    2. Click 'Create Account' and register with your email + strong password"
+echo "    3. Open the admin panel: https://$VAULT_DOMAIN/admin"
+echo "       Enter your VAULTWARDEN_ADMIN_TOKEN from .env"
+echo "    4. Go to General Settings → disable 'Allow New Signups'"
+echo "       (Prevents unauthorized registrations)"
+echo ""
+
+if confirm "Have you created your Vaultwarden account and disabled new signups?"; then
+  log_ok "Vaultwarden setup confirmed"
+else
+  log_warn "Action required: set up Vaultwarden before this server goes public"
+fi
+
+# ── Done ──────────────────────────────────────────────────────────────────────
+echo ""
+log_step "Manual tasks remaining"
+echo ""
+echo "  1. Uptime Kuma monitors — configure via web UI:"
+echo "     https://$STATUS_DOMAIN"
+echo ""
+echo "     Suggested monitors:"
+echo "       • HTTP  https://$EDGE_DOMAIN"
+echo "       • HTTP  https://$SUB_DOMAIN"
+echo "       • HTTP  https://$VAULT_DOMAIN"
+echo "       • HTTP  https://$STATUS_DOMAIN"
+echo "       • TCP   $EDGE_DOMAIN:443  (VPN port)"
+echo "       • PostgreSQL  umbra-postgres:5432"
+echo ""
+echo "  2. Distribute subscription URLs to users:"
+echo "     Saved in: $SUB_FILE"
+echo ""
+
+log_ok "Post-deploy wizard complete."

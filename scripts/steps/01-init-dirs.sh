@@ -3,8 +3,8 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-source "$SCRIPT_DIR/lib/env.sh"
-source "$SCRIPT_DIR/lib/log.sh"
+source "$SCRIPT_DIR/../lib/env.sh"
+source "$SCRIPT_DIR/../lib/log.sh"
 
 log_banner "Umbra — Init Directories"
 
@@ -74,8 +74,5 @@ for f in "$SNIPPETS_SRC"/*.conf; do
     log_ok "Copied snippet: $fname"
   fi
 done
-
-# Update nginx.conf snippets include path to match actual location
-sed -i "s|/etc/nginx/snippets|/etc/nginx/snippets|g" "$DATA_NGINX_CONF" 2>/dev/null || true
 
 log_ok "Directory init complete."

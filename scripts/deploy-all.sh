@@ -18,7 +18,7 @@ run_step() {
   local step="$1"
   local label="$2"
   log_step "[$step] $label"
-  bash "$SCRIPT_DIR/$step" || {
+  bash "$SCRIPT_DIR/steps/$step" || {
     log_error "Step $step failed. Deployment aborted."
     exit 1
   }
@@ -31,7 +31,7 @@ run_step "02-generate-reality.sh" "Generate REALITY keys"
 
 # ── Certificate step: real or self-signed ─────────────────────────────────────
 # Set CERTBOT_SKIP=true in .env to use self-signed certs (no DNS required).
-# Replace later: rm -rf $DATA_DIR/letsencrypt && bash scripts/03-issue-certs.sh
+# Upgrade later: bash scripts/deploy-certs.sh --upgrade
 if [[ "${CERTBOT_SKIP:-false}" == "true" ]]; then
   run_step "03-self-signed.sh"    "Generate self-signed certificates (debug)"
 else
@@ -39,7 +39,7 @@ else
 fi
 
 log_step "[04] Render configuration templates"
-python3 "$SCRIPT_DIR/04-render-configs.py" || {
+python3 "$SCRIPT_DIR/steps/04-render-configs.py" || {
   log_error "Config rendering failed. Deployment aborted."
   exit 1
 }
@@ -49,11 +49,11 @@ run_step "05-up.sh"              "Start Docker services"
 run_step "06-verify.sh"          "Verify deployment"
 run_step "07-backup.sh"          "Create backup"
 
-# ── Configure cert renewal cron ───────────────────────────────────────────────
-log_step "Configuring certificate renewal cron..."
+# ── Configure cert renewal and backup cron ────────────────────────────────────
+log_step "Configuring cron jobs..."
 
-CRON_LINE="17 3 * * * $REPO_DIR/scripts/renew-cert.sh >> /var/log/umbra-cert-renew.log 2>&1"
-BACKUP_CRON_LINE="0 2 * * * $REPO_DIR/scripts/07-backup.sh >> /var/log/umbra-backup.log 2>&1"
+CRON_LINE="17 3 * * * $REPO_DIR/scripts/deploy-certs.sh >> /var/log/umbra-cert-renew.log 2>&1"
+BACKUP_CRON_LINE="0 2 * * * $REPO_DIR/scripts/steps/07-backup.sh >> /var/log/umbra-backup.log 2>&1"
 
 add_cron() {
   local line="$1"
@@ -110,7 +110,7 @@ echo "  Docs:          https://$DOCS_DOMAIN"
 echo "  Short links:   https://$SHORTLINK_DOMAIN"
 echo ""
 echo "  Next steps:"
-echo "  1. Connect to VPN, then open https://$CONSOLE_DOMAIN"
-echo "  2. Add users in Marzban and distribute subscription URLs"
-echo "  3. Configure monitors in Uptime Kuma: https://$STATUS_DOMAIN"
+echo "  1. Run post-deploy wizard: bash scripts/deploy-post.sh"
+echo "  2. Connect to VPN, then open https://$CONSOLE_DOMAIN"
+echo "  3. Configure monitors: https://$STATUS_DOMAIN"
 echo ""

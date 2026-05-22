@@ -3,8 +3,8 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-source "$SCRIPT_DIR/lib/env.sh"
-source "$SCRIPT_DIR/lib/log.sh"
+source "$SCRIPT_DIR/../lib/env.sh"
+source "$SCRIPT_DIR/../lib/log.sh"
 
 log_banner "Umbra — Start Services"
 

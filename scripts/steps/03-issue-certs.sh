@@ -4,8 +4,8 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-source "$SCRIPT_DIR/lib/env.sh"
-source "$SCRIPT_DIR/lib/log.sh"
+source "$SCRIPT_DIR/../lib/env.sh"
+source "$SCRIPT_DIR/../lib/log.sh"
 
 log_banner "Umbra — Issue TLS Certificates"
 
@@ -66,7 +66,7 @@ for domain in "${DOMAINS[@]}"; do
 
     if (( days_left > 30 )); then
       log_info "Cert for $domain valid for $days_left days — skipping"
-      ((SKIPPED++))
+      (( ++SKIPPED ))
       continue
     fi
   fi
@@ -98,10 +98,10 @@ for domain in "${DOMAINS[@]}"; do
       --no-eff-email \
       -d "$domain" 2>&1 | tee -a /tmp/certbot-$domain.log; then
     log_ok "Cert issued for $domain"
-    ((ISSUED++))
+    (( ++ISSUED ))
   else
     log_fail "Failed to issue cert for $domain"
-    ((FAILED++))
+    (( ++FAILED ))
   fi
 done
 
