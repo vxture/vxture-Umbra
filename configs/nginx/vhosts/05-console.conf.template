@@ -6,6 +6,11 @@
 # so IP allowlist cannot distinguish VPN clients from public traffic here.
 # Basic Auth is the practical solution: nginx 401 uses WWW-Authenticate: Basic,
 # Marzban API uses WWW-Authenticate: Bearer — browsers handle them independently.
+#
+# auth_basic is server-level so it applies to ALL requests before any content phase.
+# Do not use `return 301` in a location block — it runs in the rewrite phase,
+# before auth_basic (access phase), and would bypass authentication on /.
+# proxy_redirect rewrites any http:// Location headers from Marzban to https://.
 
 server {
     listen 8443 ssl proxy_protocol;
@@ -19,14 +24,9 @@ server {
     auth_basic           "Umbra Console";
     auth_basic_user_file /etc/nginx/private/.htpasswd_console;
 
-    # Marzban's React dashboard is at /dashboard/, not /
-    # Use $http_host (client Host header, no port) to avoid leaking internal port 8443
-    location = / {
-        return 301 https://$http_host/dashboard/;
-    }
-
     location / {
         proxy_pass http://umbra-marzban:8000;
         include /etc/nginx/snippets/proxy-headers.conf;
+        proxy_redirect http:// https://;
     }
 }

@@ -125,7 +125,7 @@ log_step "Marzban API..."
 MARZBAN_CODE=$(docker exec -i umbra-marzban python3 - <<'PYEOF' 2>/dev/null
 import urllib.request, sys
 try:
-    with urllib.request.urlopen('http://localhost:8000/api/core/stats', timeout=10) as r:
+    with urllib.request.urlopen('http://localhost:8000/api/inbounds', timeout=10) as r:
         print(r.status)
 except urllib.error.HTTPError as e:
     print(e.code)
