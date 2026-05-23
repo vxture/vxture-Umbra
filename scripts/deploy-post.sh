@@ -81,6 +81,63 @@ fi
 
 log_ok "Marzban API authenticated"
 
+# Configure inbound host — required for subscription URLs to include proxy nodes.
+# Sets the public address, port, SNI and TLS fingerprint for VLESS_TCP_REALITY.
+log_info "Configuring Marzban inbound host..."
+
+MARZBAN_HOST_STATUS=$(docker exec -i umbra-marzban python3 - <<PYEOF
+import urllib.request, json, sys, ssl
+
+ctx = ssl.create_default_context()
+ctx.check_hostname = False
+ctx.verify_mode = ssl.CERT_NONE
+
+payload = json.dumps({
+    "VLESS_TCP_REALITY": [{
+        "remark": "🚀 {USERNAME}",
+        "address": "${EDGE_DOMAIN}",
+        "port": 443,
+        "sni": "${REALITY_SNI}",
+        "host": None,
+        "path": None,
+        "security": "inbound_default",
+        "alpn": "",
+        "fingerprint": "chrome",
+        "allowinsecure": False,
+        "is_disabled": False,
+        "mux_enable": False,
+        "fragment_setting": None,
+        "noise_setting": None,
+        "random_user_agent": False,
+        "use_sni_as_host": False
+    }]
+}).encode()
+
+req = urllib.request.Request(
+    'https://localhost:8000/api/hosts',
+    data=payload,
+    method='PUT',
+    headers={
+        'Authorization': 'Bearer ${MARZBAN_TOKEN}',
+        'Content-Type': 'application/json'
+    }
+)
+try:
+    with urllib.request.urlopen(req, context=ctx, timeout=10) as r:
+        json.loads(r.read())
+        print('OK')
+except Exception as e:
+    print('ERROR: ' + str(e), file=sys.stderr)
+    sys.exit(1)
+PYEOF
+)
+
+if [[ "$MARZBAN_HOST_STATUS" == "OK" ]]; then
+  log_ok "Marzban host configured: ${EDGE_DOMAIN}:443 (SNI: ${REALITY_SNI})"
+else
+  log_warn "Marzban host configuration may have failed — check manually"
+fi
+
 CREATED=0
 SKIPPED=0
 declare -A SUB_URLS
@@ -129,6 +186,7 @@ ctx.verify_mode = ssl.CERT_NONE
 payload = json.dumps({
     "username": "${username}",
     "proxies": {"vless": {}},
+    "inbounds": {"vless": ["VLESS_TCP_REALITY"]},
     "data_limit": 0,
     "expire": None,
     "data_limit_reset_strategy": "no_reset",

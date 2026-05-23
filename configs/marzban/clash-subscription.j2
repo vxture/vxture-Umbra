@@ -31,14 +31,12 @@ dns:
     ipcidr:
       - 240.0.0.0/4
 
-proxies:
-{{ proxies | default([]) | indent(2, first=True) }}
-
+{{ conf | only("proxies") | yaml }}
 proxy-groups:
   - name: PROXY
     type: select
     proxies:
-{% for tag in proxy_tags | default([]) %}
+{% for tag in proxy_remarks %}
       - {{ tag }}
 {% endfor %}
       - DIRECT
