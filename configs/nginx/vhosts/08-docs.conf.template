@@ -1,6 +1,6 @@
 # docs.ruyin.ai — Static documentation site
 server {
-    listen 8443 ssl;
+    listen 8443 ssl proxy_protocol;
     server_name {{ DOCS_DOMAIN }};
 
     ssl_certificate     /etc/letsencrypt/live/{{ DOCS_DOMAIN }}/fullchain.pem;

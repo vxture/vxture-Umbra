@@ -1,6 +1,6 @@
 # go.ruyin.ai — Shlink short link service
 server {
-    listen 8443 ssl;
+    listen 8443 ssl proxy_protocol;
     server_name {{ SHORTLINK_DOMAIN }};
 
     ssl_certificate     /etc/letsencrypt/live/{{ SHORTLINK_DOMAIN }}/fullchain.pem;

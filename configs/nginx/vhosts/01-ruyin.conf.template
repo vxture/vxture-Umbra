@@ -1,6 +1,6 @@
 # ruyin.ai — Brand landing page
 server {
-    listen 8443 ssl;
+    listen 8443 ssl proxy_protocol;
     server_name {{ APEX_DOMAIN }};
 
     ssl_certificate     /etc/letsencrypt/live/{{ APEX_DOMAIN }}/fullchain.pem;

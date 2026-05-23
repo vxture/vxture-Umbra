@@ -1,6 +1,6 @@
 # www.ruyin.ai — 301 canonical redirect to apex domain
 server {
-    listen 8443 ssl;
+    listen 8443 ssl proxy_protocol;
     server_name {{ WWW_DOMAIN }};
 
     ssl_certificate     /etc/letsencrypt/live/{{ WWW_DOMAIN }}/fullchain.pem;

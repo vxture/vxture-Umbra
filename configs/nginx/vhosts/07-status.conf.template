@@ -1,6 +1,6 @@
 # status.ruyin.ai — Uptime Kuma status page
 server {
-    listen 8443 ssl;
+    listen 8443 ssl proxy_protocol;
     server_name {{ STATUS_DOMAIN }};
 
     ssl_certificate     /etc/letsencrypt/live/{{ STATUS_DOMAIN }}/fullchain.pem;

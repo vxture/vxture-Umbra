@@ -52,11 +52,7 @@ echo ""
 
 # Authenticate with Marzban API
 MARZBAN_TOKEN=$(docker exec -i umbra-marzban python3 - <<PYEOF
-import urllib.request, urllib.parse, json, sys, ssl
-
-ctx = ssl.create_default_context()
-ctx.check_hostname = False
-ctx.verify_mode = ssl.CERT_NONE
+import urllib.request, urllib.parse, json, sys
 
 data = urllib.parse.urlencode({
     'username': '${MARZBAN_ADMIN_USER}',
@@ -64,8 +60,8 @@ data = urllib.parse.urlencode({
 }).encode()
 
 try:
-    req = urllib.request.Request('https://localhost:8000/api/admin/token', data=data)
-    with urllib.request.urlopen(req, context=ctx, timeout=10) as r:
+    req = urllib.request.Request('http://localhost:8000/api/admin/token', data=data)
+    with urllib.request.urlopen(req, timeout=10) as r:
         print(json.loads(r.read())['access_token'])
 except Exception as e:
     print('ERROR: ' + str(e), file=sys.stderr)
@@ -86,11 +82,7 @@ log_ok "Marzban API authenticated"
 log_info "Configuring Marzban inbound host..."
 
 MARZBAN_HOST_STATUS=$(docker exec -i umbra-marzban python3 - <<PYEOF
-import urllib.request, json, sys, ssl
-
-ctx = ssl.create_default_context()
-ctx.check_hostname = False
-ctx.verify_mode = ssl.CERT_NONE
+import urllib.request, json, sys
 
 payload = json.dumps({
     "VLESS_TCP_REALITY": [{
@@ -114,7 +106,7 @@ payload = json.dumps({
 }).encode()
 
 req = urllib.request.Request(
-    'https://localhost:8000/api/hosts',
+    'http://localhost:8000/api/hosts',
     data=payload,
     method='PUT',
     headers={
@@ -123,7 +115,7 @@ req = urllib.request.Request(
     }
 )
 try:
-    with urllib.request.urlopen(req, context=ctx, timeout=10) as r:
+    with urllib.request.urlopen(req, timeout=10) as r:
         json.loads(r.read())
         print('OK')
 except Exception as e:
@@ -146,18 +138,14 @@ for i in $(seq -w 1 "$USER_COUNT"); do
   username="${USER_PREFIX}${i}"
 
   exists=$(docker exec -i umbra-marzban python3 - <<PYEOF
-import urllib.request, json, sys, ssl
-
-ctx = ssl.create_default_context()
-ctx.check_hostname = False
-ctx.verify_mode = ssl.CERT_NONE
+import urllib.request, json, sys
 
 req = urllib.request.Request(
-    'https://localhost:8000/api/user/${username}',
+    'http://localhost:8000/api/user/${username}',
     headers={'Authorization': 'Bearer ${MARZBAN_TOKEN}'}
 )
 try:
-    with urllib.request.urlopen(req, context=ctx, timeout=5) as r:
+    with urllib.request.urlopen(req, timeout=5) as r:
         data = json.loads(r.read())
         print(data.get('subscription_url', ''))
 except urllib.error.HTTPError as e:
@@ -177,11 +165,7 @@ PYEOF
   fi
 
   sub_url=$(docker exec -i umbra-marzban python3 - <<PYEOF
-import urllib.request, json, sys, ssl
-
-ctx = ssl.create_default_context()
-ctx.check_hostname = False
-ctx.verify_mode = ssl.CERT_NONE
+import urllib.request, json, sys
 
 payload = json.dumps({
     "username": "${username}",
@@ -194,7 +178,7 @@ payload = json.dumps({
 }).encode()
 
 req = urllib.request.Request(
-    'https://localhost:8000/api/user',
+    'http://localhost:8000/api/user',
     data=payload,
     headers={
         'Authorization': 'Bearer ${MARZBAN_TOKEN}',
@@ -202,7 +186,7 @@ req = urllib.request.Request(
     }
 )
 try:
-    with urllib.request.urlopen(req, context=ctx, timeout=10) as r:
+    with urllib.request.urlopen(req, timeout=10) as r:
         data = json.loads(r.read())
         print(data.get('subscription_url', ''))
 except Exception as e:

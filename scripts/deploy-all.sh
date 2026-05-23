@@ -90,7 +90,7 @@ if [[ ! -f "$HTPASSWD_FILE" ]]; then
   fi
 
   if command -v htpasswd &>/dev/null; then
-    htpasswd -bc "$HTPASSWD_FILE" "$CONSOLE_USER" "$CONSOLE_PASS"
+    htpasswd -bcB "$HTPASSWD_FILE" "$CONSOLE_USER" "$CONSOLE_PASS"
   else
     HASH=$(docker run --rm httpd:alpine htpasswd -nbB "$CONSOLE_USER" "$CONSOLE_PASS" | tr -d '\r')
     echo "$HASH" > "$HTPASSWD_FILE"
@@ -143,7 +143,7 @@ log_ok "All services are running."
 echo ""
 echo "  VPN Portal:    https://$EDGE_DOMAIN"
 echo "  Subscriptions: https://$SUB_DOMAIN"
-echo "  Console:       https://$CONSOLE_DOMAIN  (VPN access required)"
+echo "  Console:       https://$CONSOLE_DOMAIN  (Basic Auth: $CONSOLE_USER)"
 echo "  Vault:         https://$VAULT_DOMAIN"
 echo "  Status:        https://$STATUS_DOMAIN"
 echo "  Docs:          https://$DOCS_DOMAIN"

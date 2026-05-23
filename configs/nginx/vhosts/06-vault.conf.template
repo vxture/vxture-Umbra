@@ -1,6 +1,6 @@
 # vault.ruyin.ai — Vaultwarden password manager
 server {
-    listen 8443 ssl;
+    listen 8443 ssl proxy_protocol;
     server_name {{ VAULT_DOMAIN }};
 
     ssl_certificate     /etc/letsencrypt/live/{{ VAULT_DOMAIN }}/fullchain.pem;
