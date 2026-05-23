@@ -64,16 +64,23 @@ for domain in "${DOMAINS[@]}"; do
   cert_path="$CERT_DIR/live/$domain/fullchain.pem"
 
   if [[ -f "$cert_path" ]]; then
-    # Check if cert is valid for > 30 days
-    expiry=$(openssl x509 -noout -enddate -in "$cert_path" 2>/dev/null | cut -d= -f2)
-    expiry_epoch=$(date -d "$expiry" +%s 2>/dev/null || date -j -f "%b %d %T %Y %Z" "$expiry" +%s 2>/dev/null || echo 0)
-    now_epoch=$(date +%s)
-    days_left=$(( (expiry_epoch - now_epoch) / 86400 ))
+    # Skip only if cert is from a trusted CA AND valid for > 30 days.
+    # Self-signed certs (issuer == subject) must always be replaced.
+    issuer=$(openssl x509 -noout -issuer -in "$cert_path" 2>/dev/null || echo "")
+    subject=$(openssl x509 -noout -subject -in "$cert_path" 2>/dev/null || echo "")
+    if [[ "$issuer" == "$subject" ]]; then
+      log_info "Cert for $domain is self-signed — replacing with real cert"
+    else
+      expiry=$(openssl x509 -noout -enddate -in "$cert_path" 2>/dev/null | cut -d= -f2)
+      expiry_epoch=$(date -d "$expiry" +%s 2>/dev/null || date -j -f "%b %d %T %Y %Z" "$expiry" +%s 2>/dev/null || echo 0)
+      now_epoch=$(date +%s)
+      days_left=$(( (expiry_epoch - now_epoch) / 86400 ))
 
-    if (( days_left > 30 )); then
-      log_info "Cert for $domain valid for $days_left days — skipping"
-      (( ++SKIPPED ))
-      continue
+      if (( days_left > 30 )); then
+        log_info "Cert for $domain valid for $days_left days — skipping"
+        (( ++SKIPPED ))
+        continue
+      fi
     fi
   fi
 
