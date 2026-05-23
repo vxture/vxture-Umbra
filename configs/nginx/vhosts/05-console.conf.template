@@ -15,8 +15,9 @@ server {
     include /etc/nginx/snippets/ssl-params.conf;
 
     # Marzban's React dashboard is at /dashboard/, not /
+    # Use $http_host (client Host header, no port) to avoid leaking internal port 8443
     location = / {
-        return 302 /dashboard/;
+        return 302 https://$http_host/dashboard/;
     }
 
     location / {
