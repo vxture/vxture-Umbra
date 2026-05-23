@@ -46,7 +46,7 @@ log_info "Creating $USER_COUNT users with prefix '$USER_PREFIX'..."
 echo ""
 
 # Authenticate with Marzban API
-MARZBAN_TOKEN=$(docker exec umbra-marzban python3 - <<PYEOF
+MARZBAN_TOKEN=$(docker exec -i umbra-marzban python3 - <<PYEOF
 import urllib.request, urllib.parse, json, sys, ssl
 
 ctx = ssl.create_default_context()
@@ -83,7 +83,7 @@ declare -A SUB_URLS
 for i in $(seq -w 1 "$USER_COUNT"); do
   username="${USER_PREFIX}${i}"
 
-  exists=$(docker exec umbra-marzban python3 - <<PYEOF
+  exists=$(docker exec -i umbra-marzban python3 - <<PYEOF
 import urllib.request, json, sys, ssl
 
 ctx = ssl.create_default_context()
@@ -114,7 +114,7 @@ PYEOF
     continue
   fi
 
-  sub_url=$(docker exec umbra-marzban python3 - <<PYEOF
+  sub_url=$(docker exec -i umbra-marzban python3 - <<PYEOF
 import urllib.request, json, sys, ssl
 
 ctx = ssl.create_default_context()

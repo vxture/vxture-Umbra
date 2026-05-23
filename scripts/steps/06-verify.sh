@@ -133,7 +133,7 @@ done
 
 # ── Marzban API ───────────────────────────────────────────────────────────────
 log_step "Marzban API..."
-MARZBAN_CODE=$(docker exec umbra-marzban python3 - <<'PYEOF' 2>/dev/null
+MARZBAN_CODE=$(docker exec -i umbra-marzban python3 - <<'PYEOF' 2>/dev/null
 import urllib.request, ssl, sys
 ctx = ssl.create_default_context()
 ctx.check_hostname = False
