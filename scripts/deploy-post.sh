@@ -35,6 +35,10 @@ confirm() {
   [[ "${answer,,}" == "y" ]]
 }
 
+# Marzban runs HTTPS internally (self-signed cert). All API calls use https://
+# with SSL verification disabled (cert is for internal Docker use only).
+MARZBAN_API="https://localhost:8000"
+
 log_banner "Umbra — Post-Deploy Wizard"
 log_info "Node: $NODE_NAME  ($EDGE_DOMAIN)"
 echo ""
@@ -89,7 +93,11 @@ PYEOF
 
 # Authenticate with Marzban API
 MARZBAN_TOKEN=$(docker exec -i umbra-marzban python3 - <<PYEOF
-import urllib.request, urllib.parse, json, sys
+import urllib.request, urllib.parse, json, ssl, sys
+
+ctx = ssl.create_default_context()
+ctx.check_hostname = False
+ctx.verify_mode = ssl.CERT_NONE
 
 data = urllib.parse.urlencode({
     'username': '${MARZBAN_ADMIN_USER}',
@@ -97,8 +105,8 @@ data = urllib.parse.urlencode({
 }).encode()
 
 try:
-    req = urllib.request.Request('http://localhost:8000/api/admin/token', data=data)
-    with urllib.request.urlopen(req, timeout=10) as r:
+    req = urllib.request.Request('${MARZBAN_API}/api/admin/token', data=data)
+    with urllib.request.urlopen(req, timeout=10, context=ctx) as r:
         print(json.loads(r.read())['access_token'])
 except Exception as e:
     print('ERROR: ' + str(e), file=sys.stderr)
@@ -121,7 +129,11 @@ log_ok "Marzban API authenticated"
 log_info "Configuring Marzban inbound host..."
 
 MARZBAN_HOST_STATUS=$(docker exec -i umbra-marzban python3 - <<PYEOF
-import urllib.request, json, sys
+import urllib.request, json, ssl, sys
+
+ctx = ssl.create_default_context()
+ctx.check_hostname = False
+ctx.verify_mode = ssl.CERT_NONE
 
 payload = json.dumps({
     "VLESS_TCP_REALITY": [{
@@ -145,7 +157,7 @@ payload = json.dumps({
 }).encode()
 
 req = urllib.request.Request(
-    'http://localhost:8000/api/hosts',
+    '${MARZBAN_API}/api/hosts',
     data=payload,
     method='PUT',
     headers={
@@ -154,7 +166,7 @@ req = urllib.request.Request(
     }
 )
 try:
-    with urllib.request.urlopen(req, timeout=10) as r:
+    with urllib.request.urlopen(req, timeout=10, context=ctx) as r:
         json.loads(r.read())
         print('OK')
 except Exception as e:
@@ -177,14 +189,18 @@ for i in $(seq -w 1 "$USER_COUNT"); do
   username="${USER_PREFIX}${i}"
 
   exists=$(docker exec -i umbra-marzban python3 - <<PYEOF
-import urllib.request, json, sys
+import urllib.request, json, ssl, sys
+
+ctx = ssl.create_default_context()
+ctx.check_hostname = False
+ctx.verify_mode = ssl.CERT_NONE
 
 req = urllib.request.Request(
-    'http://localhost:8000/api/user/${username}',
+    '${MARZBAN_API}/api/user/${username}',
     headers={'Authorization': 'Bearer ${MARZBAN_TOKEN}'}
 )
 try:
-    with urllib.request.urlopen(req, timeout=5) as r:
+    with urllib.request.urlopen(req, timeout=5, context=ctx) as r:
         data = json.loads(r.read())
         print(data.get('subscription_url', ''))
 except urllib.error.HTTPError as e:
@@ -204,7 +220,11 @@ PYEOF
   fi
 
   sub_url=$(docker exec -i umbra-marzban python3 - <<PYEOF
-import urllib.request, json, sys
+import urllib.request, json, ssl, sys
+
+ctx = ssl.create_default_context()
+ctx.check_hostname = False
+ctx.verify_mode = ssl.CERT_NONE
 
 payload = json.dumps({
     "username": "${username}",
@@ -217,7 +237,7 @@ payload = json.dumps({
 }).encode()
 
 req = urllib.request.Request(
-    'http://localhost:8000/api/user',
+    '${MARZBAN_API}/api/user',
     data=payload,
     headers={
         'Authorization': 'Bearer ${MARZBAN_TOKEN}',
@@ -225,7 +245,7 @@ req = urllib.request.Request(
     }
 )
 try:
-    with urllib.request.urlopen(req, timeout=10) as r:
+    with urllib.request.urlopen(req, timeout=10, context=ctx) as r:
         data = json.loads(r.read())
         print(data.get('subscription_url', ''))
 except Exception as e:
@@ -298,9 +318,6 @@ done
 echo ""
 if $DNS_OK; then
   log_ok "All domains point to this server."
-  echo ""
-  echo "  Run the following to replace self-signed certs with real TLS:"
-  echo "  $ bash scripts/deploy-certs.sh --upgrade"
 else
   log_warn "Some domains are not yet pointing to this server."
   echo ""
@@ -317,7 +334,7 @@ echo ""
 echo "  Steps to complete:"
 echo "    1. Open the admin panel: https://$PASS_DOMAIN/admin"
 echo "       Enter your VAULTWARDEN_ADMIN_TOKEN from .env"
-echo "    2. Go to 'Users' → 'Invite User' and invite yourself by email"
+echo "    2. Go to 'Users' -> 'Invite User' and invite yourself by email"
 echo "       (Web registration is disabled — accounts must be created via admin panel)"
 echo "    3. Open the invitation email link and set your master password"
 echo ""
@@ -334,8 +351,8 @@ log_step "Manual tasks remaining"
 echo ""
 echo "  1. External uptime monitoring (recommended):"
 echo "     Add a free monitor at betteruptime.com or uptimerobot.com"
-echo "       • TCP   $EDGE_DOMAIN:443  (VPN port — catches full-node outage)"
-echo "       • HTTPS https://$EDGE_DOMAIN  (portal)"
+echo "       * TCP   $EDGE_DOMAIN:443  (VPN port)"
+echo "       * HTTPS https://$EDGE_DOMAIN  (portal)"
 echo ""
 echo "  2. Distribute subscription URLs to users:"
 echo "     Saved in: $SUB_FILE"

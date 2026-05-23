@@ -11,7 +11,8 @@ server {
     # Only expose subscription paths — no admin UI leaked here
     location ~ ^/sub/ {
         limit_req zone=sub_limit burst=10 nodelay;
-        proxy_pass http://umbra-marzban:8000;
+        proxy_pass https://umbra-marzban:8000;
+        proxy_ssl_verify off;
         include /etc/nginx/snippets/proxy-headers.conf;
     }
 
