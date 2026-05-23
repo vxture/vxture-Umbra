@@ -1,8 +1,8 @@
 # Vxture Umbra
 
-Production VPN edge node — SNI routing, VLESS+REALITY proxy, subscription delivery, password management, status monitoring.
+Production VPN edge node — SNI routing, VLESS+REALITY proxy, subscription delivery, password management.
 
-**Stack:** Nginx · Xray REALITY · Marzban · Vaultwarden · Uptime Kuma · Shlink
+**Stack:** Nginx · Xray REALITY · Marzban · Vaultwarden
 
 ---
 
@@ -11,13 +11,12 @@ Production VPN edge node — SNI routing, VLESS+REALITY proxy, subscription deli
 | Domain | Service |
 |--------|---------|
 | `ruyin.ai` / `www.ruyin.ai` | Brand landing page |
-| `proxy.ruyin.ai` | VPN user portal |
+| `vpn.ruyin.ai` | VPN user portal |
 | `sub.ruyin.ai` | Marzban subscription endpoint |
 | `console.ruyin.ai` | Marzban admin *(VPN access only)* |
 | `pass.ruyin.ai` | Vaultwarden password manager |
-| `status.ruyin.ai` | Uptime Kuma status page |
+| `vault.ruyin.ai` | Placeholder (future use) |
 | `docs.ruyin.ai` | Documentation |
-| `go.ruyin.ai` | Shlink short links |
 
 ---
 
@@ -25,12 +24,12 @@ Production VPN edge node — SNI routing, VLESS+REALITY proxy, subscription deli
 
 | Requirement | Notes |
 |-------------|-------|
-| Ubuntu 22.04 LTS | Vultr or similar; 1C1G minimum, 2C2G recommended |
+| Ubuntu 22.04 LTS | Vultr or similar; 1C1G / 25GB SSD |
 | SSH key access | Key-based login as root (Vultr adds this at provision time) |
-| DNS A records | All 9 domains → server IP, propagated **before** running deploy |
+| DNS A records | All 8 domains → server IP, propagated **before** running deploy |
 | Open ports | 80 (ACME) and 443 (HTTPS + REALITY) |
 
-> **DNS first.** Let's Encrypt cert issuance is the first blocking step. Point all 9 records before starting.
+> **DNS first.** Let's Encrypt cert issuance is the first blocking step. Point all 8 records before starting.
 
 ---
 
@@ -131,11 +130,7 @@ Connect to VPN first (console is IP-restricted to Docker network), then open `ht
 - SNI: `www.microsoft.com`
 - Allow Insecure: off
 
-### 2. Configure Uptime Kuma Monitors
-
-Open `https://status.ruyin.ai` and add monitors for each domain.
-
-### 3. Lock Down Vaultwarden
+### 2. Lock Down Vaultwarden
 
 Open `https://pass.ruyin.ai`, create your account, then set `SIGNUPS_ALLOWED=false` (already set in docker-compose) — no action needed; signups are disabled by default.
 
@@ -244,13 +239,12 @@ Internet
                 ├─ SNI = www.microsoft.com → Xray VLESS+REALITY (port 10443 internal)
                 └─ SNI = anything else     → nginx HTTP block (:8443)
                                                ├─ ruyin.ai          → landing page
-                                               ├─ proxy.ruyin.ai    → VPN portal
+                                               ├─ vpn.ruyin.ai      → VPN portal
                                                ├─ sub.ruyin.ai      → Marzban /sub/*
                                                ├─ console.ruyin.ai  → Marzban dashboard (IP restricted)
-                                               ├─ pass.ruyin.ai    → Vaultwarden
-                                               ├─ status.ruyin.ai   → Uptime Kuma
-                                               ├─ docs.ruyin.ai     → Static docs
-                                               └─ go.ruyin.ai       → Shlink
+                                               ├─ pass.ruyin.ai     → Vaultwarden
+                                               ├─ vault.ruyin.ai    → placeholder
+                                               └─ docs.ruyin.ai     → Static docs
 ```
 
 See [`docs/agent.md`](docs/agent.md) for full design reference.

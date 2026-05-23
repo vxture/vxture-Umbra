@@ -28,9 +28,7 @@ Internet
                                     ├── console.ruyin.ai     → umbra-marzban:8000 (VPN-only + Basic Auth)
                                     ├── pass.ruyin.ai       → umbra-vaultwarden:80
                                     ├── vault.ruyin.ai      → static placeholder
-                                    ├── status.ruyin.ai      → umbra-uptime:3001
-                                    ├── docs.ruyin.ai        → umbra-docs:80
-                                    └── go.ruyin.ai          → umbra-shortlink:80
+                                    └── docs.ruyin.ai       → umbra-docs:80
 ```
 
 ### REALITY Proxy Path

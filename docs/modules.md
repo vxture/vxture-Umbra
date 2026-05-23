@@ -34,10 +34,8 @@ Nginx runs two listeners:
 | `vpn-portal.conf.template` | `vpn.ruyin.ai` | `umbra-portal:80` |
 | `sub-marzban.conf.template` | `sub.ruyin.ai` | `umbra-marzban:8000` |
 | `console.conf.template` | `console.ruyin.ai` | `umbra-marzban:8000` + 3-layer access control |
-| `vault-vaultwarden.conf.template` | `pass.ruyin.ai` | `umbra-vaultwarden:80` |
-| `status-uptime.conf.template` | `status.ruyin.ai` | `umbra-uptime:3001` |
-| `docs.conf.template` | `docs.ruyin.ai` | `umbra-docs:80` |
-| `shortlink.conf.template` | `go.ruyin.ai` | `umbra-shortlink:80` |
+| `06-pass.conf.template` | `pass.ruyin.ai` | `umbra-vaultwarden:80` |
+| `08-docs.conf.template` | `docs.ruyin.ai` | `umbra-docs:80` |
 
 ### Stream Config Spec
 
@@ -414,48 +412,7 @@ umbra-vaultwarden:
 
 ---
 
-## Module 7: Uptime Kuma (status.ruyin.ai)
-
-### Responsibility
-
-- Service health monitoring
-- Public-facing status page
-- Monitors: all 9 public domains + Xray port + DB health
-
-### Image
-
-```
-louislam/uptime-kuma:1
-```
-
-### Docker Config
-
-```yaml
-umbra-uptime:
-  image: louislam/uptime-kuma:1
-  restart: always
-  volumes:
-    - DATA_DIR/uptime-kuma/data:/app/data
-  networks:
-    - umbra-net
-```
-
-### Monitors to Configure (post-deploy)
-
-| Monitor | Type | Target |
-|---------|------|--------|
-| ruyin.ai | HTTPS | https://ruyin.ai |
-| vpn.ruyin.ai | HTTPS | https://vpn.ruyin.ai |
-| sub.ruyin.ai | HTTPS | https://sub.ruyin.ai/health (or any 200 endpoint) |
-| pass.ruyin.ai | HTTPS | https://pass.ruyin.ai |
-| docs.ruyin.ai | HTTPS | https://docs.ruyin.ai |
-| go.ruyin.ai | HTTPS | https://go.ruyin.ai |
-| Xray port | TCP | vpn.ruyin.ai:443 |
-| PostgreSQL | TCP | umbra-postgres:5432 |
-
----
-
-## Module 8: Docs Site (docs.ruyin.ai)
+## Module 7: Docs Site (docs.ruyin.ai)
 
 ### Responsibility
 
@@ -480,53 +437,7 @@ umbra-docs:
 
 ---
 
-## Module 9: Short Link Service (go.ruyin.ai)
-
-### Responsibility
-
-- URL shortener and redirect service
-- Use cases: share subscription URLs cleanly, share doc links, internal redirects
-
-### Recommended: Shlink
-
-```
-shlinkio/shlink:stable
-```
-
-Reasons:
-- Docker-native
-- PostgreSQL support (shares umbra-postgres)
-- REST API for programmatic link creation
-- No PHP dependency
-
-### Environment Variables
-
-```env
-DEFAULT_DOMAIN=go.ruyin.ai
-IS_HTTPS_ENABLED=true
-DB_DRIVER=postgres
-DB_NAME=shlink
-DB_USER=shlink
-DB_PASSWORD={{ POSTGRES_SHLINK_PASSWORD }}
-DB_HOST=umbra-postgres
-```
-
-### Docker Config
-
-```yaml
-umbra-shortlink:
-  image: shlinkio/shlink:stable
-  restart: always
-  env_file: .env
-  depends_on:
-    - umbra-postgres
-  networks:
-    - umbra-net
-```
-
----
-
-## Module 10: Certbot
+## Module 8: Certbot
 
 ### Responsibility
 

@@ -44,30 +44,27 @@ Marzban runs Xray as an internal subprocess. Do not deploy a separate Xray conta
 
 ---
 
-## 3. PostgreSQL over SQLite
+## 3. SQLite over PostgreSQL
 
 ### Decision
 
-PostgreSQL is the database for Marzban (and optionally Vaultwarden and Shlink).
+SQLite is the database backend for all services (Marzban, Vaultwarden) on this 1C1G node.
 
 ### Rationale
 
-- SQLite has no concurrent write support — any future multi-node or multi-process access will corrupt data
-- PostgreSQL supports shared access from Vaultwarden and Shlink on the same instance (separate databases)
-- `pg_dump` gives clean, consistent backup snapshots regardless of write activity
-- Marginally higher memory cost (~80MB) is acceptable on 2C2G with correct tuning
+- At 10 concurrent VPN users, SQLite write contention is not a concern
+- SQLite eliminates the ~100MB PostgreSQL process and the associated tuning burden
+- Backup is a simple file copy — `cp db.sqlite3` or tar of the data directory
+- Marzban and Vaultwarden both support SQLite natively
 
-### Shared PostgreSQL Instance
+### Database Files
 
-Three databases on one PostgreSQL container:
+| File | Service |
+|------|---------|
+| `DATA_DIR/marzban/db.sqlite3` | Marzban |
+| `DATA_DIR/vaultwarden/data/db.sqlite3` | Vaultwarden |
 
-| Database | User | Service |
-|----------|------|---------|
-| `marzban` | `marzban` | Marzban |
-| `vaultwarden` | `vaultwarden` | Vaultwarden |
-| `shlink` | `shlink` | Short link (Shlink) |
-
-Passwords stored in `DATA_DIR/private/postgres.env` (permissions 600).
+Backed up via timestamped file copies in `07-backup.sh`.
 
 ---
 
@@ -306,8 +303,8 @@ This means the admin panel is invisible to anyone not connected to the VPN — n
 
 - All services communicate only via `umbra-net` Docker bridge
 - No service except Nginx exposes ports to the host
-- PostgreSQL port 5432 is internal only — never bound to `0.0.0.0`
 - Xray port 10443 is internal only
+- SQLite files are local to each container's volume — no network DB exposure
 
 ### Layer 5: Subscription Obscurity
 
@@ -332,25 +329,22 @@ This means the admin panel is invisible to anyone not connected to the VPN — n
 
 ---
 
-## 9. Resource Budget (2C2G)
+## 9. Resource Budget (1C1G)
 
 ```
 Service               RAM estimate
 ──────────────────────────────────
-OS + system           ~350MB
+OS + system           ~300MB
 Docker daemon         ~50MB
 umbra-nginx           ~30MB
 umbra-marzban         ~100MB  (includes Xray subprocess)
-umbra-postgres        ~100MB  (tuned for low memory)
 umbra-vaultwarden     ~25MB
-umbra-uptime          ~250MB
 umbra-portal          ~10MB
 umbra-docs            ~10MB
-umbra-shortlink       ~60MB
 ──────────────────────────────────
-Total estimated       ~985MB / 2048MB
+Total estimated       ~525MB / 1024MB
 
-Headroom              ~1063MB
+Headroom              ~499MB
 ```
 
-Monitor actual usage post-deploy. If Uptime Kuma exceeds estimate, it can move to worker-01 in a future iteration.
+Monitor actual usage post-deploy with `docker stats --no-stream`.

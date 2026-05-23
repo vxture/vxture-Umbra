@@ -16,10 +16,9 @@ log_step "Backing up SQLite databases..."
 
 declare -A SQLITE_DBS=(
   ["marzban"]="$DATA_DIR/marzban/db.sqlite3"
-  ["shlink"]="$DATA_DIR/shortlink/data/database.sqlite"
 )
 
-for label in marzban shlink; do
+for label in marzban; do
   db_path="${SQLITE_DBS[$label]}"
   dest="$BACKUP_DIR/${label}-db-${TIMESTAMP}.sqlite3"
   if [[ -f "$db_path" ]]; then

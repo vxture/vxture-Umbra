@@ -24,9 +24,7 @@ DOMAINS=(
   "$CONSOLE_DOMAIN"
   "$PASS_DOMAIN"
   "$VAULT_DOMAIN"
-  "$STATUS_DOMAIN"
   "$DOCS_DOMAIN"
-  "$SHORTLINK_DOMAIN"
 )
 
 for domain in "${DOMAINS[@]}"; do

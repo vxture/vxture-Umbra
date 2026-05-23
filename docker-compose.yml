@@ -70,16 +70,6 @@ services:
     networks:
       - umbra-net
 
-  # ── Uptime Kuma: Status monitoring ───────────────────────────────────────────
-  umbra-uptime:
-    image: louislam/uptime-kuma:1
-    container_name: umbra-uptime
-    restart: always
-    volumes:
-      - ${DATA_DIR}/uptime-kuma/data:/app/data
-    networks:
-      - umbra-net
-
   # ── VPN Portal: User onboarding static site ───────────────────────────────────
   umbra-portal:
     image: nginx:alpine
@@ -100,18 +90,3 @@ services:
     networks:
       - umbra-net
 
-  # ── Shlink: Short link / redirect service ─────────────────────────────────────
-  # Uses SQLite — database stored in the /app/data volume.
-  umbra-shortlink:
-    image: shlinkio/shlink:stable
-    container_name: umbra-shortlink
-    restart: always
-    environment:
-      DEFAULT_DOMAIN: "${SHORTLINK_DOMAIN}"
-      IS_HTTPS_ENABLED: "true"
-      DB_DRIVER: "sqlite"
-      INITIAL_API_KEY: "${SHLINK_INITIAL_API_KEY:-}"
-    volumes:
-      - ${DATA_DIR}/shortlink/data:/app/data
-    networks:
-      - umbra-net

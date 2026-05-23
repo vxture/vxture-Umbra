@@ -242,7 +242,7 @@ echo ""
 
 ALL_DOMAINS=(
   "$APEX_DOMAIN" "$WWW_DOMAIN" "$EDGE_DOMAIN" "$SUB_DOMAIN"
-  "$CONSOLE_DOMAIN" "$PASS_DOMAIN" "$STATUS_DOMAIN" "$DOCS_DOMAIN" "$SHORTLINK_DOMAIN"
+  "$CONSOLE_DOMAIN" "$PASS_DOMAIN" "$VAULT_DOMAIN" "$DOCS_DOMAIN"
 )
 
 DNS_OK=true
@@ -293,15 +293,10 @@ fi
 echo ""
 log_step "Manual tasks remaining"
 echo ""
-echo "  1. Uptime Kuma monitors — configure via web UI:"
-echo "     https://$STATUS_DOMAIN"
-echo ""
-echo "     Suggested monitors:"
-echo "       • HTTP  https://$EDGE_DOMAIN"
-echo "       • HTTP  https://$SUB_DOMAIN"
-echo "       • HTTP  https://$PASS_DOMAIN"
-echo "       • HTTP  https://$STATUS_DOMAIN"
-echo "       • TCP   $EDGE_DOMAIN:443  (VPN port)"
+echo "  1. External uptime monitoring (recommended):"
+echo "     Add a free monitor at betteruptime.com or uptimerobot.com"
+echo "       • TCP   $EDGE_DOMAIN:443  (VPN port — catches full-node outage)"
+echo "       • HTTPS https://$EDGE_DOMAIN  (portal)"
 echo ""
 echo "  2. Distribute subscription URLs to users:"
 echo "     Saved in: $SUB_FILE"

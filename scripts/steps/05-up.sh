@@ -25,7 +25,7 @@ docker compose ps
 # Health check: fail if any service exited or is crash-looping
 PROBLEMS=""
 
-for container in umbra-nginx umbra-marzban umbra-vaultwarden umbra-uptime umbra-portal umbra-docs umbra-shortlink; do
+for container in umbra-nginx umbra-marzban umbra-vaultwarden umbra-portal umbra-docs; do
   state=$(docker inspect "$container" --format '{{.State.Status}}' 2>/dev/null || echo "missing")
 
   if [[ "$state" == "exited" ]]; then

@@ -66,17 +66,7 @@ check_http "$WWW_DOMAIN"         "https://$WWW_DOMAIN"
 check_http "$EDGE_DOMAIN"        "https://$EDGE_DOMAIN"
 check_http "$PASS_DOMAIN"        "https://$PASS_DOMAIN"
 check_http "$VAULT_DOMAIN"       "https://$VAULT_DOMAIN"
-check_http "$STATUS_DOMAIN"      "https://$STATUS_DOMAIN"
 check_http "$DOCS_DOMAIN"        "https://$DOCS_DOMAIN"
-# Shlink returns 404 on root when no short links exist (normal on first run)
-GO_CODE=$(curl -sk --max-time 10 -o /dev/null -w "%{http_code}" "https://$SHORTLINK_DOMAIN/" || echo "000")
-if [[ "$GO_CODE" =~ ^(200|301|302|404)$ ]]; then
-  log_ok "$SHORTLINK_DOMAIN responding ($GO_CODE)"
-  (( ++PASS ))
-else
-  log_fail "$SHORTLINK_DOMAIN not responding (got $GO_CODE)"
-  (( ++FAIL ))
-fi
 
 # SUB_DOMAIN root returns 404 (only /sub/* paths are proxied)
 SUB_CODE=$(curl -sk --max-time 10 -o /dev/null -w "%{http_code}" "https://$SUB_DOMAIN/" || echo "000")

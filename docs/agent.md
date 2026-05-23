@@ -36,9 +36,7 @@ Purpose:    Production overseas edge entry node
 | Marzban | `umbra-marzban` | sub.ruyin.ai, console.ruyin.ai | VPN user management + subscription |
 | VPN Portal | `umbra-portal` | vpn.ruyin.ai | User onboarding, client downloads, docs |
 | Vaultwarden | `umbra-vaultwarden` | pass.ruyin.ai | Password manager |
-| Uptime Kuma | `umbra-uptime` | status.ruyin.ai | Status monitoring |
 | Docs | `umbra-docs` | docs.ruyin.ai | Static documentation site |
-| Short Link | `umbra-shortlink` | go.ruyin.ai | URL shortener / redirect |
 | Certbot | `umbra-certbot` | — | Let's Encrypt cert automation |
 
 ---
@@ -54,9 +52,7 @@ Purpose:    Production overseas edge entry node
 | `console.ruyin.ai` | Nginx → umbra-marzban (VPN-only + Basic Auth) | Marzban admin panel |
 | `pass.ruyin.ai` | Nginx → umbra-vaultwarden | Password manager |
 | `vault.ruyin.ai` | Nginx → static placeholder | Reserved for future use |
-| `status.ruyin.ai` | Nginx → umbra-uptime:3001 | Uptime Kuma |
 | `docs.ruyin.ai` | Nginx → umbra-docs | Static documentation |
-| `go.ruyin.ai` | Nginx → umbra-shortlink | Short link / redirect service |
 
 ---
 
@@ -79,9 +75,7 @@ Phase 2 — Core Services
 
 Phase 3 — Supporting Services
   [ ] Vaultwarden
-  [ ] Uptime Kuma
   [ ] Docs site
-  [ ] Short Link service
 
 Phase 4 — Hardening
   [ ] vpn-admin IP restriction
@@ -126,8 +120,8 @@ Phase 4 — Hardening
 ## v1.0 Success Criteria
 
 ```
-[ ] All containers running: nginx, xray, marzban, vaultwarden, uptime, portal, docs, shortlink
-[ ] HTTPS working on all 9 domains
+[ ] All containers running: nginx, marzban, vaultwarden, portal, docs
+[ ] HTTPS working on all 7 domains
 [ ] Xray REALITY connection functional (test with Clash Verge)
 [ ] Marzban admin accessible at console.ruyin.ai only when VPN-connected
 [ ] Marzban subscription URL functional at sub.ruyin.ai
@@ -136,9 +130,7 @@ Phase 4 — Hardening
 [ ] B++ rules present and correct (openai.com PROXY, microsoft.com not forced)
 [ ] Vaultwarden login functional at pass.ruyin.ai
 [ ] Placeholder responding at vault.ruyin.ai
-[ ] Uptime Kuma dashboard at status.ruyin.ai
 [ ] Docs site loading at docs.ruyin.ai
-[ ] Short link redirect working at go.ruyin.ai
 [ ] VPN Portal loading at vpn.ruyin.ai
 [ ] Backup archive created with correct permissions (600)
 [ ] Cert renewal cron configured

@@ -248,46 +248,16 @@ Place at `/etc/logrotate.d/umbra`.
 
 ---
 
-## Monitoring (Uptime Kuma)
+## Monitoring
 
-### Access
+External uptime monitoring (free tier sufficient):
+- **BetterStack** or **UptimeRobot** — monitors from outside the node
+- Covers full-node outages that self-hosted solutions cannot detect
 
-`https://status.ruyin.ai`
-
-### Required Monitors
-
-Configure these on first access:
-
-| Name | Type | Target | Interval |
-|------|------|--------|----------|
-| ruyin.ai | HTTPS | https://ruyin.ai | 60s |
-| VPN Portal | HTTPS | https://vpn.ruyin.ai | 60s |
-| Subscription | HTTPS | https://sub.ruyin.ai | 60s |
-| Vaultwarden | HTTPS | https://pass.ruyin.ai | 60s |
-| Docs | HTTPS | https://docs.ruyin.ai | 60s |
-| Short Link | HTTPS | https://go.ruyin.ai | 60s |
-| Xray 443 | TCP | vpn.ruyin.ai:443 | 30s |
-| PostgreSQL | TCP | localhost:5432 (or umbra-postgres:5432) | 60s |
-| Marzban API | HTTPS | https://console.ruyin.ai | 60s |
-
----
-
-## Uptime Kuma → Prometheus Bridge (v1.1)
-
-Future: Uptime Kuma can push metrics to Prometheus on worker-01.
-
-Enable in Uptime Kuma: Settings → Prometheus → set endpoint.
-
-Configure Prometheus scrape on worker-01:
-
-```yaml
-scrape_configs:
-  - job_name: 'umbra-edge-01'
-    static_configs:
-      - targets: ['status.ruyin.ai:80']
-    metrics_path: '/metrics'
-    scheme: https
-```
+Recommended monitors:
+- TCP `vpn.ruyin.ai:443` — VPN port (primary health signal)
+- HTTPS `https://ruyin.ai` — portal
+- HTTPS `https://sub.ruyin.ai` — subscription endpoint
 
 ---
 

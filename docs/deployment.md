@@ -10,7 +10,7 @@ Complete guide for deploying a fresh Umbra node.
 
 ```
 OS:      Ubuntu 22.04 LTS
-Spec:    2C2G / 40GB SSD
+Spec:    1C1G / 25GB SSD
 User:    stone (non-root, sudo + docker group)
 ```
 
@@ -36,14 +36,12 @@ sudo apt install -y python3 python3-pip
 | `console.ruyin.ai` | A | server public IP |
 | `pass.ruyin.ai` | A | server public IP |
 | `vault.ruyin.ai` | A | server public IP |
-| `status.ruyin.ai` | A | server public IP |
 | `docs.ruyin.ai` | A | server public IP |
-| `go.ruyin.ai` | A | server public IP |
 
 Verify all resolve before running `deploy-all.sh`:
 
 ```bash
-for d in ruyin.ai www.ruyin.ai vpn.ruyin.ai sub.ruyin.ai console.ruyin.ai pass.ruyin.ai vault.ruyin.ai status.ruyin.ai docs.ruyin.ai go.ruyin.ai; do
+for d in ruyin.ai www.ruyin.ai vpn.ruyin.ai sub.ruyin.ai console.ruyin.ai pass.ruyin.ai vault.ruyin.ai docs.ruyin.ai; do
   echo "$d → $(dig +short $d)"
 done
 ```
@@ -69,16 +67,14 @@ PROJECT_NAME=umbra
 NODE_NAME=vx-tokyo
 
 # ── Domains ────────────────────────────────────────────
-EDGE_DOMAIN=vpn.ruyin.ai
-SUB_DOMAIN=sub.ruyin.ai
-ADMIN_DOMAIN=console.ruyin.ai
-PASS_DOMAIN=pass.ruyin.ai
-VAULT_DOMAIN=vault.ruyin.ai
-STATUS_DOMAIN=status.ruyin.ai
-DOCS_DOMAIN=docs.ruyin.ai
-SHORTLINK_DOMAIN=go.ruyin.ai
 APEX_DOMAIN=ruyin.ai
 WWW_DOMAIN=www.ruyin.ai
+EDGE_DOMAIN=vpn.ruyin.ai
+SUB_DOMAIN=sub.ruyin.ai
+CONSOLE_DOMAIN=console.ruyin.ai
+PASS_DOMAIN=pass.ruyin.ai
+VAULT_DOMAIN=vault.ruyin.ai
+DOCS_DOMAIN=docs.ruyin.ai
 
 # ── Paths ───────────────────────────────────────────────
 ROOT_DIR=/srv/vxture
@@ -111,22 +107,11 @@ VAULTWARDEN_ADMIN_TOKEN=<generate-with: openssl rand -base64 48>
 # ── Certbot ─────────────────────────────────────────────
 CERTBOT_EMAIL=<your-email>
 
-# ── Shlink (Short Link) ──────────────────────────────────
-SHLINK_DEFAULT_DOMAIN=go.ruyin.ai
 ```
 
 ### Step 3: Create postgres.env (secrets file)
 
-```bash
-cat > /srv/vxture/data/umbra/private/postgres.env << 'EOF'
-POSTGRES_USER=postgres
-POSTGRES_PASSWORD=<generate-with: openssl rand -base64 32>
-POSTGRES_MARZBAN_PASSWORD=<generate-with: openssl rand -base64 32>
-POSTGRES_VAULTWARDEN_PASSWORD=<generate-with: openssl rand -base64 32>
-POSTGRES_SHLINK_PASSWORD=<generate-with: openssl rand -base64 32>
-EOF
-chmod 600 /srv/vxture/data/umbra/private/postgres.env
-```
+Not applicable — this deployment uses SQLite for all services. No postgres.env needed.
 
 ---
 
@@ -180,16 +165,12 @@ DATA_DIR/nginx/html/ruyin-landing
 DATA_DIR/nginx/html/www-ruyin
 DATA_DIR/nginx/logs
 DATA_DIR/marzban/templates/clash
-DATA_DIR/postgres/data
 DATA_DIR/vaultwarden/data
-DATA_DIR/uptime-kuma/data
 DATA_DIR/docs/site
 DATA_DIR/portal/html
-DATA_DIR/shortlink/data
 DATA_DIR/letsencrypt
 DATA_DIR/certbot
 DATA_DIR/private
-DATA_DIR/runtime
 BACKUP_DIR
 ```
 
@@ -221,7 +202,7 @@ Renders all templates with variables from `.env` and `private/`:
 | Source | Output |
 |--------|--------|
 | `configs/nginx/stream.conf.template` | `DATA_DIR/nginx/stream.d/stream.conf` |
-| `configs/nginx/vhosts/*.conf.template` (×9) | `DATA_DIR/nginx/conf.d/*.conf` |
+| `configs/nginx/vhosts/*.conf.template` (×8) | `DATA_DIR/nginx/conf.d/*.conf` |
 | `configs/marzban/clash-subscription.j2` | `DATA_DIR/marzban/templates/clash/default.yml` |
 
 Also injects REALITY public key and short ID into Marzban startup config.
@@ -257,7 +238,7 @@ Expected: all containers in `running` state.
 ### HTTPS Check (all domains)
 
 ```bash
-for d in ruyin.ai www.ruyin.ai vpn.ruyin.ai sub.ruyin.ai pass.ruyin.ai vault.ruyin.ai status.ruyin.ai docs.ruyin.ai go.ruyin.ai; do
+for d in ruyin.ai www.ruyin.ai vpn.ruyin.ai sub.ruyin.ai pass.ruyin.ai vault.ruyin.ai docs.ruyin.ai; do
   code=$(curl -sk -o /dev/null -w "%{http_code}" https://$d)
   echo "$d → $code"
 done
@@ -312,13 +293,14 @@ Must NOT contain:
 DOMAIN-SUFFIX,microsoft.com,PROXY
 ```
 
-### PostgreSQL
+### SQLite Databases
 
 ```bash
-docker exec umbra-postgres psql -U marzban -c "\l"
+ls -la /srv/vxture/data/umbra/marzban/db.sqlite3
+ls -la /srv/vxture/data/umbra/vaultwarden/data/db.sqlite3
 ```
 
-Expected: databases `marzban`, `vaultwarden`, `shlink` listed.
+Expected: both files exist and are non-zero size.
 
 ---
 
