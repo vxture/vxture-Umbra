@@ -135,36 +135,36 @@ This file is a Jinja2 template that Marzban renders per-subscription. No externa
 ```
 Priority  Rule Type                        Action
 ────────────────────────────────────────────────
-1         Subscription domain (EDGE_DOMAIN)  DIRECT
-2         Loopback / LAN / fake-ip           DIRECT
-3         AI model services                  PROXY (forced)
-4         Model aggregation platforms        PROXY (forced)
-5         Design tools (Figma)               PROXY (forced)
-6         Dev toolchain (GitHub/Docker/npm)  PROXY (forced)
-7         Foreign social / comms             PROXY (forced)
-8         China IP (GEOIP,CN)                DIRECT
-9         Everything else                    PROXY (fallback)
+0         Node infra (APEX / EDGE domain)  DIRECT
+1         Loopback / LAN / fake-ip         DIRECT
+2         VPS hosting ASN                  DIRECT
+3         Microsoft ecosystem              DIRECT
+4         DeepSeek (domestic AI)           DIRECT
+5         AI providers (per-vendor)        PROXY (forced)
+6         Model platforms / aggregators    PROXY (forced)
+7         Design tools (Figma/Notion)      PROXY (forced)
+8         Dev toolchain (GitHub/Docker/npm)PROXY (forced)
+9         Streaming (Netflix/YouTube/etc)  PROXY (forced)
+10        Social / comms                   PROXY (forced)
+11        Google ecosystem                 PROXY (forced)
+12        China IP (GEOIP,CN)              DIRECT
+13        Everything else                  PROXY (fallback)
 ```
 
-### Hard Constraint: Must-PROXY
+### Hard Constraint: Must-PROXY (AI providers, per-vendor)
 
 ```
-openai.com, chatgpt.com, oaistatic.com, oaiusercontent.com, ai.com
-anthropic.com, claude.ai
-gemini.google.com, aistudio.google.com, generativelanguage.googleapis.com
-x.ai, api.x.ai
-perplexity.ai
-mistral.ai, api.mistral.ai
-groq.com, groqcloud.com, api.groq.com
-deepseek.com, deepseek.ai, api.deepseek.com
-openrouter.ai
-huggingface.co, hf.co, replicate.com, together.ai, fireworks.ai, poe.com
-figma.com, figma.site, figma.app (and makeproxy variants)
-jsdelivr.net, esm.sh
-github.com, githubusercontent.com, githubassets.com, github.io, ghcr.io
-docker.com, docker.io, registry-1.docker.io
-npmjs.org, npmjs.com, pnpm.io, nodejs.org
-reddit.com, x.com, twitter.com, telegram.org, t.me, discord.com, medium.com
+OpenAI:      openai.com, chatgpt.com, oaistatic.com, oaiusercontent.com, ai.com
+Anthropic:   anthropic.com, claude.ai
+Google AI:   gemini.google.com, aistudio.google.com, generativelanguage.googleapis.com
+xAI:         x.ai, api.x.ai
+Perplexity:  perplexity.ai
+Mistral:     mistral.ai, api.mistral.ai
+Groq:        groq.com, groqcloud.com, api.groq.com
+Cohere:      cohere.com, cohere.ai
+
+Platforms:   openrouter.ai
+             huggingface.co, hf.co, replicate.com, together.ai, fireworks.ai, poe.com
 ```
 
 ### Hard Constraint: Must-NOT-Force-PROXY
