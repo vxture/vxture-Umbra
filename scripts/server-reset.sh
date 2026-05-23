@@ -72,19 +72,17 @@ if [[ "$MODE" == "--full" ]]; then
   free_ports
 
   log_step "Removing all data..."
-  if [[ -d "$DATA_DIR" ]]; then
-    rm -rf "$DATA_DIR"
-    log_ok "Removed: $DATA_DIR"
-  else
-    log_info "DATA_DIR already absent: $DATA_DIR"
-  fi
-
-  if [[ -d "$BACKUP_DIR" ]]; then
-    rm -rf "$BACKUP_DIR"
-    log_ok "Removed: $BACKUP_DIR"
-  else
-    log_info "BACKUP_DIR already absent: $BACKUP_DIR"
-  fi
+  # certbot and some containers write files as root; plain rm -rf will fail
+  # for the host user. Use an alpine container to remove root-owned files first.
+  for target_dir in "$DATA_DIR" "$BACKUP_DIR"; do
+    if [[ -d "$target_dir" ]]; then
+      docker run --rm -v "$target_dir:/target" alpine sh -c 'rm -rf /target/*' 2>/dev/null || true
+      rm -rf "$target_dir"
+      log_ok "Removed: $target_dir"
+    else
+      log_info "Already absent: $target_dir"
+    fi
+  done
 
   echo ""
   log_ok "Full reset complete. Server is clean."

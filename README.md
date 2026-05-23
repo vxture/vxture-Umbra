@@ -1,6 +1,6 @@
 # Vxture Umbra
 
-Production overseas edge entry node — SNI routing, VLESS+REALITY proxy, subscription delivery, password management, status monitoring.
+Production VPN edge node — SNI routing, VLESS+REALITY proxy, subscription delivery, password management, status monitoring.
 
 **Stack:** Nginx · Xray REALITY · Marzban · Vaultwarden · Uptime Kuma · Shlink
 
@@ -11,13 +11,13 @@ Production overseas edge entry node — SNI routing, VLESS+REALITY proxy, subscr
 | Domain | Service |
 |--------|---------|
 | `ruyin.ai` / `www.ruyin.ai` | Brand landing page |
-| `vpn.ruyin.ai` | VPN Portal (user onboarding) |
-| `sub.ruyin.ai` | Marzban subscriptions |
+| `proxy.ruyin.ai` | VPN user portal |
+| `sub.ruyin.ai` | Marzban subscription endpoint |
 | `console.ruyin.ai` | Marzban admin *(VPN access only)* |
-| `vault.ruyin.ai` | Vaultwarden |
-| `status.ruyin.ai` | Uptime Kuma |
+| `vault.ruyin.ai` | Vaultwarden password manager |
+| `status.ruyin.ai` | Uptime Kuma status page |
 | `docs.ruyin.ai` | Documentation |
-| `go.ruyin.ai` | Short links |
+| `go.ruyin.ai` | Shlink short links |
 
 ---
 
@@ -25,165 +25,232 @@ Production overseas edge entry node — SNI routing, VLESS+REALITY proxy, subscr
 
 | Requirement | Notes |
 |-------------|-------|
-| Ubuntu 22.04 LTS | Tested on 2C2G / 40GB SSD |
-| Docker + docker compose v2 | Installed by `server-init.sh` |
-| DNS A records | All 9 domains → server IP |
-| Open ports | 80, 443 |
+| Ubuntu 22.04 LTS | Vultr or similar; 1C1G minimum, 2C2G recommended |
+| SSH key access | Key-based login as root (Vultr adds this at provision time) |
+| DNS A records | All 9 domains → server IP, propagated **before** running deploy |
+| Open ports | 80 (ACME) and 443 (HTTPS + REALITY) |
+
+> **DNS first.** Let's Encrypt cert issuance is the first blocking step. Point all 9 records before starting.
 
 ---
 
-## Deployment
+## Initial Server Setup
 
-### 1. Bootstrap the server (as root, once)
+SSH in as root using the key provided at server creation:
 
 ```bash
-bash scripts/server-init.sh
+ssh root@<server-ip>
 ```
 
-Installs Docker, creates admin user `stone` (sudo + docker), copies SSH keys, disables root SSH. Safe to re-run.
-
-### 2. Clone and configure (as the admin user)
+Clone the repo and bootstrap the server (installs Docker, creates admin user, copies SSH keys, disables root SSH):
 
 ```bash
 git clone https://github.com/vxture/umbra.git /srv/vxture/repo/umbra
+bash /srv/vxture/repo/umbra/scripts/server-init.sh
+```
+
+`server-init.sh` creates the `stone` admin user (sudo + docker), copies `/root/.ssh/authorized_keys` to the new user, and disables root SSH login. **Your existing SSH key will work for both root (before) and stone (after).**
+
+---
+
+## Deploy
+
+Open a new SSH session as the admin user:
+
+```bash
+ssh stone@<server-ip>
 cd /srv/vxture/repo/umbra
+```
+
+Configure the environment:
+
+```bash
 cp .env.example .env
 nano .env
 ```
 
-Fill in all required values:
+Required values to fill in:
 
 ```bash
-# Passwords — generate with: openssl rand -base64 32
+# Domains — adjust subdomain prefix as needed
+APEX_DOMAIN=ruyin.ai
+EDGE_DOMAIN=proxy.ruyin.ai      # VPN user portal
+SUB_DOMAIN=sub.ruyin.ai         # subscription endpoint
+CONSOLE_DOMAIN=console.ruyin.ai
+# ... (see .env.example for all domains)
+
+# Marzban admin credentials
 MARZBAN_ADMIN_USER=admin
-MARZBAN_ADMIN_PASSWORD=<strong-password>
-CONSOLE_HTPASSWD_PASSWORD=<strong-password>
+MARZBAN_ADMIN_PASSWORD=<generate: openssl rand -base64 32>
+CONSOLE_HTPASSWD_PASSWORD=<same or different strong password>
 
-# Admin token — generate with: openssl rand -base64 48
-VAULTWARDEN_ADMIN_TOKEN=<token>
+# Vaultwarden admin token
+VAULTWARDEN_ADMIN_TOKEN=<generate: openssl rand -base64 48>
 
-# Email for Let's Encrypt notifications
+# Let's Encrypt
 CERTBOT_EMAIL=your@email.com
 
-# Debug without DNS: set true to use self-signed certs (upgrade later)
-CERTBOT_SKIP=false
+# Subscription URL prefix — no trailing slash
+SUBSCRIPTION_URL_PREFIX=https://sub.ruyin.ai
 ```
 
-### 3. Point DNS to this server
-
-All 9 A records must resolve to the server's public IP before cert issuance.
-Verify: `dig +short vpn.ruyin.ai`
-
-If DNS is not ready yet, set `CERTBOT_SKIP=true` in `.env` to use self-signed certs and deploy anyway. Upgrade later with `deploy-certs.sh --upgrade`.
-
-### 4. Deploy
+Run the one-command deployment:
 
 ```bash
 bash scripts/deploy-all.sh
 ```
 
-Runs all steps in order — idempotent, safe to re-run:
-
 | Step | Script | Action |
 |------|--------|--------|
-| 00 | `steps/00-check-env.sh` | Validate env vars, Docker, DNS, ports |
-| 01 | `steps/01-init-dirs.sh` | Create data directory structure |
-| 02 | `steps/02-generate-reality.sh` | Generate REALITY x25519 keypair *(skips if exists)* |
-| 03 | `steps/03-issue-certs.sh` | Issue Let's Encrypt certs *(skips if valid >30d)* |
-| 03 | `steps/03-self-signed.sh` | Self-signed certs *(when `CERTBOT_SKIP=true`)* |
-| 04 | `steps/04-render-configs.py` | Render all templates → `DATA_DIR` |
-| 05 | `steps/05-up.sh` | Pull images and start all containers |
-| 06 | `steps/06-verify.sh` | Verify endpoints, containers, certs, databases |
-| 07 | `steps/07-backup.sh` | Create initial backup |
+| 00 | `00-check-env.sh` | Validate env vars, Docker, ports |
+| 01 | `01-init-dirs.sh` | Create data directory structure |
+| 02 | `02-generate-reality.sh` | Generate REALITY x25519 keypair *(skip if exists)* |
+| 03 | `03-issue-certs.sh` | Issue Let's Encrypt certs via certbot webroot *(skip if valid LE cert >30d)* |
+| 04 | `04-render-configs.py` | Render all templates into `DATA_DIR` |
+| 05 | `05-up.sh` | Pull images and start all containers |
+| 06 | `06-verify.sh` | Verify all endpoints, containers, certs, databases |
+| 07 | `07-backup.sh` | Create initial config backup |
 
-### 5. Post-deploy wizard
+After the deploy completes, run the post-deploy wizard to create VPN users and get subscription URLs:
 
 ```bash
 bash scripts/deploy-post.sh
 ```
 
-Interactive wizard:
-1. Create Marzban VPN users (prompts for count and prefix)
-2. Display and save subscription URLs
-3. Show DNS status for all domains
-4. Guide Vaultwarden account creation and signup lockdown
+---
 
-### 6. Upgrade to real TLS certificates
+## Post-Deploy: Manual Steps
 
-After all DNS records point to the server:
+### 1. Configure Marzban Host
 
-```bash
-bash scripts/deploy-certs.sh --upgrade
-```
+Connect to VPN first (console is IP-restricted to Docker network), then open `https://console.ruyin.ai`:
 
-This verifies DNS, removes self-signed certs, issues real Let's Encrypt certs, and reloads Nginx.
+- Go to **Hosts** → add a host
+- Address: `proxy.ruyin.ai` (or your `EDGE_DOMAIN`)
+- Port: `443`
+- SNI: `www.microsoft.com`
+- Allow Insecure: off
+
+### 2. Configure Uptime Kuma Monitors
+
+Open `https://status.ruyin.ai` and add monitors for each domain.
+
+### 3. Lock Down Vaultwarden
+
+Open `https://vault.ruyin.ai`, create your account, then set `SIGNUPS_ALLOWED=false` (already set in docker-compose) — no action needed; signups are disabled by default.
 
 ---
 
 ## Operations
 
-### Certificate management
+### Logs and status
 
 ```bash
-bash scripts/deploy-certs.sh              # run renewal check (also runs daily via cron)
-bash scripts/deploy-certs.sh --upgrade    # replace self-signed with real LE certs
-bash scripts/deploy-certs.sh --status     # show cert expiry for all domains
-```
-
-### Reset and re-deploy
-
-```bash
-# Soft reset: stop containers, free ports (data preserved)
-bash scripts/server-reset.sh
-
-# Full reset: destroy all data (requires typing YES)
-bash scripts/server-reset.sh --full
-
-# Then re-deploy
-bash scripts/deploy-all.sh
-```
-
-### Backup and logs
-
-```bash
-# Manual backup
-bash scripts/steps/07-backup.sh
-
-# View logs
+docker compose ps
 docker compose logs -f umbra-nginx
 docker compose logs -f umbra-marzban
-
-# Restart a service
 docker compose restart umbra-nginx
 ```
 
+### Certificate management
+
+```bash
+bash scripts/deploy-certs.sh              # manual renewal check (also runs daily via cron)
+bash scripts/deploy-certs.sh --status     # show expiry for all domains
+bash scripts/deploy-certs.sh --upgrade    # force replace existing certs with new LE certs
+```
+
+Renewal runs daily at 03:17 via cron (added by `deploy-all.sh`).
+
+### Reset and redeploy
+
+```bash
+# Soft reset: stop containers only, data preserved
+bash scripts/server-reset.sh
+
+# Full reset: destroy all data (prompts for YES)
+bash scripts/server-reset.sh --full
+
+# Redeploy after either reset
+bash scripts/deploy-all.sh
+```
+
+> `--full` uses Docker internally to remove root-owned certbot files.
+
+### Manual backup
+
+```bash
+bash scripts/steps/07-backup.sh
+# Archives saved to BACKUP_DIR, 30-day retention
+```
+
 ---
 
-## Migration (DNS cutover)
+## Troubleshooting
 
-If migrating from an existing server:
+### Red HTTPS in browser after first deploy
 
-1. Lower DNS TTL to 60s (ideally 24h in advance)
-2. Deploy new server with `CERTBOT_SKIP=true`
-3. Test all services
-4. Update DNS → new server IP
-5. Run `bash scripts/deploy-certs.sh --upgrade` to issue real certs
-6. Run `bash scripts/deploy-post.sh` to create users and distribute subscription URLs
+Certbot ran but nginx still serves old cert. Restart nginx:
+
+```bash
+docker compose restart umbra-nginx
+```
+
+### `rm -rf letsencrypt` — Permission denied
+
+Certbot runs as root inside Docker; its files are root-owned. Clean them via Docker:
+
+```bash
+docker run --rm -v /srv/vxture/data/umbra/letsencrypt:/target alpine sh -c 'rm -rf /target/*'
+```
+
+### Marzban crash-loops on startup
+
+Marzban (newer versions) requires a valid non-self-signed TLS cert to bind to `0.0.0.0`. Run real cert issuance first:
+
+```bash
+bash scripts/deploy-certs.sh --upgrade
+docker compose restart umbra-marzban
+```
+
+### console.ruyin.ai returns 403
+
+Expected — the admin console is IP-restricted to the Docker network (VPN clients only). Connect to VPN first, then access the console.
 
 ---
 
-## Scripts
+## Scripts Reference
 
 | Script | Purpose |
 |--------|---------|
-| `server-init.sh` | Server bootstrap (root, once) |
+| `server-init.sh` | Bootstrap server: Docker, admin user, SSH hardening *(root, once)* |
 | `server-reset.sh` | Stop or wipe deployment |
 | `deploy-all.sh` | Full deployment orchestrator |
-| `deploy-certs.sh` | Certificate lifecycle (renew / upgrade / status) |
-| `deploy-post.sh` | Post-deploy wizard (users, DNS check, Vaultwarden) |
+| `deploy-certs.sh` | Certificate lifecycle: renew / upgrade / status |
+| `deploy-post.sh` | Post-deploy: create VPN users, show subscription URLs |
 | `steps/06-verify.sh` | Verify all services and endpoints |
-| `steps/07-backup.sh` | Backup databases and configs |
+| `steps/07-backup.sh` | Backup databases and config files |
 
-## Docs
+---
 
-See [`docs/agent.md`](docs/agent.md) for architecture and design reference.
+## Architecture
+
+```
+Internet
+   │
+   ├─ :80  → nginx HTTP → ACME challenge / 301 redirect to HTTPS
+   │
+   └─ :443 → nginx stream (SNI preread)
+                ├─ SNI = www.microsoft.com → Xray VLESS+REALITY (port 10443 internal)
+                └─ SNI = anything else     → nginx HTTP block (:8443)
+                                               ├─ ruyin.ai          → landing page
+                                               ├─ proxy.ruyin.ai    → VPN portal
+                                               ├─ sub.ruyin.ai      → Marzban /sub/*
+                                               ├─ console.ruyin.ai  → Marzban dashboard (IP restricted)
+                                               ├─ vault.ruyin.ai    → Vaultwarden
+                                               ├─ status.ruyin.ai   → Uptime Kuma
+                                               ├─ docs.ruyin.ai     → Static docs
+                                               └─ go.ruyin.ai       → Shlink
+```
+
+See [`docs/agent.md`](docs/agent.md) for full design reference.
