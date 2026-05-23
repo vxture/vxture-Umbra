@@ -171,7 +171,7 @@ PYEOF
 
   if [[ "$exists" != "NOT_FOUND" ]]; then
     log_info "User $username already exists — skipping"
-    SUB_URLS[$username]="${SUBSCRIPTION_URL_PREFIX}${exists}"
+    SUB_URLS[$username]="${SUBSCRIPTION_URL_PREFIX}${exists}/clash-meta"
     (( ++SKIPPED ))
     continue
   fi
@@ -211,7 +211,7 @@ except Exception as e:
 PYEOF
 )
 
-  SUB_URLS[$username]="${SUBSCRIPTION_URL_PREFIX}${sub_url}"
+  SUB_URLS[$username]="${SUBSCRIPTION_URL_PREFIX}${sub_url}/clash-meta"
   log_ok "Created: $username"
   (( ++CREATED ))
 done
