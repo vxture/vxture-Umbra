@@ -51,14 +51,13 @@ chmod 700 "$BACKUP_DIR"
 log_ok "chmod 700 $BACKUP_DIR"
 
 # ── Copy nginx.conf (static, no templating needed) ────────────────────────────
+# Always overwrite so repo changes (e.g. map blocks) propagate to the running config.
 REPO_NGINX_CONF="$REPO_DIR/configs/nginx/nginx.conf"
 DATA_NGINX_CONF="$DATA_DIR/nginx/nginx.conf"
 
-if [[ -f "$REPO_NGINX_CONF" ]] && [[ ! -f "$DATA_NGINX_CONF" ]]; then
+if [[ -f "$REPO_NGINX_CONF" ]]; then
   cp "$REPO_NGINX_CONF" "$DATA_NGINX_CONF"
   log_ok "Copied nginx.conf to $DATA_NGINX_CONF"
-elif [[ -f "$DATA_NGINX_CONF" ]]; then
-  log_info "nginx.conf already exists — skipping copy"
 fi
 
 # ── Copy snippet configs ──────────────────────────────────────────────────────
