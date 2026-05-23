@@ -49,7 +49,7 @@ git clone https://github.com/vxture/umbra.git /srv/vxture/repo/umbra
 bash /srv/vxture/repo/umbra/scripts/server-init.sh
 ```
 
-`server-init.sh` creates the `stone` admin user (sudo + docker), copies `/root/.ssh/authorized_keys` to the new user, and disables root SSH login. **Your existing SSH key will work for both root (before) and stone (after).**
+`server-init.sh` creates the `stone` admin user (sudo + docker) and copies `/root/.ssh/authorized_keys` to the new user. **Your existing SSH key works for both root and stone.**
 
 ---
 

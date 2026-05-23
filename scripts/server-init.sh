@@ -111,34 +111,11 @@ fi
 chown -R "$ADMIN_USER:$ADMIN_USER" /srv/vxture
 log_ok "/srv/vxture owned by $ADMIN_USER"
 
-# ── Harden SSH ────────────────────────────────────────────────────────────────
-log_step "Hardening SSH..."
-
-SSHD_CONF="/etc/ssh/sshd_config"
-
-if grep -q "^PermitRootLogin no" "$SSHD_CONF" 2>/dev/null; then
-  log_ok "SSH: PermitRootLogin already disabled"
-elif grep -q "^PermitRootLogin yes" "$SSHD_CONF" 2>/dev/null; then
-  sed -i 's/^PermitRootLogin yes/PermitRootLogin no/' "$SSHD_CONF"
-  log_ok "PermitRootLogin → no"
-elif ! grep -q "^PermitRootLogin" "$SSHD_CONF" 2>/dev/null; then
-  echo "PermitRootLogin no" >> "$SSHD_CONF"
-  log_ok "PermitRootLogin no — added"
-else
-  log_info "SSH: $(grep '^PermitRootLogin' "$SSHD_CONF")"
-fi
-
-if systemctl reload sshd 2>/dev/null; then
-  log_ok "sshd reloaded"
-else
-  log_warn "sshd reload failed — is sshd running?"
-fi
 
 # ── Done ──────────────────────────────────────────────────────────────────────
 echo ""
 log_banner "Server Init Complete"
 log_ok "Admin user : $ADMIN_USER  (sudo + docker)"
-log_ok "Root SSH   : disabled"
 log_ok "Docker     : $(docker --version | cut -d' ' -f3 | tr -d ',')"
 log_ok "Data dir   : /srv/vxture (owned by $ADMIN_USER)"
 echo ""
