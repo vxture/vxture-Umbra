@@ -16,7 +16,7 @@ dns:
   fake-ip-filter:
     - "*.lan"
     - "*.local"
-    - "*.ruyin.ai"
+    - "*.{{ APEX_DOMAIN }}"
     - localhost.ptlogin2.qq.com
   nameserver:
     - 223.5.5.5
@@ -57,7 +57,7 @@ proxy-groups:
 
 rules:
   # ── 0. 节点基础设施直连 ──────────────────────────────────────────────────────
-  - DOMAIN-SUFFIX,ruyin.ai,DIRECT
+  - DOMAIN-SUFFIX,{{ APEX_DOMAIN }},DIRECT
 
   # ── 1. 本地 / 局域网 / 保留地址直连 ────────────────────────────────────────
   - IP-CIDR,127.0.0.0/8,DIRECT,no-resolve

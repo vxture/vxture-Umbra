@@ -128,28 +128,29 @@ render_file(
     mode=0o600,
 )
 
-print("\n── Copying Marzban Clash subscription template ───────────────────────────")
-copy_file(
+print("\n── Rendering Marzban Clash subscription template ────────────────────────")
+render_file(
     configs_dir / "marzban" / "clash-subscription.j2",
     DATA_DIR / "marzban" / "templates" / "clash" / "default.yml",
+    variables,
 )
 
-print("\n── Copying VPN portal ───────────────────────────────────────────────────")
+print("\n── Rendering VPN portal ─────────────────────────────────────────────────")
 portal_src = REPO_DIR / "portal" / "html"
 portal_dst = DATA_DIR / "portal" / "html"
 if portal_src.exists():
     for f in portal_src.iterdir():
-        copy_file(f, portal_dst / f.name)
+        render_file(f, portal_dst / f.name, variables)
 else:
     print(f"[WARN] portal/html/ not found in repo — skipping")
 
-print("\n── Copying ruyin.ai landing page ────────────────────────────────────────")
+print("\n── Rendering landing page ───────────────────────────────────────────────")
 landing_src = REPO_DIR / "landing" / "html"
 if landing_src.exists():
     for dst_dir in [DATA_DIR / "nginx" / "html" / "ruyin-landing",
                     DATA_DIR / "nginx" / "html" / "www-ruyin"]:
         for f in landing_src.iterdir():
-            copy_file(f, dst_dir / f.name)
+            render_file(f, dst_dir / f.name, variables)
 else:
     print(f"[WARN] landing/html/ not found in repo — skipping")
 

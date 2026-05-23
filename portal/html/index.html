@@ -237,7 +237,7 @@
         <div class="step-num">2</div>
         <div class="step-content">
           <h4>获取订阅链接</h4>
-          <p>联系管理员获取你的专属订阅链接，格式为 <code style="display:inline; background:#1a1d27; padding:2px 6px; border-radius:4px; font-size:13px;">https://sub.ruyin.ai/sub/...</code></p>
+          <p>联系管理员获取你的专属订阅链接，格式为 <code style="display:inline; background:#1a1d27; padding:2px 6px; border-radius:4px; font-size:13px;">https://{{ SUB_DOMAIN }}/sub/...</code></p>
         </div>
       </div>
       <div class="step">
@@ -289,15 +289,15 @@
     <div class="sub-box">
       <p>每位用户拥有独立的订阅链接和代理凭证，互相隔离。订阅链接包含节点配置和智能分流规则，定期刷新即可获取最新设置。</p>
       <p>订阅链接格式：</p>
-      <code>https://sub.ruyin.ai/sub/&lt;your-token&gt;</code>
+      <code>https://{{ SUB_DOMAIN }}/sub/&lt;your-token&gt;</code>
     </div>
   </div>
 
   <div class="section">
     <h2>服务状态</h2>
-    <a class="status-link" href="https://status.ruyin.ai" target="_blank">
+    <a class="status-link" href="https://{{ STATUS_DOMAIN }}" target="_blank">
       <span class="dot"></span>
-      查看实时服务状态 → status.ruyin.ai
+      查看实时服务状态 → {{ STATUS_DOMAIN }}
     </a>
   </div>
 

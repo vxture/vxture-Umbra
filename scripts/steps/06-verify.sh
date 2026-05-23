@@ -61,43 +61,43 @@ done
 # ── HTTPS endpoints ───────────────────────────────────────────────────────────
 log_step "HTTPS endpoints..."
 
-check_http "ruyin.ai"          "https://$APEX_DOMAIN"
-check_http "www.ruyin.ai"      "https://$WWW_DOMAIN"
-check_http "vpn.ruyin.ai"      "https://$EDGE_DOMAIN"
-check_http "vault.ruyin.ai"    "https://$VAULT_DOMAIN"
-check_http "status.ruyin.ai"   "https://$STATUS_DOMAIN"
-check_http "docs.ruyin.ai"     "https://$DOCS_DOMAIN"
-# go.ruyin.ai — Shlink returns 404 on root when no links exist (normal on first run)
+check_http "$APEX_DOMAIN"        "https://$APEX_DOMAIN"
+check_http "$WWW_DOMAIN"         "https://$WWW_DOMAIN"
+check_http "$EDGE_DOMAIN"        "https://$EDGE_DOMAIN"
+check_http "$VAULT_DOMAIN"       "https://$VAULT_DOMAIN"
+check_http "$STATUS_DOMAIN"      "https://$STATUS_DOMAIN"
+check_http "$DOCS_DOMAIN"        "https://$DOCS_DOMAIN"
+# Shlink returns 404 on root when no short links exist (normal on first run)
 GO_CODE=$(curl -sk --max-time 10 -o /dev/null -w "%{http_code}" "https://$SHORTLINK_DOMAIN/" || echo "000")
 if [[ "$GO_CODE" =~ ^(200|301|302|404)$ ]]; then
-  log_ok "go.ruyin.ai responding ($GO_CODE)"
+  log_ok "$SHORTLINK_DOMAIN responding ($GO_CODE)"
   (( ++PASS ))
 else
-  log_fail "go.ruyin.ai not responding (got $GO_CODE)"
+  log_fail "$SHORTLINK_DOMAIN not responding (got $GO_CODE)"
   (( ++FAIL ))
 fi
 
-# sub.ruyin.ai — random path should 404, but domain should respond
+# SUB_DOMAIN root returns 404 (only /sub/* paths are proxied)
 SUB_CODE=$(curl -sk --max-time 10 -o /dev/null -w "%{http_code}" "https://$SUB_DOMAIN/" || echo "000")
 if [[ "$SUB_CODE" == "404" ]] || [[ "$SUB_CODE" == "200" ]]; then
-  log_ok "sub.ruyin.ai responding ($SUB_CODE)"
+  log_ok "$SUB_DOMAIN responding ($SUB_CODE)"
   (( ++PASS ))
 else
-  log_fail "sub.ruyin.ai not responding (got $SUB_CODE)"
+  log_fail "$SUB_DOMAIN not responding (got $SUB_CODE)"
   (( ++FAIL ))
 fi
 
-# ── console.ruyin.ai access control ──────────────────────────────────────────
+# ── CONSOLE_DOMAIN access control ────────────────────────────────────────────
 # Note: when tested from the server itself, the stream proxy presents as 127.0.0.1,
 # which is in the allow list, so the IP layer is bypassed and Basic Auth (401) is
 # what the server sees. From the public internet the IP deny returns 403.
-log_step "console.ruyin.ai access control..."
+log_step "$CONSOLE_DOMAIN access control..."
 CONSOLE_CODE=$(curl -sk --max-time 10 -o /dev/null -w "%{http_code}" "https://$CONSOLE_DOMAIN" || echo "000")
 if [[ "$CONSOLE_CODE" == "403" ]] || [[ "$CONSOLE_CODE" == "000" ]] || [[ "$CONSOLE_CODE" == "401" ]]; then
-  log_ok "console.ruyin.ai protected ($CONSOLE_CODE — 403=IP blocked, 401=auth gate active)"
+  log_ok "$CONSOLE_DOMAIN protected ($CONSOLE_CODE — 403=IP blocked, 401=auth gate active)"
   (( ++PASS ))
 else
-  log_fail "console.ruyin.ai unexpectedly open (got $CONSOLE_CODE)"
+  log_fail "$CONSOLE_DOMAIN unexpectedly open (got $CONSOLE_CODE)"
   (( ++FAIL ))
 fi
 
