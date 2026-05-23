@@ -10,24 +10,25 @@ log_banner "Umbra — Start Services"
 
 cd "$REPO_DIR"
 
-# ── Marzban internal TLS cert ─────────────────────────────────────────────────
+# ── Marzban TLS cert ──────────────────────────────────────────────────────────
 # Marzban (newer versions) binds to 127.0.0.1 when no SSL cert is provided,
-# making it unreachable from other Docker containers. A self-signed cert forces
-# it to bind to 0.0.0.0. nginx proxies with proxy_ssl_verify off.
+# making it unreachable from other Docker containers (nginx gets 502).
+# It also rejects self-signed certs. Copy the LE cert issued in step 03 so
+# Marzban binds to 0.0.0.0. nginx proxies https:// with proxy_ssl_verify off.
 MARZBAN_TLS_DIR="$DATA_DIR/marzban/tls"
-if [[ ! -f "$MARZBAN_TLS_DIR/cert.pem" ]]; then
-  log_step "Generating Marzban internal TLS cert..."
-  mkdir -p "$MARZBAN_TLS_DIR"
-  openssl req -x509 -newkey rsa:2048 \
-    -keyout "$MARZBAN_TLS_DIR/key.pem" \
-    -out    "$MARZBAN_TLS_DIR/cert.pem" \
-    -days 3650 -nodes \
-    -subj "/CN=umbra-marzban" \
-    2>/dev/null
+mkdir -p "$MARZBAN_TLS_DIR"
+
+LE_CERT="$DATA_DIR/letsencrypt/live/$EDGE_DOMAIN/fullchain.pem"
+LE_KEY="$DATA_DIR/letsencrypt/live/$EDGE_DOMAIN/privkey.pem"
+
+if [[ -f "$LE_CERT" ]]; then
+  cp "$LE_CERT" "$MARZBAN_TLS_DIR/cert.pem"
+  cp "$LE_KEY"  "$MARZBAN_TLS_DIR/key.pem"
   chmod 600 "$MARZBAN_TLS_DIR/key.pem"
-  log_ok "Marzban internal TLS cert generated"
+  log_ok "Marzban TLS: copied LE cert for $EDGE_DOMAIN"
 else
-  log_ok "Marzban internal TLS cert already exists — skipping"
+  log_warn "LE cert not found ($LE_CERT) — Marzban will bind to 127.0.0.1 (console/sub unavailable)"
+  log_warn "Run step 03 first: bash scripts/steps/03-issue-certs.sh"
 fi
 
 log_step "Pulling latest images..."
