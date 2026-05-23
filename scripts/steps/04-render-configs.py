@@ -43,7 +43,10 @@ def render(template_text: str, variables: dict) -> str:
     def replacer(match):
         key = match.group(1).strip()
         if key not in variables:
-            print(f"[WARN] Template variable not found: {{{{{key}}}}}", file=sys.stderr)
+            # Only warn for SCREAMING_SNAKE_CASE — those are our env vars.
+            # Lowercase/mixed tokens are Jinja2 variables for second-stage renderers.
+            if key == key.upper():
+                print(f"[WARN] Template variable not found: {{{{{key}}}}}", file=sys.stderr)
             return match.group(0)
         return variables[key]
     return re.sub(r"\{\{\s*(\w+)\s*\}\}", replacer, template_text)
@@ -115,10 +118,7 @@ print("\n── Copying Nginx nginx.conf ─────────────
 nginx_conf_src = configs_dir / "nginx" / "nginx.conf"
 nginx_conf_dst = DATA_DIR / "nginx" / "nginx.conf"
 if nginx_conf_src.exists():
-    if not nginx_conf_dst.exists():
-        copy_file(nginx_conf_src, nginx_conf_dst)
-    else:
-        print(f"[SKIP] nginx.conf already exists at {nginx_conf_dst}")
+    copy_file(nginx_conf_src, nginx_conf_dst)
 
 print("\n── Rendering Xray config (for Marzban) ──────────────────────────────────")
 render_file(
