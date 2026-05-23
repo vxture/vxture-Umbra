@@ -7,6 +7,12 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/lib/env.sh"
 source "$SCRIPT_DIR/lib/log.sh"
 
+if [[ "$EUID" -eq 0 ]]; then
+  log_error "Do not run as root. Switch to the admin user: su - stone"
+  log_error "Root-owned files in DATA_DIR will break subsequent runs by the admin user."
+  exit 1
+fi
+
 log_banner "Umbra — Full Deployment"
 log_info "Node:    $NODE_NAME"
 log_info "Domains: $EDGE_DOMAIN, $SUB_DOMAIN, +7 more"

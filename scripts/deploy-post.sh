@@ -10,6 +10,11 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/lib/env.sh"
 source "$SCRIPT_DIR/lib/log.sh"
 
+if [[ "$EUID" -eq 0 ]]; then
+  log_error "Do not run as root. Switch to the admin user: su - stone"
+  exit 1
+fi
+
 # ── Helpers ───────────────────────────────────────────────────────────────────
 prompt() {
   local question="$1"

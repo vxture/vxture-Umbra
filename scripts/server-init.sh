@@ -100,16 +100,14 @@ fi
 # ── Directory ownership ───────────────────────────────────────────────────────
 log_step "Setting up /srv/vxture ..."
 
-if [[ -d /srv/vxture ]]; then
-  log_ok "/srv/vxture already exists"
-else
-  mkdir -p /srv/vxture/repo
-  log_ok "Created /srv/vxture"
-fi
+# Pre-create both repo and data dirs so the chown below covers them
+# even before deploy-all.sh runs and creates the full DATA_DIR structure.
+mkdir -p /srv/vxture/repo /srv/vxture/data
 
-# Always ensure correct ownership (safe to repeat)
+# Always chown recursively — safe to repeat; fixes root-owned files from
+# any previous accidental root invocation of deploy scripts.
 chown -R "$ADMIN_USER:$ADMIN_USER" /srv/vxture
-log_ok "/srv/vxture owned by $ADMIN_USER"
+log_ok "/srv/vxture owned by $ADMIN_USER (repo + data)"
 
 # ── Firewall ──────────────────────────────────────────────────────────────────
 log_step "Configuring firewall..."
