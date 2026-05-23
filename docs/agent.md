@@ -53,6 +53,7 @@ Purpose:    Production overseas edge entry node
 | `sub.ruyin.ai` | Nginx → umbra-marzban | Marzban subscription endpoint |
 | `console.ruyin.ai` | Nginx → umbra-marzban (VPN-only + Basic Auth) | Marzban admin panel |
 | `pass.ruyin.ai` | Nginx → umbra-vaultwarden | Password manager |
+| `vault.ruyin.ai` | Nginx → static placeholder | Reserved for future use |
 | `status.ruyin.ai` | Nginx → umbra-uptime:3001 | Uptime Kuma |
 | `docs.ruyin.ai` | Nginx → umbra-docs | Static documentation |
 | `go.ruyin.ai` | Nginx → umbra-shortlink | Short link / redirect service |
@@ -134,6 +135,7 @@ Phase 4 — Hardening
 [ ] Node name shows vx-tokyo
 [ ] B++ rules present and correct (openai.com PROXY, microsoft.com not forced)
 [ ] Vaultwarden login functional at pass.ruyin.ai
+[ ] Placeholder responding at vault.ruyin.ai
 [ ] Uptime Kuma dashboard at status.ruyin.ai
 [ ] Docs site loading at docs.ruyin.ai
 [ ] Short link redirect working at go.ruyin.ai

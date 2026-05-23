@@ -242,7 +242,7 @@ echo ""
 
 ALL_DOMAINS=(
   "$APEX_DOMAIN" "$WWW_DOMAIN" "$EDGE_DOMAIN" "$SUB_DOMAIN"
-  "$CONSOLE_DOMAIN" "$VAULT_DOMAIN" "$STATUS_DOMAIN" "$DOCS_DOMAIN" "$SHORTLINK_DOMAIN"
+  "$CONSOLE_DOMAIN" "$PASS_DOMAIN" "$STATUS_DOMAIN" "$DOCS_DOMAIN" "$SHORTLINK_DOMAIN"
 )
 
 DNS_OK=true
@@ -273,10 +273,10 @@ fi
 echo ""
 log_step "[4/4] Vaultwarden Account Setup"
 echo ""
-echo "  Vaultwarden is running at https://$VAULT_DOMAIN"
+echo "  Vaultwarden is running at https://$PASS_DOMAIN"
 echo ""
 echo "  Steps to complete:"
-echo "    1. Open the admin panel: https://$VAULT_DOMAIN/admin"
+echo "    1. Open the admin panel: https://$PASS_DOMAIN/admin"
 echo "       Enter your VAULTWARDEN_ADMIN_TOKEN from .env"
 echo "    2. Go to 'Users' → 'Invite User' and invite yourself by email"
 echo "       (Web registration is disabled — accounts must be created via admin panel)"
@@ -299,7 +299,7 @@ echo ""
 echo "     Suggested monitors:"
 echo "       • HTTP  https://$EDGE_DOMAIN"
 echo "       • HTTP  https://$SUB_DOMAIN"
-echo "       • HTTP  https://$VAULT_DOMAIN"
+echo "       • HTTP  https://$PASS_DOMAIN"
 echo "       • HTTP  https://$STATUS_DOMAIN"
 echo "       • TCP   $EDGE_DOMAIN:443  (VPN port)"
 echo ""

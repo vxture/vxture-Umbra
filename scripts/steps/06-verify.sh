@@ -64,6 +64,7 @@ log_step "HTTPS endpoints..."
 check_http "$APEX_DOMAIN"        "https://$APEX_DOMAIN"
 check_http "$WWW_DOMAIN"         "https://$WWW_DOMAIN"
 check_http "$EDGE_DOMAIN"        "https://$EDGE_DOMAIN"
+check_http "$PASS_DOMAIN"        "https://$PASS_DOMAIN"
 check_http "$VAULT_DOMAIN"       "https://$VAULT_DOMAIN"
 check_http "$STATUS_DOMAIN"      "https://$STATUS_DOMAIN"
 check_http "$DOCS_DOMAIN"        "https://$DOCS_DOMAIN"
@@ -153,7 +154,7 @@ fi
 
 # ── TLS certificates ──────────────────────────────────────────────────────────
 log_step "Certificate expiry check..."
-for domain in "$APEX_DOMAIN" "$EDGE_DOMAIN" "$SUB_DOMAIN" "$VAULT_DOMAIN"; do
+for domain in "$APEX_DOMAIN" "$EDGE_DOMAIN" "$SUB_DOMAIN" "$PASS_DOMAIN" "$VAULT_DOMAIN"; do
   expiry=$(echo | openssl s_client -connect "$domain:443" -servername "$domain" 2>/dev/null \
     | openssl x509 -noout -enddate 2>/dev/null | cut -d= -f2 || echo "")
   if [[ -n "$expiry" ]]; then

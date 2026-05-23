@@ -61,7 +61,7 @@ services:
     container_name: umbra-vaultwarden
     restart: always
     environment:
-      DOMAIN: "https://${VAULT_DOMAIN}"
+      DOMAIN: "https://${PASS_DOMAIN}"
       SIGNUPS_ALLOWED: "false"
       ADMIN_TOKEN: "${VAULTWARDEN_ADMIN_TOKEN}"
       LOG_LEVEL: "warn"
