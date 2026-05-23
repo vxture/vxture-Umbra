@@ -84,15 +84,14 @@ if [[ "$MODE" == "--upgrade" ]]; then
   log_step "Issuing real Let's Encrypt certificates..."
   CERTBOT_STAGING=false bash "$SCRIPT_DIR/steps/03-issue-certs.sh"
 
-  log_step "Reloading Nginx..."
-  docker exec "$NGINX_CONTAINER" nginx -s reload
-  log_ok "Nginx reloaded with real certificates"
-
-  log_step "Restarting Marzban (picks up new cert on startup)..."
-  if docker compose -f "$REPO_DIR/docker-compose.yml" restart umbra-marzban 2>/dev/null; then
-    log_ok "Marzban restarted"
+  log_step "Restarting Nginx and Marzban with new certificates..."
+  # Full restart (not reload) after cert replacement: certbot writes new
+  # archive files as root; a restart guarantees nginx re-opens all file
+  # descriptors cleanly rather than relying on the reload config-test path.
+  if docker compose -f "$REPO_DIR/docker-compose.yml" restart umbra-nginx umbra-marzban 2>/dev/null; then
+    log_ok "Nginx and Marzban restarted"
   else
-    log_warn "Marzban restart failed — check: docker compose ps"
+    log_warn "Restart failed — check: docker compose ps"
   fi
 
   echo ""
