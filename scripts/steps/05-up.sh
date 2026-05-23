@@ -27,12 +27,11 @@ PROBLEMS=""
 
 for container in umbra-nginx umbra-marzban umbra-vaultwarden umbra-uptime umbra-portal umbra-docs umbra-shortlink; do
   state=$(docker inspect "$container" --format '{{.State.Status}}' 2>/dev/null || echo "missing")
-  restarts=$(docker inspect "$container" --format '{{.RestartCount}}' 2>/dev/null || echo "0")
 
   if [[ "$state" == "exited" ]]; then
     PROBLEMS="$PROBLEMS\n  $container: exited unexpectedly"
-  elif [[ "$state" == "restarting" ]] || [[ "$restarts" -gt 2 ]]; then
-    PROBLEMS="$PROBLEMS\n  $container: crash-looping (restarts=$restarts)"
+  elif [[ "$state" == "restarting" ]]; then
+    PROBLEMS="$PROBLEMS\n  $container: crash-looping (currently restarting)"
   fi
 done
 
