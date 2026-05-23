@@ -43,7 +43,6 @@ BACKUP_ITEMS=(
   "$DATA_DIR/nginx/private"
   "$DATA_DIR/marzban/templates"
   "$DATA_DIR/marzban/xray_config.json"
-  "$DATA_DIR/letsencrypt"
   "$DATA_DIR/private"
 )
 
