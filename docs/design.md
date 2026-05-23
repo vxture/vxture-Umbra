@@ -170,46 +170,97 @@ Platforms:   openrouter.ai
 ### Hard Constraint: Must-NOT-Force-PROXY
 
 ```
-microsoft.com and all subdomains
-live.com, office.com, onedrive.com
-visualstudio.com, vscode.dev
-cloudflare.com
+Microsoft:   microsoft.com, microsoftonline.com, windows.com, windowsupdate.com
+             office.com, office365.com, sharepoint.com, onedrive.com
+             live.com, outlook.com, hotmail.com, msn.com, bing.com
+             azure.com, azurewebsites.net, azureedge.net, trafficmanager.net
+             visualstudio.com, vscode.dev, xbox.com, xboxlive.com
+
+DeepSeek:    deepseek.com, deepseek.ai, api.deepseek.com  (国内可直连)
 ```
 
-**Reason:** Microsoft services are accessible from most networks without proxy; forcing them causes latency and auth degradation. Cloudflare is a CDN — proxying it would redirect traffic through an unnecessary hop.
+**Reason:** Microsoft services are accessible from most networks without proxy; forcing them causes latency and auth degradation. DeepSeek is a Chinese domestic service — direct connection is faster and more stable.
 
 ### Full Rules Block
 
+Source of truth: `configs/marzban/clash-subscription.j2`. Reproduced here for reference.
+
 ```yaml
 rules:
-  - DOMAIN-SUFFIX,sub.ruyin.ai,DIRECT
+  # 0. 节点基础设施直连
+  - DOMAIN-SUFFIX,<APEX_DOMAIN>,DIRECT
+  - DOMAIN-SUFFIX,<EDGE_DOMAIN>,DIRECT
+
+  # 1. 本地 / 局域网 / 保留地址直连
   - IP-CIDR,127.0.0.0/8,DIRECT,no-resolve
   - IP-CIDR,10.0.0.0/8,DIRECT,no-resolve
   - IP-CIDR,172.16.0.0/12,DIRECT,no-resolve
   - IP-CIDR,192.168.0.0/16,DIRECT,no-resolve
   - IP-CIDR,169.254.0.0/16,DIRECT,no-resolve
   - IP-CIDR,198.18.0.0/15,DIRECT,no-resolve
+
+  # 2. 宿主服务商直连（防止流量绕回自身服务器）
+  - IP-ASN,20473,DIRECT,no-resolve
+
+  # 3. Microsoft 生态直连
+  - DOMAIN-SUFFIX,microsoft.com,DIRECT
+  - DOMAIN-SUFFIX,microsoftonline.com,DIRECT
+  - DOMAIN-SUFFIX,windows.com,DIRECT
+  - DOMAIN-SUFFIX,windowsupdate.com,DIRECT
+  - DOMAIN-SUFFIX,office.com,DIRECT
+  - DOMAIN-SUFFIX,office365.com,DIRECT
+  - DOMAIN-SUFFIX,sharepoint.com,DIRECT
+  - DOMAIN-SUFFIX,onedrive.com,DIRECT
+  - DOMAIN-SUFFIX,live.com,DIRECT
+  - DOMAIN-SUFFIX,outlook.com,DIRECT
+  - DOMAIN-SUFFIX,hotmail.com,DIRECT
+  - DOMAIN-SUFFIX,msn.com,DIRECT
+  - DOMAIN-SUFFIX,bing.com,DIRECT
+  - DOMAIN-SUFFIX,azure.com,DIRECT
+  - DOMAIN-SUFFIX,azurewebsites.net,DIRECT
+  - DOMAIN-SUFFIX,azureedge.net,DIRECT
+  - DOMAIN-SUFFIX,trafficmanager.net,DIRECT
+  - DOMAIN-SUFFIX,visualstudio.com,DIRECT
+  - DOMAIN-SUFFIX,vscode.dev,DIRECT
+  - DOMAIN-SUFFIX,xbox.com,DIRECT
+  - DOMAIN-SUFFIX,xboxlive.com,DIRECT
+
+  # 4. DeepSeek 直连（国内 AI 服务）
+  - DOMAIN-SUFFIX,deepseek.com,DIRECT
+  - DOMAIN-SUFFIX,deepseek.ai,DIRECT
+  - DOMAIN-SUFFIX,api.deepseek.com,DIRECT
+
+  # 5. AI 大模型服务 → 代理
+  # OpenAI / ChatGPT
   - DOMAIN-SUFFIX,openai.com,PROXY
   - DOMAIN-SUFFIX,chatgpt.com,PROXY
   - DOMAIN-SUFFIX,oaistatic.com,PROXY
   - DOMAIN-SUFFIX,oaiusercontent.com,PROXY
   - DOMAIN-SUFFIX,ai.com,PROXY
+  # Anthropic / Claude
   - DOMAIN-SUFFIX,anthropic.com,PROXY
   - DOMAIN-SUFFIX,claude.ai,PROXY
+  # Google AI / Gemini
   - DOMAIN-SUFFIX,gemini.google.com,PROXY
   - DOMAIN-SUFFIX,aistudio.google.com,PROXY
   - DOMAIN-SUFFIX,generativelanguage.googleapis.com,PROXY
+  # xAI / Grok
   - DOMAIN-SUFFIX,x.ai,PROXY
   - DOMAIN-SUFFIX,api.x.ai,PROXY
+  # Perplexity
   - DOMAIN-SUFFIX,perplexity.ai,PROXY
+  # Mistral
   - DOMAIN-SUFFIX,mistral.ai,PROXY
   - DOMAIN-SUFFIX,api.mistral.ai,PROXY
+  # Groq
   - DOMAIN-SUFFIX,groq.com,PROXY
   - DOMAIN-SUFFIX,groqcloud.com,PROXY
   - DOMAIN-SUFFIX,api.groq.com,PROXY
-  - DOMAIN-SUFFIX,deepseek.com,PROXY
-  - DOMAIN-SUFFIX,deepseek.ai,PROXY
-  - DOMAIN-SUFFIX,api.deepseek.com,PROXY
+  # Cohere
+  - DOMAIN-SUFFIX,cohere.com,PROXY
+  - DOMAIN-SUFFIX,cohere.ai,PROXY
+
+  # 6. 模型平台 / 聚合路由 → 代理
   - DOMAIN-SUFFIX,openrouter.ai,PROXY
   - DOMAIN-SUFFIX,huggingface.co,PROXY
   - DOMAIN-SUFFIX,hf.co,PROXY
@@ -217,13 +268,17 @@ rules:
   - DOMAIN-SUFFIX,together.ai,PROXY
   - DOMAIN-SUFFIX,fireworks.ai,PROXY
   - DOMAIN-SUFFIX,poe.com,PROXY
+
+  # 7. 设计工具 → 代理
   - DOMAIN-SUFFIX,figma.com,PROXY
   - DOMAIN-SUFFIX,figma.site,PROXY
   - DOMAIN-SUFFIX,figma.app,PROXY
   - DOMAIN-SUFFIX,makeproxy-c.figma.site,PROXY
   - DOMAIN-SUFFIX,makeproxy-m.figma.site,PROXY
-  - DOMAIN-SUFFIX,jsdelivr.net,PROXY
-  - DOMAIN-SUFFIX,esm.sh,PROXY
+  - DOMAIN-SUFFIX,notion.so,PROXY
+  - DOMAIN-SUFFIX,notion.com,PROXY
+
+  # 8. 开发工具链 → 代理
   - DOMAIN-SUFFIX,github.com,PROXY
   - DOMAIN-SUFFIX,githubusercontent.com,PROXY
   - DOMAIN-SUFFIX,githubassets.com,PROXY
@@ -236,14 +291,57 @@ rules:
   - DOMAIN-SUFFIX,npmjs.com,PROXY
   - DOMAIN-SUFFIX,pnpm.io,PROXY
   - DOMAIN-SUFFIX,nodejs.org,PROXY
-  - DOMAIN-SUFFIX,reddit.com,PROXY
+  - DOMAIN-SUFFIX,esm.sh,PROXY
+  - DOMAIN-SUFFIX,jsdelivr.net,PROXY
+  - DOMAIN-SUFFIX,unpkg.com,PROXY
+
+  # 9. 流媒体 → 代理
+  - DOMAIN-SUFFIX,netflix.com,PROXY
+  - DOMAIN-SUFFIX,netflix.net,PROXY
+  - DOMAIN-SUFFIX,nflxext.com,PROXY
+  - DOMAIN-SUFFIX,nflximg.net,PROXY
+  - DOMAIN-SUFFIX,nflxso.net,PROXY
+  - DOMAIN-SUFFIX,youtube.com,PROXY
+  - DOMAIN-SUFFIX,googlevideo.com,PROXY
+  - DOMAIN-SUFFIX,ytimg.com,PROXY
+  - DOMAIN-SUFFIX,youtu.be,PROXY
+  - DOMAIN-SUFFIX,spotify.com,PROXY
+  - DOMAIN-SUFFIX,scdn.co,PROXY
+  - DOMAIN-SUFFIX,disneyplus.com,PROXY
+  - DOMAIN-SUFFIX,hbo.com,PROXY
+  - DOMAIN-SUFFIX,max.com,PROXY
+  - DOMAIN-SUFFIX,twitch.tv,PROXY
+
+  # 10. 社交 / 通讯 → 代理
   - DOMAIN-SUFFIX,x.com,PROXY
   - DOMAIN-SUFFIX,twitter.com,PROXY
+  - DOMAIN-SUFFIX,twimg.com,PROXY
+  - DOMAIN-SUFFIX,reddit.com,PROXY
+  - DOMAIN-SUFFIX,redd.it,PROXY
   - DOMAIN-SUFFIX,telegram.org,PROXY
   - DOMAIN-SUFFIX,t.me,PROXY
+  - DOMAIN-SUFFIX,telegra.ph,PROXY
   - DOMAIN-SUFFIX,discord.com,PROXY
+  - DOMAIN-SUFFIX,discordapp.com,PROXY
+  - DOMAIN-SUFFIX,discord.gg,PROXY
+  - DOMAIN-SUFFIX,instagram.com,PROXY
+  - DOMAIN-SUFFIX,facebook.com,PROXY
+  - DOMAIN-SUFFIX,fb.com,PROXY
+  - DOMAIN-SUFFIX,fbcdn.net,PROXY
   - DOMAIN-SUFFIX,medium.com,PROXY
+  - DOMAIN-SUFFIX,linkedin.com,PROXY
+
+  # 11. Google 生态 → 代理
+  - DOMAIN-SUFFIX,google.com,PROXY
+  - DOMAIN-SUFFIX,googleapis.com,PROXY
+  - DOMAIN-SUFFIX,googleusercontent.com,PROXY
+  - DOMAIN-SUFFIX,gstatic.com,PROXY
+  - DOMAIN-SUFFIX,g.co,PROXY
+
+  # 12. 国内 IP 直连
   - GEOIP,CN,DIRECT
+
+  # 13. 兜底代理
   - MATCH,PROXY
 ```
 
