@@ -123,7 +123,7 @@ bash scripts/deploy-all.sh
 00-check-env.sh        Validate environment, DNS, Docker
 01-init-dirs.sh        Create DATA_DIR structure with correct permissions
 02-generate-reality.sh Generate REALITY keypair → private/reality.json
-03-issue-certs.sh      Issue Let's Encrypt certs for all 9 domains
+03-issue-certs.sh      Issue Let's Encrypt certs for all 7 domains
 04-render-configs.py   Render all templates → DATA_DIR
 05-up.sh               docker compose up -d
 06-verify.sh           Full verification suite
@@ -194,7 +194,7 @@ Renders all templates with variables from `.env` and `private/`:
 | Source | Output |
 |--------|--------|
 | `configs/nginx/stream.conf.template` | `DATA_DIR/nginx/stream.d/stream.conf` |
-| `configs/nginx/vhosts/*.conf.template` (×7) | `DATA_DIR/nginx/conf.d/*.conf` |
+| `configs/nginx/vhosts/*.conf.template` (×8: 7 domain vhosts + 1 catch-all) | `DATA_DIR/nginx/conf.d/*.conf` |
 | `configs/marzban/clash-subscription.j2` | `DATA_DIR/marzban/templates/clash/default.yml` |
 
 Also injects REALITY public key and short ID into Marzban startup config.

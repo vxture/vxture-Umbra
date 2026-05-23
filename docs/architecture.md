@@ -59,7 +59,7 @@ Clash client subscription update
                     umbra-marzban:8000
                         │ (subscription generator)
                         │
-                    PostgreSQL (user + config data)
+                    SQLite (user + config data)
 ```
 
 ---
