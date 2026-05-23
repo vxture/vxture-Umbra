@@ -20,7 +20,6 @@ DOMAINS=(
   "$CONSOLE_DOMAIN"
   "$PASS_DOMAIN"
   "$VAULT_DOMAIN"
-  "$DOCS_DOMAIN"
 )
 
 # ── Start temporary Nginx for ACME challenge ──────────────────────────────────

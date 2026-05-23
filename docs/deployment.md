@@ -36,12 +36,11 @@ sudo apt install -y python3 python3-pip
 | `console.ruyin.ai` | A | server public IP |
 | `pass.ruyin.ai` | A | server public IP |
 | `vault.ruyin.ai` | A | server public IP |
-| `docs.ruyin.ai` | A | server public IP |
 
 Verify all resolve before running `deploy-all.sh`:
 
 ```bash
-for d in ruyin.ai www.ruyin.ai vpn.ruyin.ai sub.ruyin.ai console.ruyin.ai pass.ruyin.ai vault.ruyin.ai docs.ruyin.ai; do
+for d in ruyin.ai www.ruyin.ai vpn.ruyin.ai sub.ruyin.ai console.ruyin.ai pass.ruyin.ai vault.ruyin.ai; do
   echo "$d → $(dig +short $d)"
 done
 ```
@@ -74,7 +73,6 @@ SUB_DOMAIN=sub.ruyin.ai
 CONSOLE_DOMAIN=console.ruyin.ai
 PASS_DOMAIN=pass.ruyin.ai
 VAULT_DOMAIN=vault.ruyin.ai
-DOCS_DOMAIN=docs.ruyin.ai
 
 # ── Paths ───────────────────────────────────────────────
 ROOT_DIR=/srv/vxture
@@ -145,7 +143,7 @@ Checks:
   [ ] Docker is available
   [ ] docker compose v2 is available
   [ ] stone user is in docker group
-  [ ] All 8 domains resolve to this server's public IP
+  [ ] All 7 domains resolve to this server's public IP
   [ ] Ports 80 and 443 are not in use
 ```
 
@@ -161,7 +159,6 @@ DATA_DIR/nginx/html/www-ruyin
 DATA_DIR/nginx/logs
 DATA_DIR/marzban/templates/clash
 DATA_DIR/vaultwarden/data
-DATA_DIR/docs/site
 DATA_DIR/portal/html
 DATA_DIR/letsencrypt
 DATA_DIR/certbot
@@ -197,7 +194,7 @@ Renders all templates with variables from `.env` and `private/`:
 | Source | Output |
 |--------|--------|
 | `configs/nginx/stream.conf.template` | `DATA_DIR/nginx/stream.d/stream.conf` |
-| `configs/nginx/vhosts/*.conf.template` (×8) | `DATA_DIR/nginx/conf.d/*.conf` |
+| `configs/nginx/vhosts/*.conf.template` (×7) | `DATA_DIR/nginx/conf.d/*.conf` |
 | `configs/marzban/clash-subscription.j2` | `DATA_DIR/marzban/templates/clash/default.yml` |
 
 Also injects REALITY public key and short ID into Marzban startup config.
@@ -233,7 +230,7 @@ Expected: all containers in `running` state.
 ### HTTPS Check (all domains)
 
 ```bash
-for d in ruyin.ai www.ruyin.ai vpn.ruyin.ai sub.ruyin.ai pass.ruyin.ai vault.ruyin.ai docs.ruyin.ai; do
+for d in ruyin.ai www.ruyin.ai vpn.ruyin.ai sub.ruyin.ai pass.ruyin.ai vault.ruyin.ai; do
   code=$(curl -sk -o /dev/null -w "%{http_code}" https://$d)
   echo "$d → $code"
 done

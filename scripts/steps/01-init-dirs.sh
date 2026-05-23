@@ -27,7 +27,7 @@ mk "$DATA_DIR/marzban/templates/v2ray"
 mk "$DATA_DIR/marzban/logs"
 mk "$DATA_DIR/vaultwarden/data"
 mk "$DATA_DIR/portal/html"
-mk "$DATA_DIR/docs/site"
+
 mk "$DATA_DIR/letsencrypt"
 mk "$DATA_DIR/certbot/www/.well-known/acme-challenge"
 mk "$DATA_DIR/private"

@@ -35,7 +35,6 @@ Nginx runs two listeners:
 | `sub-marzban.conf.template` | `sub.ruyin.ai` | `umbra-marzban:8000` |
 | `console.conf.template` | `console.ruyin.ai` | `umbra-marzban:8000` + 3-layer access control |
 | `06-pass.conf.template` | `pass.ruyin.ai` | `umbra-vaultwarden:80` |
-| `08-docs.conf.template` | `docs.ruyin.ai` | `umbra-docs:80` |
 
 ### Stream Config Spec
 
@@ -370,36 +369,11 @@ umbra-vaultwarden:
 
 ---
 
-## Module 7: Docs Site (docs.ruyin.ai)
+## Module 7: Certbot
 
 ### Responsibility
 
-- Static documentation site
-- Content: project docs, API references, internal guides
-
-### Stack
-
-Static site generator (recommend MkDocs or VitePress). Served by `nginx:alpine`.
-
-### Docker Config
-
-```yaml
-umbra-docs:
-  image: nginx:alpine
-  restart: always
-  volumes:
-    - DATA_DIR/docs/site:/usr/share/nginx/html:ro
-  networks:
-    - umbra-net
-```
-
----
-
-## Module 8: Certbot
-
-### Responsibility
-
-- Issue Let's Encrypt certs for all 9 domains
+- Issue Let's Encrypt certs for all 7 domains
 - Auto-renew via cron
 
 ### Issue Command

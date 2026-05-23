@@ -80,13 +80,4 @@ services:
     networks:
       - umbra-net
 
-  # ── Docs: Static documentation site ─────────────────────────────────────────
-  umbra-docs:
-    image: nginx:alpine
-    container_name: umbra-docs
-    restart: always
-    volumes:
-      - ${DATA_DIR}/docs/site:/usr/share/nginx/html:ro
-    networks:
-      - umbra-net
 

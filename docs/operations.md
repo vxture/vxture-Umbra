@@ -116,7 +116,7 @@ docker exec umbra-nginx nginx -s reload
 
 ```bash
 # Check all cert expiries
-for d in ruyin.ai www.ruyin.ai vpn.ruyin.ai sub.ruyin.ai console.ruyin.ai pass.ruyin.ai vault.ruyin.ai docs.ruyin.ai; do
+for d in ruyin.ai www.ruyin.ai vpn.ruyin.ai sub.ruyin.ai console.ruyin.ai pass.ruyin.ai vault.ruyin.ai; do
   expiry=$(echo | openssl s_client -connect $d:443 -servername $d 2>/dev/null \
     | openssl x509 -noout -enddate 2>/dev/null | cut -d= -f2)
   echo "$d: $expiry"

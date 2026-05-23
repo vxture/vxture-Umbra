@@ -16,7 +16,6 @@ Production VPN edge node — SNI routing, VLESS+REALITY proxy, subscription deli
 | `console.ruyin.ai` | Marzban admin *(VPN access only)* |
 | `pass.ruyin.ai` | Vaultwarden password manager |
 | `vault.ruyin.ai` | Placeholder (future use) |
-| `docs.ruyin.ai` | Documentation |
 
 ---
 
@@ -26,10 +25,10 @@ Production VPN edge node — SNI routing, VLESS+REALITY proxy, subscription deli
 |-------------|-------|
 | Ubuntu 22.04 LTS | Vultr or similar; 1C1G / 25GB SSD |
 | SSH key access | Key-based login as root (Vultr adds this at provision time) |
-| DNS A records | All 8 domains → server IP, propagated **before** running deploy |
+| DNS A records | All 7 domains → server IP, propagated **before** running deploy |
 | Open ports | 80 (ACME) and 443 (HTTPS + REALITY) |
 
-> **DNS first.** Let's Encrypt cert issuance is the first blocking step. Point all 8 records before starting.
+> **DNS first.** Let's Encrypt cert issuance is the first blocking step. Point all 7 records before starting.
 
 ---
 
@@ -243,8 +242,7 @@ Internet
                                                ├─ sub.ruyin.ai      → Marzban /sub/*
                                                ├─ console.ruyin.ai  → Marzban dashboard (IP restricted)
                                                ├─ pass.ruyin.ai     → Vaultwarden
-                                               ├─ vault.ruyin.ai    → placeholder
-                                               └─ docs.ruyin.ai     → Static docs
+                                               └─ vault.ruyin.ai    → placeholder
 ```
 
 See [`docs/agent.md`](docs/agent.md) for full design reference.

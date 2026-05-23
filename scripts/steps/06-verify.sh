@@ -43,7 +43,7 @@ log_step "Container health..."
 
 CONTAINERS=(
   umbra-nginx umbra-marzban
-  umbra-vaultwarden umbra-portal umbra-docs
+  umbra-vaultwarden umbra-portal
 )
 
 cd "$REPO_DIR"
@@ -66,7 +66,6 @@ check_http "$WWW_DOMAIN"         "https://$WWW_DOMAIN"
 check_http "$EDGE_DOMAIN"        "https://$EDGE_DOMAIN"
 check_http "$PASS_DOMAIN"        "https://$PASS_DOMAIN"
 check_http "$VAULT_DOMAIN"       "https://$VAULT_DOMAIN"
-check_http "$DOCS_DOMAIN"        "https://$DOCS_DOMAIN"
 
 # SUB_DOMAIN root returns 404 (only /sub/* paths are proxied)
 SUB_CODE=$(curl -sk --max-time 10 -o /dev/null -w "%{http_code}" "https://$SUB_DOMAIN/" || echo "000")

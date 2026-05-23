@@ -340,11 +340,10 @@ umbra-nginx           ~30MB
 umbra-marzban         ~100MB  (includes Xray subprocess)
 umbra-vaultwarden     ~25MB
 umbra-portal          ~10MB
-umbra-docs            ~10MB
 ──────────────────────────────────
-Total estimated       ~525MB / 1024MB
+Total estimated       ~515MB / 1024MB
 
-Headroom              ~499MB
+Headroom              ~509MB
 ```
 
 Monitor actual usage post-deploy with `docker stats --no-stream`.

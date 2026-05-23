@@ -28,7 +28,7 @@ Internet
                                     ├── console.ruyin.ai     → umbra-marzban:8000 (VPN-only + Basic Auth)
                                     ├── pass.ruyin.ai       → umbra-vaultwarden:80
                                     ├── vault.ruyin.ai      → static placeholder
-                                    └── docs.ruyin.ai       → umbra-docs:80
+                                    └── vault.ruyin.ai      → placeholder (200)
 ```
 
 ### REALITY Proxy Path
@@ -110,10 +110,10 @@ Docker network: umbra-net (bridge)
 │                   │  DB container│                                  │
 │                   └─────────────┘                                  │
 │                                                                    │
-│  ┌──────────────┐  ┌──────────────┐                                │
-│  │umbra-vaultwarden│  │ umbra-docs  │                               │
-│  │ :80 (int)    │  │ :80          │                                │
-│  └──────────────┘  └──────────────┘                                │
+│  ┌──────────────────┐                                              │
+│  │ umbra-vaultwarden │                                              │
+│  │ :80 (int)         │                                              │
+│  └──────────────────┘                                              │
 │                                                                    │
 │  ┌──────────────┐  ┌────────────────────────────────┐             │
 │  │umbra-portal  │  │umbra-certbot (one-shot + cron) │             │
@@ -145,7 +145,6 @@ Docker network: umbra-net (bridge)
 │       │   │   │   ├── sub-marzban.conf.template
 │       │   │   │   ├── console.conf.template
 │       │   │   │   ├── 06-pass.conf.template
-│       │   │   │   ├── 08-docs.conf.template
 │       │   │   │   └── 10-vault.conf.template
 │       │   │   └── snippets/
 │       │   │       ├── ssl-params.conf
@@ -189,8 +188,6 @@ Docker network: umbra-net (bridge)
 │       │   └── data/                 ← Vaultwarden DB + attachments
 │       ├── portal/
 │       │   └── html/
-│       ├── docs/
-│       │   └── site/                 ← Built static docs
 │       ├── letsencrypt/              ← Certs for all domains
 │       ├── certbot/                  ← ACME account + challenges
 │       └── private/                  ← Secrets (700/600)
@@ -213,7 +210,6 @@ Docker network: umbra-net (bridge)
 | 8000 | Internal | umbra-marzban | Marzban API + admin + subscription |
 | 80 | Internal | umbra-vaultwarden | Vaultwarden HTTP |
 | 80 | Internal | umbra-portal | VPN portal static site |
-| 80 | Internal | umbra-docs | Docs static site |
 
 ---
 

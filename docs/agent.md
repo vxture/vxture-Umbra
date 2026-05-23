@@ -36,7 +36,6 @@ Purpose:    Production overseas edge entry node
 | Marzban | `umbra-marzban` | sub.ruyin.ai, console.ruyin.ai | VPN user management + subscription |
 | VPN Portal | `umbra-portal` | vpn.ruyin.ai | User onboarding, client downloads, docs |
 | Vaultwarden | `umbra-vaultwarden` | pass.ruyin.ai | Password manager |
-| Docs | `umbra-docs` | docs.ruyin.ai | Static documentation site |
 | Certbot | `umbra-certbot` | — | Let's Encrypt cert automation |
 
 ---
@@ -52,7 +51,6 @@ Purpose:    Production overseas edge entry node
 | `console.ruyin.ai` | Nginx → umbra-marzban (VPN-only + Basic Auth) | Marzban admin panel |
 | `pass.ruyin.ai` | Nginx → umbra-vaultwarden | Password manager |
 | `vault.ruyin.ai` | Nginx → static placeholder | Reserved for future use |
-| `docs.ruyin.ai` | Nginx → umbra-docs | Static documentation |
 
 ---
 
@@ -130,7 +128,6 @@ Phase 4 — Hardening
 [ ] B++ rules present and correct (openai.com PROXY, microsoft.com not forced)
 [ ] Vaultwarden login functional at pass.ruyin.ai
 [ ] Placeholder responding at vault.ruyin.ai
-[ ] Docs site loading at docs.ruyin.ai
 [ ] VPN Portal loading at vpn.ruyin.ai
 [ ] Backup archive created with correct permissions (600)
 [ ] Cert renewal cron configured

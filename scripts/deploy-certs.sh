@@ -18,7 +18,7 @@ WEBROOT="$DATA_DIR/certbot/www"
 
 DOMAINS=(
   "$APEX_DOMAIN" "$WWW_DOMAIN" "$EDGE_DOMAIN" "$SUB_DOMAIN"
-  "$CONSOLE_DOMAIN" "$PASS_DOMAIN" "$VAULT_DOMAIN" "$DOCS_DOMAIN"
+  "$CONSOLE_DOMAIN" "$PASS_DOMAIN" "$VAULT_DOMAIN"
 )
 
 # ── Status mode ───────────────────────────────────────────────────────────────
