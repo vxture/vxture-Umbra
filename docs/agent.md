@@ -35,7 +35,7 @@ Purpose:    Production overseas edge entry node
 | Xray-core | `umbra-xray` | — | VLESS + REALITY + Vision proxy |
 | Marzban | `umbra-marzban` | sub.ruyin.ai, console.ruyin.ai | VPN user management + subscription |
 | VPN Portal | `umbra-portal` | vpn.ruyin.ai | User onboarding, client downloads, docs |
-| Vaultwarden | `umbra-vaultwarden` | vault.ruyin.ai | Password manager |
+| Vaultwarden | `umbra-vaultwarden` | pass.ruyin.ai | Password manager |
 | Uptime Kuma | `umbra-uptime` | status.ruyin.ai | Status monitoring |
 | Docs | `umbra-docs` | docs.ruyin.ai | Static documentation site |
 | Short Link | `umbra-shortlink` | go.ruyin.ai | URL shortener / redirect |
@@ -52,7 +52,7 @@ Purpose:    Production overseas edge entry node
 | `vpn.ruyin.ai` | Nginx → umbra-portal | VPN user entry, onboarding, client DL |
 | `sub.ruyin.ai` | Nginx → umbra-marzban | Marzban subscription endpoint |
 | `console.ruyin.ai` | Nginx → umbra-marzban (VPN-only + Basic Auth) | Marzban admin panel |
-| `vault.ruyin.ai` | Nginx → umbra-vaultwarden | Password manager |
+| `pass.ruyin.ai` | Nginx → umbra-vaultwarden | Password manager |
 | `status.ruyin.ai` | Nginx → umbra-uptime:3001 | Uptime Kuma |
 | `docs.ruyin.ai` | Nginx → umbra-docs | Static documentation |
 | `go.ruyin.ai` | Nginx → umbra-shortlink | Short link / redirect service |
@@ -133,7 +133,7 @@ Phase 4 — Hardening
 [ ] Subscription imports correctly into Clash Verge
 [ ] Node name shows vx-tokyo
 [ ] B++ rules present and correct (openai.com PROXY, microsoft.com not forced)
-[ ] Vaultwarden login functional at vault.ruyin.ai
+[ ] Vaultwarden login functional at pass.ruyin.ai
 [ ] Uptime Kuma dashboard at status.ruyin.ai
 [ ] Docs site loading at docs.ruyin.ai
 [ ] Short link redirect working at go.ruyin.ai

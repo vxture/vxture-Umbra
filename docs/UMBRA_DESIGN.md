@@ -238,7 +238,7 @@ SNI = www.microsoft.com → Xray REALITY
 SNI = vpn.ruyin.ai      → Subscription Nginx
 SNI = ruyin.ai          → Backend business service
 SNI = www.ruyin.ai      → Backend business service
-SNI = vault.ruyin.ai    → Backend service or vault service
+SNI = pass.ruyin.ai    → Backend service or vault service
 ```
 
 目标效果：
@@ -247,7 +247,7 @@ SNI = vault.ruyin.ai    → Backend service or vault service
 https://vpn.ruyin.ai/sub/<hidden-path> → 订阅
 vless://...@vpn.ruyin.ai:443           → 代理
 https://ruyin.ai                       → 后端业务
-https://vault.ruyin.ai                 → 后端业务或管理服务
+https://pass.ruyin.ai                 → 后端业务或管理服务
 ```
 
 优点：
@@ -901,7 +901,7 @@ stream {
         vpn.ruyin.ai subscription_backend;
         ruyin.ai business_backend;
         www.ruyin.ai business_backend;
-        vault.ruyin.ai vault_backend;
+        pass.ruyin.ai vault_backend;
         default subscription_backend;
     }
 

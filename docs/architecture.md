@@ -26,7 +26,7 @@ Internet
                                     ├── vpn.ruyin.ai         → umbra-portal:80
                                     ├── sub.ruyin.ai         → umbra-marzban:8000
                                     ├── console.ruyin.ai     → umbra-marzban:8000 (VPN-only + Basic Auth)
-                                    ├── vault.ruyin.ai       → umbra-vaultwarden:80
+                                    ├── pass.ruyin.ai       → umbra-vaultwarden:80
                                     ├── status.ruyin.ai      → umbra-uptime:3001
                                     ├── docs.ruyin.ai        → umbra-docs:80
                                     └── go.ruyin.ai          → umbra-shortlink:80

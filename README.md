@@ -14,7 +14,7 @@ Production VPN edge node — SNI routing, VLESS+REALITY proxy, subscription deli
 | `proxy.ruyin.ai` | VPN user portal |
 | `sub.ruyin.ai` | Marzban subscription endpoint |
 | `console.ruyin.ai` | Marzban admin *(VPN access only)* |
-| `vault.ruyin.ai` | Vaultwarden password manager |
+| `pass.ruyin.ai` | Vaultwarden password manager |
 | `status.ruyin.ai` | Uptime Kuma status page |
 | `docs.ruyin.ai` | Documentation |
 | `go.ruyin.ai` | Shlink short links |
@@ -137,7 +137,7 @@ Open `https://status.ruyin.ai` and add monitors for each domain.
 
 ### 3. Lock Down Vaultwarden
 
-Open `https://vault.ruyin.ai`, create your account, then set `SIGNUPS_ALLOWED=false` (already set in docker-compose) — no action needed; signups are disabled by default.
+Open `https://pass.ruyin.ai`, create your account, then set `SIGNUPS_ALLOWED=false` (already set in docker-compose) — no action needed; signups are disabled by default.
 
 ---
 
@@ -247,7 +247,7 @@ Internet
                                                ├─ proxy.ruyin.ai    → VPN portal
                                                ├─ sub.ruyin.ai      → Marzban /sub/*
                                                ├─ console.ruyin.ai  → Marzban dashboard (IP restricted)
-                                               ├─ vault.ruyin.ai    → Vaultwarden
+                                               ├─ pass.ruyin.ai    → Vaultwarden
                                                ├─ status.ruyin.ai   → Uptime Kuma
                                                ├─ docs.ruyin.ai     → Static docs
                                                └─ go.ruyin.ai       → Shlink

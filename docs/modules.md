@@ -34,7 +34,7 @@ Nginx runs two listeners:
 | `vpn-portal.conf.template` | `vpn.ruyin.ai` | `umbra-portal:80` |
 | `sub-marzban.conf.template` | `sub.ruyin.ai` | `umbra-marzban:8000` |
 | `console.conf.template` | `console.ruyin.ai` | `umbra-marzban:8000` + 3-layer access control |
-| `vault-vaultwarden.conf.template` | `vault.ruyin.ai` | `umbra-vaultwarden:80` |
+| `vault-vaultwarden.conf.template` | `pass.ruyin.ai` | `umbra-vaultwarden:80` |
 | `status-uptime.conf.template` | `status.ruyin.ai` | `umbra-uptime:3001` |
 | `docs.conf.template` | `docs.ruyin.ai` | `umbra-docs:80` |
 | `shortlink.conf.template` | `go.ruyin.ai` | `umbra-shortlink:80` |
@@ -376,7 +376,7 @@ umbra-portal:
 
 ---
 
-## Module 6: Vaultwarden (vault.ruyin.ai)
+## Module 6: Vaultwarden (pass.ruyin.ai)
 
 ### Responsibility
 
@@ -391,7 +391,7 @@ vaultwarden/server:latest
 ### Key Environment Variables
 
 ```env
-DOMAIN=https://vault.ruyin.ai
+DOMAIN=https://pass.ruyin.ai
 SIGNUPS_ALLOWED=false
 ADMIN_TOKEN={{ VAULTWARDEN_ADMIN_TOKEN }}
 DATABASE_URL=postgresql://vaultwarden:{{ POSTGRES_VAULT_PASSWORD }}@umbra-postgres:5432/vaultwarden
@@ -447,7 +447,7 @@ umbra-uptime:
 | ruyin.ai | HTTPS | https://ruyin.ai |
 | vpn.ruyin.ai | HTTPS | https://vpn.ruyin.ai |
 | sub.ruyin.ai | HTTPS | https://sub.ruyin.ai/health (or any 200 endpoint) |
-| vault.ruyin.ai | HTTPS | https://vault.ruyin.ai |
+| pass.ruyin.ai | HTTPS | https://pass.ruyin.ai |
 | docs.ruyin.ai | HTTPS | https://docs.ruyin.ai |
 | go.ruyin.ai | HTTPS | https://go.ruyin.ai |
 | Xray port | TCP | vpn.ruyin.ai:443 |

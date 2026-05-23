@@ -124,7 +124,7 @@ docker exec umbra-nginx nginx -s reload
 
 ```bash
 # Check all cert expiries
-for d in ruyin.ai www.ruyin.ai vpn.ruyin.ai sub.ruyin.ai console.ruyin.ai vault.ruyin.ai status.ruyin.ai docs.ruyin.ai go.ruyin.ai; do
+for d in ruyin.ai www.ruyin.ai vpn.ruyin.ai sub.ruyin.ai console.ruyin.ai pass.ruyin.ai status.ruyin.ai docs.ruyin.ai go.ruyin.ai; do
   expiry=$(echo | openssl s_client -connect $d:443 -servername $d 2>/dev/null \
     | openssl x509 -noout -enddate 2>/dev/null | cut -d= -f2)
   echo "$d: $expiry"
@@ -263,7 +263,7 @@ Configure these on first access:
 | ruyin.ai | HTTPS | https://ruyin.ai | 60s |
 | VPN Portal | HTTPS | https://vpn.ruyin.ai | 60s |
 | Subscription | HTTPS | https://sub.ruyin.ai | 60s |
-| Vaultwarden | HTTPS | https://vault.ruyin.ai | 60s |
+| Vaultwarden | HTTPS | https://pass.ruyin.ai | 60s |
 | Docs | HTTPS | https://docs.ruyin.ai | 60s |
 | Short Link | HTTPS | https://go.ruyin.ai | 60s |
 | Xray 443 | TCP | vpn.ruyin.ai:443 | 30s |

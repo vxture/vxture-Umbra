@@ -1,4 +1,4 @@
-# vault.ruyin.ai — Vaultwarden password manager
+# pass.ruyin.ai — Vaultwarden password manager
 server {
     listen 8443 ssl proxy_protocol;
     server_name {{ VAULT_DOMAIN }};

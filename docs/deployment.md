@@ -34,7 +34,7 @@ sudo apt install -y python3 python3-pip
 | `vpn.ruyin.ai` | A | server public IP |
 | `sub.ruyin.ai` | A | server public IP |
 | `console.ruyin.ai` | A | server public IP |
-| `vault.ruyin.ai` | A | server public IP |
+| `pass.ruyin.ai` | A | server public IP |
 | `status.ruyin.ai` | A | server public IP |
 | `docs.ruyin.ai` | A | server public IP |
 | `go.ruyin.ai` | A | server public IP |
@@ -42,7 +42,7 @@ sudo apt install -y python3 python3-pip
 Verify all resolve before running `deploy-all.sh`:
 
 ```bash
-for d in ruyin.ai www.ruyin.ai vpn.ruyin.ai sub.ruyin.ai console.ruyin.ai vault.ruyin.ai status.ruyin.ai docs.ruyin.ai go.ruyin.ai; do
+for d in ruyin.ai www.ruyin.ai vpn.ruyin.ai sub.ruyin.ai console.ruyin.ai pass.ruyin.ai status.ruyin.ai docs.ruyin.ai go.ruyin.ai; do
   echo "$d → $(dig +short $d)"
 done
 ```
@@ -71,7 +71,7 @@ NODE_NAME=vx-tokyo
 EDGE_DOMAIN=vpn.ruyin.ai
 SUB_DOMAIN=sub.ruyin.ai
 ADMIN_DOMAIN=console.ruyin.ai
-PASS_DOMAIN=vault.ruyin.ai
+VAULT_DOMAIN=pass.ruyin.ai
 STATUS_DOMAIN=status.ruyin.ai
 DOCS_DOMAIN=docs.ruyin.ai
 SHORTLINK_DOMAIN=go.ruyin.ai
@@ -255,7 +255,7 @@ Expected: all containers in `running` state.
 ### HTTPS Check (all domains)
 
 ```bash
-for d in ruyin.ai www.ruyin.ai vpn.ruyin.ai sub.ruyin.ai vault.ruyin.ai status.ruyin.ai docs.ruyin.ai go.ruyin.ai; do
+for d in ruyin.ai www.ruyin.ai vpn.ruyin.ai sub.ruyin.ai pass.ruyin.ai status.ruyin.ai docs.ruyin.ai go.ruyin.ai; do
   code=$(curl -sk -o /dev/null -w "%{http_code}" https://$d)
   echo "$d → $code"
 done
