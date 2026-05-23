@@ -1,16 +1,9 @@
 # console.ruyin.ai — Marzban admin panel
-# Access control:
-#   Layer 1: nginx Basic Auth (htpasswd) — first gate, stops unauthenticated browsers
-#   Layer 2: Marzban JWT session authentication — second gate inside the app
-# Note: stream proxy makes $remote_addr always 127.0.0.1 in the HTTP block,
-# so IP allowlist cannot distinguish VPN clients from public traffic here.
-# Basic Auth is the practical solution: nginx 401 uses WWW-Authenticate: Basic,
-# Marzban API uses WWW-Authenticate: Bearer — browsers handle them independently.
-#
-# auth_basic is server-level so it applies to ALL requests before any content phase.
-# Do not use `return 301` in a location block — it runs in the rewrite phase,
-# before auth_basic (access phase), and would bypass authentication on /.
-# proxy_redirect rewrites any http:// Location headers from Marzban to https://.
+# Authentication: Marzban JWT session only (handled by the app).
+# No nginx auth_basic — it intercepts API calls (Authorization: Bearer) and
+# causes a 401 loop: React app authenticates, sends Bearer token, nginx rejects
+# it expecting Basic credentials, Marzban JS redirects back to login.
+# proxy_redirect rewrites Marzban's Location headers from internal host to public host.
 
 server {
     listen 8443 ssl proxy_protocol;
@@ -20,9 +13,6 @@ server {
     ssl_certificate_key /etc/letsencrypt/live/{{ CONSOLE_DOMAIN }}/privkey.pem;
     include /etc/nginx/snippets/ssl-params.conf;
     include /etc/nginx/snippets/security-headers.conf;
-
-    auth_basic           "Umbra Console";
-    auth_basic_user_file /etc/nginx/private/.htpasswd_console;
 
     location / {
         proxy_pass https://umbra-marzban:8000;
