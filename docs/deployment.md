@@ -9,7 +9,7 @@ Complete guide for deploying a fresh Umbra node.
 ### Server
 
 ```
-OS:      Ubuntu 22.04 LTS
+OS:      Ubuntu 26.04 LTS
 Spec:    1C1G / 25GB SSD
 User:    stone (non-root, sudo + docker group)
 ```

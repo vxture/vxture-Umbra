@@ -26,9 +26,8 @@ Internet
                                     ├── vpn.ruyin.ai         → umbra-portal:80
                                     ├── sub.ruyin.ai         → umbra-marzban:8000
                                     ├── console.ruyin.ai     → umbra-marzban:8000 (VPN-only + Basic Auth)
-                                    ├── pass.ruyin.ai       → umbra-vaultwarden:80
-                                    ├── vault.ruyin.ai      → static placeholder
-                                    └── vault.ruyin.ai      → placeholder (200)
+                                    ├── pass.ruyin.ai        → umbra-vaultwarden:80
+                                    └── vault.ruyin.ai       → placeholder (200 static)
 ```
 
 ### REALITY Proxy Path
@@ -145,7 +144,7 @@ Docker network: umbra-net (bridge)
 │       │   │   │   ├── sub-marzban.conf.template
 │       │   │   │   ├── console.conf.template
 │       │   │   │   ├── 06-pass.conf.template
-│       │   │   │   └── 10-vault.conf.template
+│       │   │   │   └── 07-vault.conf.template
 │       │   │   └── snippets/
 │       │   │       ├── ssl-params.conf
 │       │   │       ├── proxy-headers.conf
