@@ -23,6 +23,9 @@
       "streamSettings": {
         "network": "tcp",
         "security": "reality",
+        "sockopt": {
+          "acceptProxyProtocol": true
+        },
         "realitySettings": {
           "show": false,
           "dest": "{{ REALITY_DEST }}",
