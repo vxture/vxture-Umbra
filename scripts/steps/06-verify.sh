@@ -43,7 +43,7 @@ log_step "Container health..."
 
 CONTAINERS=(
   umbra-nginx umbra-marzban
-  umbra-vaultwarden umbra-uptime umbra-portal umbra-docs umbra-shortlink
+  umbra-vaultwarden umbra-portal umbra-docs
 )
 
 cd "$REPO_DIR"
@@ -108,10 +108,9 @@ log_step "Database check..."
 declare -A SQLITE_DBS=(
   ["marzban"]="$DATA_DIR/marzban/db.sqlite3"
   ["vaultwarden"]="$DATA_DIR/vaultwarden/data/db.sqlite3"
-  ["shlink"]="$DATA_DIR/shortlink/data/database.sqlite"
 )
 
-for label in marzban vaultwarden shlink; do
+for label in marzban vaultwarden; do
   db_path="${SQLITE_DBS[$label]}"
   if [[ -f "$db_path" ]]; then
     size=$(du -sh "$db_path" 2>/dev/null | cut -f1 || echo "?")

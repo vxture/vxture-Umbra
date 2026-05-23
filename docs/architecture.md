@@ -106,17 +106,17 @@ Docker network: umbra-net (bridge)
 │  └─────────────┘  └──────┬──────┘  └──────────────┘               │
 │                          │                                          │
 │                   ┌──────▼──────┐                                  │
-│                   │umbra-postgres│                                  │
-│                   │ :5432        │                                  │
+│                   │ (SQLite, no  │                                  │
+│                   │  DB container│                                  │
 │                   └─────────────┘                                  │
 │                                                                    │
-│  ┌──────────────┐  ┌────────────┐  ┌──────────────┐               │
-│  │umbra-vaultwarden│  │umbra-uptime│  │ umbra-docs  │              │
-│  │ :80 (int)    │  │ :3001       │  │ :80          │               │
-│  └──────────────┘  └────────────┘  └──────────────┘               │
+│  ┌──────────────┐  ┌──────────────┐                                │
+│  │umbra-vaultwarden│  │ umbra-docs  │                               │
+│  │ :80 (int)    │  │ :80          │                                │
+│  └──────────────┘  └──────────────┘                                │
 │                                                                    │
 │  ┌──────────────┐  ┌────────────────────────────────┐             │
-│  │umbra-shortlink│  │umbra-certbot (one-shot + cron) │             │
+│  │umbra-portal  │  │umbra-certbot (one-shot + cron) │             │
 │  │ :80           │  │ (no persistent port)           │             │
 │  └──────────────┘  └────────────────────────────────┘             │
 │                                                                    │
@@ -144,10 +144,9 @@ Docker network: umbra-net (bridge)
 │       │   │   │   ├── vpn-portal.conf.template
 │       │   │   │   ├── sub-marzban.conf.template
 │       │   │   │   ├── console.conf.template
-│       │   │   │   ├── vault-vaultwarden.conf.template
-│       │   │   │   ├── status-uptime.conf.template
-│       │   │   │   ├── docs.conf.template
-│       │   │   │   └── shortlink.conf.template
+│       │   │   │   ├── 06-pass.conf.template
+│       │   │   │   ├── 08-docs.conf.template
+│       │   │   │   └── 10-vault.conf.template
 │       │   │   └── snippets/
 │       │   │       ├── ssl-params.conf
 │       │   │       ├── proxy-headers.conf
@@ -182,27 +181,20 @@ Docker network: umbra-net (bridge)
 │       │   │   ├── ruyin-landing/    ← ruyin.ai static files
 │       │   │   └── www-ruyin/        ← www.ruyin.ai static files
 │       │   └── logs/
-│       ├── xray/
-│       │   ├── config.json
-│       │   └── logs/
 │       ├── marzban/
 │       │   ├── xray_config.json      ← Marzban manages this
-│       │   └── logs/
-│       ├── postgres/
-│       │   └── data/                 ← PostgreSQL data files
+│       │   ├── db.sqlite3            ← Marzban database
+│       │   └── templates/
 │       ├── vaultwarden/
-│       │   └── data/
-│       ├── uptime-kuma/
-│       │   └── data/
+│       │   └── data/                 ← Vaultwarden DB + attachments
+│       ├── portal/
+│       │   └── html/
 │       ├── docs/
 │       │   └── site/                 ← Built static docs
-│       ├── shortlink/
-│       │   └── data/
 │       ├── letsencrypt/              ← Certs for all domains
 │       ├── certbot/                  ← ACME account + challenges
 │       └── private/                  ← Secrets (700/600)
-│           ├── reality.json
-│           └── postgres.env          ← DB passwords
+│           └── reality.json
 │
 └── backup/
     └── umbra/                        ← Archives (700/600)
@@ -219,9 +211,9 @@ Docker network: umbra-net (bridge)
 | 8443 | Internal | umbra-nginx | HTTP virtual hosts (after SNI handoff) |
 | 10443 | Internal | umbra-xray | VLESS + REALITY |
 | 8000 | Internal | umbra-marzban | Marzban API + admin + subscription |
-| 5432 | Internal | umbra-postgres | PostgreSQL |
-| 3011 | Internal | umbra-vaultwarden | Vaultwarden HTTP |
-| 3001 | Internal | umbra-uptime | Uptime Kuma HTTP |
+| 80 | Internal | umbra-vaultwarden | Vaultwarden HTTP |
+| 80 | Internal | umbra-portal | VPN portal static site |
+| 80 | Internal | umbra-docs | Docs static site |
 
 ---
 

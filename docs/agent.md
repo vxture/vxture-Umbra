@@ -82,7 +82,7 @@ Phase 4 — Hardening
   [ ] Backup automation
   [ ] Logrotate
   [ ] Cert renewal cron
-  [ ] Uptime Kuma monitors configured
+  [ ] External uptime monitoring configured (BetterStack / UptimeRobot)
 ```
 
 ---
@@ -104,7 +104,7 @@ Phase 4 — Hardening
 
 1. **Edge Mode only** — no Simple Mode. Xray runs on internal port, never public.
 2. **All traffic enters on 443** — Nginx SNI stream routes to correct internal service.
-3. **SQLite** — all services (Marzban, Vaultwarden, Shlink) use SQLite for data storage.
+3. **SQLite** — all services (Marzban, Vaultwarden) use SQLite for data storage. No PostgreSQL.
 4. **Secrets never in Git** — `.env`, keys, certs, DB passwords all stay in `DATA_DIR/private/`.
 5. **console.ruyin.ai has three access layers** — see Security Model in `design.md`.
 6. **All containers in one Docker network** — `umbra-net`, internal service discovery by container name.

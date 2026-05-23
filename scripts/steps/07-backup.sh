@@ -11,7 +11,7 @@ log_banner "Umbra — Backup"
 TIMESTAMP=$(date +%Y%m%d-%H%M%S)
 ARCHIVE="$BACKUP_DIR/umbra-config-${TIMESTAMP}.tar.gz"
 
-# ── SQLite database copies (Marzban + Shlink) ─────────────────────────────────
+# ── SQLite database copies ────────────────────────────────────────────────────
 log_step "Backing up SQLite databases..."
 
 declare -A SQLITE_DBS=(

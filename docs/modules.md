@@ -241,7 +241,7 @@ gozargah/marzban:latest
 UVICORN_HOST=0.0.0.0
 UVICORN_PORT=8000
 
-SQLALCHEMY_DATABASE_URL=postgresql://marzban:{{ POSTGRES_MARZBAN_PASSWORD }}@umbra-postgres:5432/marzban
+SQLALCHEMY_DATABASE_URL=sqlite:////var/lib/marzban/db.sqlite3
 
 XRAY_JSON=/var/lib/marzban/xray_config.json
 XRAY_EXECUTABLE_PATH=/usr/local/bin/xray
@@ -273,67 +273,26 @@ umbra-marzban:
   env_file: .env
   volumes:
     - DATA_DIR/marzban:/var/lib/marzban
-  depends_on:
-    - umbra-postgres
   networks:
     - umbra-net
 ```
 
 ---
 
-## Module 4: PostgreSQL
+## Module 4: Storage (SQLite)
 
-### Responsibility
+### Decision
 
-- Primary database for Marzban (users, nodes, subscriptions, traffic stats)
-- Optionally shared by Short Link service (separate schema or database)
+All services use SQLite on this 1C1G node. No PostgreSQL container.
 
-### Image
-
-```
-postgres:16-alpine
-```
-
-### Environment Variables
-
-```env
-POSTGRES_USER=marzban
-POSTGRES_PASSWORD={{ POSTGRES_MARZBAN_PASSWORD }}
-POSTGRES_DB=marzban
-```
-
-Store `POSTGRES_MARZBAN_PASSWORD` in `DATA_DIR/private/postgres.env` (permissions 600), never in `.env.example`.
-
-### Tuning for 2C2G
-
-Low-memory PostgreSQL config (`postgresql.conf` overrides):
-
-```
-shared_buffers = 128MB
-effective_cache_size = 256MB
-work_mem = 4MB
-maintenance_work_mem = 32MB
-max_connections = 50
-```
-
-Mount as a volume or pass via `command` in compose.
-
-### Docker Config
-
-```yaml
-umbra-postgres:
-  image: postgres:16-alpine
-  restart: always
-  env_file: DATA_DIR/private/postgres.env
-  volumes:
-    - DATA_DIR/postgres/data:/var/lib/postgresql/data
-  networks:
-    - umbra-net
-```
+| File | Service |
+|------|---------|
+| `DATA_DIR/marzban/db.sqlite3` | Marzban |
+| `DATA_DIR/vaultwarden/data/db.sqlite3` | Vaultwarden |
 
 ### Backup
 
-PostgreSQL data is backed up via `pg_dump` in `07-backup.sh`. Do NOT rely solely on volume file backup — always use `pg_dump` for consistent DB snapshots.
+SQLite databases are backed up via file copy in `07-backup.sh`. Vaultwarden's full `data/` directory is archived (includes attachments and sends).
 
 ---
 
@@ -356,8 +315,7 @@ vpn.ruyin.ai/
 ├── /                  → landing (what is this, how to use)
 ├── /start             → quick start guide
 ├── /clients           → client download links (Clash Verge, V2RayN, etc.)
-├── /subscribe         → subscription instructions (link to sub.ruyin.ai)
-└── /status            → link to status.ruyin.ai
+└── /subscribe         → subscription instructions (link to sub.ruyin.ai)
 ```
 
 ### Docker Config
@@ -392,7 +350,7 @@ vaultwarden/server:latest
 DOMAIN=https://pass.ruyin.ai
 SIGNUPS_ALLOWED=false
 ADMIN_TOKEN={{ VAULTWARDEN_ADMIN_TOKEN }}
-DATABASE_URL=postgresql://vaultwarden:{{ POSTGRES_VAULT_PASSWORD }}@umbra-postgres:5432/vaultwarden
+DATABASE_URL=sqlite:////data/db.sqlite3
 ```
 
 Disable open signups from day one. Admin token stored in `private/`.

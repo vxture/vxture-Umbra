@@ -97,10 +97,6 @@ MARZBAN_ADMIN_PASSWORD=<strong-password>
 CONSOLE_HTPASSWD_PASSWORD=<strong-password>   # Nginx Basic Auth for console.ruyin.ai
 SUBSCRIPTION_URL_PREFIX=https://sub.ruyin.ai
 
-# ── PostgreSQL ──────────────────────────────────────────
-# Passwords stored in DATA_DIR/private/postgres.env (600)
-# Do not put passwords here
-
 # ── Vaultwarden ─────────────────────────────────────────
 VAULTWARDEN_ADMIN_TOKEN=<generate-with: openssl rand -base64 48>
 
@@ -109,9 +105,9 @@ CERTBOT_EMAIL=<your-email>
 
 ```
 
-### Step 3: Create postgres.env (secrets file)
+### Step 3: Secrets
 
-Not applicable — this deployment uses SQLite for all services. No postgres.env needed.
+No database passwords needed — SQLite requires no credentials. The only secret file is `DATA_DIR/private/reality.json`, which is generated automatically by `02-generate-reality.sh`.
 
 ---
 
@@ -149,9 +145,8 @@ Checks:
   [ ] Docker is available
   [ ] docker compose v2 is available
   [ ] stone user is in docker group
-  [ ] All 9 domains resolve to this server's public IP
+  [ ] All 8 domains resolve to this server's public IP
   [ ] Ports 80 and 443 are not in use
-  [ ] DATA_DIR/private/postgres.env exists
 ```
 
 ### `01-init-dirs.sh`

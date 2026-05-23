@@ -23,30 +23,27 @@ Runs automatically:
 DATA_DIR/nginx/conf.d/
 DATA_DIR/nginx/stream.d/
 DATA_DIR/marzban/templates/
-DATA_DIR/private/               ← REALITY keys, postgres passwords
+DATA_DIR/private/               ← REALITY keys
 
-# Database dump (pg_dump — consistent snapshot)
-pg_dump marzban    → backup/marzban-<ts>.sql.gz
-pg_dump vaultwarden → backup/vaultwarden-<ts>.sql.gz
-pg_dump shlink     → backup/shlink-<ts>.sql.gz
+# SQLite database copies
+DATA_DIR/marzban/db.sqlite3        → backup/marzban-db-<ts>.sqlite3
+DATA_DIR/vaultwarden/data/         → backup/vaultwarden-data-<ts>.tar.gz  (full dir: DB + attachments + sends)
 
 # Certs
 DATA_DIR/letsencrypt/
 
 # System state
 crontab -l → backup/root-crontab-<ts>.txt
-docker inspect → backup/compose-state-<ts>.json
 ```
 
 ### Backup Output
 
 ```
-BACKUP_DIR/umbra-config-<YYYYMMDD-HHMMSS>.tar.gz    permissions: 600
-BACKUP_DIR/marzban-db-<YYYYMMDD-HHMMSS>.sql.gz      permissions: 600
-BACKUP_DIR/vaultwarden-db-<YYYYMMDD-HHMMSS>.sql.gz  permissions: 600
-BACKUP_DIR/shlink-db-<YYYYMMDD-HHMMSS>.sql.gz       permissions: 600
-BACKUP_DIR/root-crontab-<YYYYMMDD-HHMMSS>.txt       permissions: 600
-BACKUP_DIR/                                           permissions: 700
+BACKUP_DIR/umbra-config-<YYYYMMDD-HHMMSS>.tar.gz        permissions: 600
+BACKUP_DIR/marzban-db-<YYYYMMDD-HHMMSS>.sqlite3         permissions: 600
+BACKUP_DIR/vaultwarden-data-<YYYYMMDD-HHMMSS>.tar.gz    permissions: 600
+BACKUP_DIR/root-crontab-<YYYYMMDD-HHMMSS>.txt           permissions: 600
+BACKUP_DIR/                                               permissions: 700
 ```
 
 ### Backup Retention
@@ -76,16 +73,11 @@ docker compose down
 # 2. Restore config files
 tar -xzf BACKUP_DIR/umbra-config-<timestamp>.tar.gz -C DATA_DIR/
 
-# 3. Restore database
-docker compose up -d umbra-postgres
+# 3. Restore SQLite databases
+cp BACKUP_DIR/marzban-db-<timestamp>.sqlite3 DATA_DIR/marzban/db.sqlite3
 
-# Marzban DB
-gunzip -c BACKUP_DIR/marzban-db-<timestamp>.sql.gz \
-  | docker exec -i umbra-postgres psql -U marzban marzban
-
-# Vaultwarden DB
-gunzip -c BACKUP_DIR/vaultwarden-db-<timestamp>.sql.gz \
-  | docker exec -i umbra-postgres psql -U vaultwarden vaultwarden
+# Vaultwarden — full data dir (DB + attachments + sends)
+tar -xzf BACKUP_DIR/vaultwarden-data-<timestamp>.tar.gz -C DATA_DIR/vaultwarden/
 
 # 4. Restore crontab
 crontab BACKUP_DIR/root-crontab-<timestamp>.txt
@@ -124,7 +116,7 @@ docker exec umbra-nginx nginx -s reload
 
 ```bash
 # Check all cert expiries
-for d in ruyin.ai www.ruyin.ai vpn.ruyin.ai sub.ruyin.ai console.ruyin.ai pass.ruyin.ai status.ruyin.ai docs.ruyin.ai go.ruyin.ai; do
+for d in ruyin.ai www.ruyin.ai vpn.ruyin.ai sub.ruyin.ai console.ruyin.ai pass.ruyin.ai vault.ruyin.ai docs.ruyin.ai; do
   expiry=$(echo | openssl s_client -connect $d:443 -servername $d 2>/dev/null \
     | openssl x509 -noout -enddate 2>/dev/null | cut -d= -f2)
   echo "$d: $expiry"
@@ -187,7 +179,6 @@ Marzban supports connecting multiple Xray nodes. Future edge nodes (edge-02, etc
 ```bash
 docker compose restart umbra-nginx
 docker compose restart umbra-marzban
-docker compose restart umbra-postgres
 docker compose restart umbra-vaultwarden
 ```
 
@@ -202,7 +193,7 @@ docker exec umbra-nginx nginx -s reload
 ```bash
 docker compose logs umbra-nginx --tail=100
 docker compose logs umbra-marzban --tail=100
-docker compose logs umbra-postgres --tail=50
+docker compose logs umbra-vaultwarden --tail=50
 ```
 
 ### Full restart
