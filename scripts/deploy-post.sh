@@ -185,7 +185,7 @@ ctx.verify_mode = ssl.CERT_NONE
 
 payload = json.dumps({
     "username": "${username}",
-    "proxies": {"vless": {}},
+    "proxies": {"vless": {"flow": "xtls-rprx-vision"}},
     "inbounds": {"vless": ["VLESS_TCP_REALITY"]},
     "data_limit": 0,
     "expire": None,
