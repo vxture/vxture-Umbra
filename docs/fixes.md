@@ -5,7 +5,16 @@ Goal: one-click deploy → fresh server operational with three commands.
 
 ---
 
-## Session 3 — 2026-05-23 (cont.)
+## Session 3 — 2026-05-23 (cont. 2)
+
+| File | Problem | Fix |
+|---|---|---|
+| `docker-compose.yml` | Marzban container received `SUBSCRIPTION_URL_PREFIX` but reads `XRAY_SUBSCRIPTION_URL_PREFIX` → dashboard built subscription URLs from `window.location.origin` (console.ruyin.ai) instead of sub.ruyin.ai | Renamed env key to `XRAY_SUBSCRIPTION_URL_PREFIX` |
+| `scripts/deploy-post.sh` | After the above fix, Marzban API returns full URL (`https://sub.ruyin.ai/sub/token`); script was still prepending `${SUBSCRIPTION_URL_PREFIX}` → doubled prefix in subscription URLs | Removed the prefix concatenation; API value is used as-is |
+
+---
+
+## Session 3 — 2026-05-23 (cont. 1)
 
 | File | Problem | Fix |
 |---|---|---|
