@@ -90,7 +90,7 @@ if [[ ! -f "$HTPASSWD_FILE" ]]; then
     echo "$HASH" > "$HTPASSWD_FILE"
   fi
 
-  chmod 600 "$HTPASSWD_FILE"
+  chmod 644 "$HTPASSWD_FILE"
   log_ok "htpasswd_console created for user: $CONSOLE_USER"
 else
   log_info "htpasswd_console already exists — skipping"

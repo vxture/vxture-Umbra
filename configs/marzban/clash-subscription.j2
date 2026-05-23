@@ -32,13 +32,13 @@ dns:
       - 240.0.0.0/4
 
 proxies:
-{{ proxies | indent(2, first=True) }}
+{{ proxies | default([]) | indent(2, first=True) }}
 
 proxy-groups:
   - name: PROXY
     type: select
     proxies:
-{% for tag in proxy_tags %}
+{% for tag in proxy_tags | default([]) %}
       - {{ tag }}
 {% endfor %}
       - DIRECT

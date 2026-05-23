@@ -44,8 +44,8 @@ log_step "Setting permissions on sensitive directories..."
 chmod 700 "$DATA_DIR/private"
 log_ok "chmod 700 $DATA_DIR/private"
 
-chmod 700 "$DATA_DIR/nginx/private"
-log_ok "chmod 700 $DATA_DIR/nginx/private"
+chmod 711 "$DATA_DIR/nginx/private"
+log_ok "chmod 711 $DATA_DIR/nginx/private"
 
 chmod 700 "$BACKUP_DIR"
 log_ok "chmod 700 $BACKUP_DIR"
