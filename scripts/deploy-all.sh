@@ -28,7 +28,7 @@ fi
 
 log_banner "Umbra — Full Deployment"
 log_info "Node:    $NODE_NAME"
-log_info "Domains: $EDGE_DOMAIN, $SUB_DOMAIN, +7 more"
+log_info "Domains: $EDGE_DOMAIN, $SUB_DOMAIN, +5 more (7 total)"
 log_info "Data:    $DATA_DIR"
 log_info "Backup:  $BACKUP_DIR"
 echo ""

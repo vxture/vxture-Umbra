@@ -40,14 +40,14 @@ SSH in as root using the key provided at server creation:
 ssh root@<server-ip>
 ```
 
-Clone the repo and bootstrap the server (installs Docker, creates admin user, copies SSH keys, disables root SSH):
+Clone the repo and bootstrap the server (installs Docker, creates admin user, copies SSH keys):
 
 ```bash
 git clone https://github.com/vxture/umbra.git /srv/vxture/repo/umbra
 bash /srv/vxture/repo/umbra/scripts/server-init.sh
 ```
 
-`server-init.sh` creates the `stone` admin user (sudo + docker) and copies `/root/.ssh/authorized_keys` to the new user. **Your existing SSH key works for both root and stone.**
+`server-init.sh` creates the `stone` admin user (sudo + docker) and copies `/root/.ssh/authorized_keys` to the new user. **Your existing SSH key works for both root and stone.** Root SSH is left enabled — disable it manually after confirming `stone` login works.
 
 ---
 
@@ -217,7 +217,7 @@ Expected — the admin console is IP-restricted to the Docker network (VPN clien
 
 | Script | Purpose |
 |--------|---------|
-| `server-init.sh` | Bootstrap server: Docker, admin user, SSH hardening *(root, once)* |
+| `server-init.sh` | Bootstrap server: Docker, admin user, SSH key copy *(root, once)* |
 | `server-reset.sh` | Stop or wipe deployment |
 | `deploy-all.sh` | Full deployment orchestrator |
 | `deploy-certs.sh` | Certificate lifecycle: renew / upgrade / status |

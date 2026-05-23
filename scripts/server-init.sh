@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # Server bootstrap — run as root on a fresh (or existing) server.
-# Installs Docker, creates admin user, hardens SSH.
+# Installs Docker, creates admin user, copies SSH keys.
 # Safe to re-run: each step checks state before acting.
+# NOTE: root SSH is intentionally left enabled — disable manually after verifying stone login works.
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -145,3 +146,6 @@ log_info "  cd /srv/vxture/repo/umbra"
 log_info "  cp .env.example .env && nano .env"
 log_info "  bash scripts/deploy-all.sh"
 log_info "  bash scripts/deploy-post.sh"
+echo ""
+log_info "After confirming $ADMIN_USER SSH login works, optionally harden SSH:"
+log_info "  sed -i 's/^#\\?PermitRootLogin.*/PermitRootLogin no/' /etc/ssh/sshd_config && systemctl reload sshd"
