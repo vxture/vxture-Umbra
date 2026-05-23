@@ -54,6 +54,8 @@ services:
       SUBSCRIPTION_URL_PREFIX: "${SUBSCRIPTION_URL_PREFIX}"
       CUSTOM_TEMPLATES_DIRECTORY: "/var/lib/marzban/templates"
       CLASH_SUBSCRIPTION_TEMPLATE: "clash/default.yml"
+      UVICORN_SSL_CERTFILE: "/var/lib/marzban/internal-cert.pem"
+      UVICORN_SSL_KEYFILE: "/var/lib/marzban/internal-key.pem"
     volumes:
       - ${DATA_DIR}/marzban:/var/lib/marzban
     networks:

@@ -26,7 +26,8 @@ server {
 
     # Layer 3: Marzban handles its own session auth
     location / {
-        proxy_pass http://umbra-marzban:8000;
+        proxy_pass https://umbra-marzban:8000;
+        proxy_ssl_verify off;
         include /etc/nginx/snippets/proxy-headers.conf;
     }
 }

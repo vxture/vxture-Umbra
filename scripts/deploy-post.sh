@@ -47,7 +47,11 @@ echo ""
 
 # Authenticate with Marzban API
 MARZBAN_TOKEN=$(docker exec umbra-marzban python3 - <<PYEOF
-import urllib.request, urllib.parse, json, sys
+import urllib.request, urllib.parse, json, sys, ssl
+
+ctx = ssl.create_default_context()
+ctx.check_hostname = False
+ctx.verify_mode = ssl.CERT_NONE
 
 data = urllib.parse.urlencode({
     'username': '${MARZBAN_ADMIN_USER}',
@@ -55,8 +59,8 @@ data = urllib.parse.urlencode({
 }).encode()
 
 try:
-    req = urllib.request.Request('http://localhost:8000/api/admin/token', data=data)
-    with urllib.request.urlopen(req, timeout=10) as r:
+    req = urllib.request.Request('https://localhost:8000/api/admin/token', data=data)
+    with urllib.request.urlopen(req, context=ctx, timeout=10) as r:
         print(json.loads(r.read())['access_token'])
 except Exception as e:
     print('ERROR: ' + str(e), file=sys.stderr)
@@ -80,14 +84,18 @@ for i in $(seq -w 1 "$USER_COUNT"); do
   username="${USER_PREFIX}${i}"
 
   exists=$(docker exec umbra-marzban python3 - <<PYEOF
-import urllib.request, json, sys
+import urllib.request, json, sys, ssl
+
+ctx = ssl.create_default_context()
+ctx.check_hostname = False
+ctx.verify_mode = ssl.CERT_NONE
 
 req = urllib.request.Request(
-    'http://localhost:8000/api/user/${username}',
+    'https://localhost:8000/api/user/${username}',
     headers={'Authorization': 'Bearer ${MARZBAN_TOKEN}'}
 )
 try:
-    with urllib.request.urlopen(req, timeout=5) as r:
+    with urllib.request.urlopen(req, context=ctx, timeout=5) as r:
         data = json.loads(r.read())
         print(data.get('subscription_url', ''))
 except urllib.error.HTTPError as e:
@@ -107,7 +115,11 @@ PYEOF
   fi
 
   sub_url=$(docker exec umbra-marzban python3 - <<PYEOF
-import urllib.request, json, sys
+import urllib.request, json, sys, ssl
+
+ctx = ssl.create_default_context()
+ctx.check_hostname = False
+ctx.verify_mode = ssl.CERT_NONE
 
 payload = json.dumps({
     "username": "${username}",
@@ -119,7 +131,7 @@ payload = json.dumps({
 }).encode()
 
 req = urllib.request.Request(
-    'http://localhost:8000/api/user',
+    'https://localhost:8000/api/user',
     data=payload,
     headers={
         'Authorization': 'Bearer ${MARZBAN_TOKEN}',
@@ -127,7 +139,7 @@ req = urllib.request.Request(
     }
 )
 try:
-    with urllib.request.urlopen(req, timeout=10) as r:
+    with urllib.request.urlopen(req, context=ctx, timeout=10) as r:
         data = json.loads(r.read())
         print(data.get('subscription_url', ''))
 except Exception as e:

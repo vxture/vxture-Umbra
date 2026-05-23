@@ -133,9 +133,20 @@ done
 
 # ── Marzban API ───────────────────────────────────────────────────────────────
 log_step "Marzban API..."
-MARZBAN_CODE=$(docker exec umbra-nginx \
-  wget -qO- --server-response http://umbra-marzban:8000/api/core/stats 2>&1 \
-  | grep "HTTP/" | awk '{print $2}' | head -1 || echo "000")
+MARZBAN_CODE=$(docker exec umbra-marzban python3 - <<'PYEOF' 2>/dev/null
+import urllib.request, ssl, sys
+ctx = ssl.create_default_context()
+ctx.check_hostname = False
+ctx.verify_mode = ssl.CERT_NONE
+try:
+    with urllib.request.urlopen('https://localhost:8000/api/core/stats', context=ctx, timeout=10) as r:
+        print(r.status)
+except urllib.error.HTTPError as e:
+    print(e.code)
+except Exception:
+    print('000')
+PYEOF
+)
 if [[ "$MARZBAN_CODE" =~ ^(200|401|403)$ ]]; then
   log_ok "Marzban API reachable (internal) → $MARZBAN_CODE"
   (( ++PASS ))

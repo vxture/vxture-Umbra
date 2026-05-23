@@ -25,6 +25,20 @@ mk "$DATA_DIR/nginx/logs"
 mk "$DATA_DIR/marzban/templates/clash"
 mk "$DATA_DIR/marzban/templates/v2ray"
 mk "$DATA_DIR/marzban/logs"
+
+# Internal TLS cert so Marzban binds to 0.0.0.0 (newer Marzban ignores UVICORN_HOST without SSL)
+MARZBAN_CERT="$DATA_DIR/marzban/internal-cert.pem"
+MARZBAN_KEY="$DATA_DIR/marzban/internal-key.pem"
+if [[ ! -f "$MARZBAN_CERT" ]]; then
+  openssl req -x509 -newkey rsa:2048 \
+    -keyout "$MARZBAN_KEY" -out "$MARZBAN_CERT" \
+    -days 3650 -nodes -subj "/CN=umbra-marzban" 2>/dev/null
+  chmod 600 "$MARZBAN_KEY"
+  log_ok "Generated Marzban internal TLS cert"
+else
+  log_info "Marzban internal cert already exists — skipping"
+fi
+
 mk "$DATA_DIR/vaultwarden/data"
 mk "$DATA_DIR/uptime-kuma/data"
 mk "$DATA_DIR/portal/html"
