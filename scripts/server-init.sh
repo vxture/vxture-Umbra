@@ -111,6 +111,28 @@ fi
 chown -R "$ADMIN_USER:$ADMIN_USER" /srv/vxture
 log_ok "/srv/vxture owned by $ADMIN_USER"
 
+# ── Firewall ──────────────────────────────────────────────────────────────────
+log_step "Configuring firewall..."
+
+if command -v ufw &>/dev/null; then
+  ufw allow 22/tcp  &>/dev/null || true
+  ufw allow 80/tcp  &>/dev/null || true
+  ufw allow 443/tcp &>/dev/null || true
+  log_ok "UFW rules added: 22, 80, 443"
+else
+  log_info "UFW not installed — skipping firewall config"
+fi
+
+# ── Git safe directory ────────────────────────────────────────────────────────
+log_step "Configuring git..."
+
+REPO_PATH="/srv/vxture/repo/umbra"
+if ! git config --global --get-all safe.directory 2>/dev/null | grep -qF "$REPO_PATH"; then
+  git config --global --add safe.directory "$REPO_PATH"
+  log_ok "git safe.directory configured for $REPO_PATH"
+else
+  log_ok "git safe.directory already configured for $REPO_PATH"
+fi
 
 # ── Done ──────────────────────────────────────────────────────────────────────
 echo ""
