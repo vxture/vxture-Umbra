@@ -76,7 +76,9 @@ if [[ "$MODE" == "--upgrade" ]]; then
   fi
 
   log_step "Removing existing certificates..."
-  rm -rf "$CERT_DIR"
+  # certbot runs as root in Docker — files are root-owned and cannot be removed
+  # by the host user directly. Use an alpine container to clean them up.
+  docker run --rm -v "$CERT_DIR:/target" alpine sh -c 'rm -rf /target/*'
   log_ok "Removed old certs"
 
   log_step "Issuing real Let's Encrypt certificates..."
