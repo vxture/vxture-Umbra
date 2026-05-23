@@ -94,7 +94,7 @@ ctx.verify_mode = ssl.CERT_NONE
 
 payload = json.dumps({
     "VLESS_TCP_REALITY": [{
-        "remark": "🚀 {USERNAME}",
+        "remark": "{USERNAME}",
         "address": "${EDGE_DOMAIN}",
         "port": 443,
         "sni": "${REALITY_SNI}",

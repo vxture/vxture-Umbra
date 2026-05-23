@@ -41,18 +41,6 @@ proxy-groups:
 {% endfor %}
       - DIRECT
 
-  - name: DIRECT
-    type: select
-    proxies:
-      - DIRECT
-      - PROXY
-
-  - name: REJECT
-    type: select
-    proxies:
-      - REJECT
-      - DIRECT
-
 rules:
   # ── 0. 节点基础设施直连 ──────────────────────────────────────────────────────
   - DOMAIN-SUFFIX,{{ APEX_DOMAIN }},DIRECT
