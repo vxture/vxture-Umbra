@@ -19,7 +19,7 @@ Nginx runs two listeners:
 
 **Stream listener (port 443, in `nginx.conf` stream block):**
 - `ssl_preread on` — reads SNI without terminating TLS
-- Routes to `xray_backend` (port 10443) or `http_backend` (port 8443)
+- Routes to `xray_upstream` (`umbra-marzban:10443`, bundled Xray subprocess) or `https_upstream` (`127.0.0.1:8443`)
 
 **HTTP listener (internal port 8443):**
 - TLS termination with Let's Encrypt certs
@@ -29,34 +29,37 @@ Nginx runs two listeners:
 
 | Template | Domain | Upstream |
 |----------|--------|---------|
-| `ruyin-landing.conf.template` | `ruyin.ai` | static files in `nginx/html/ruyin-landing/` |
-| `www-ruyin.conf.template` | `www.ruyin.ai` | static files in `nginx/html/www-ruyin/` |
-| `vpn-portal.conf.template` | `vpn.ruyin.ai` | `umbra-portal:80` |
-| `sub-marzban.conf.template` | `sub.ruyin.ai` | `umbra-marzban:8000` |
-| `console.conf.template` | `console.ruyin.ai` | `umbra-marzban:8000` + 3-layer access control |
+| `00-default.conf.template` | catch-all | ACME challenge and default 404/redirect behavior |
+| `01-ruyin.conf.template` | `ruyin.ai` | static files in `nginx/html/ruyin-landing/` |
+| `02-www.conf.template` | `www.ruyin.ai` | static files in `nginx/html/www-ruyin/` |
+| `03-vpn-portal.conf.template` | `EDGE_DOMAIN` | `umbra-portal:80` |
+| `04-sub.conf.template` | `sub.ruyin.ai` | native Marzban `/sub/<token>` only |
+| `05-console.conf.template` | `console.ruyin.ai` | `umbra-marzban:8000` + IP restriction + Marzban login |
 | `06-pass.conf.template` | `pass.ruyin.ai` | `umbra-vaultwarden:80` |
+| `07-vault.conf.template` | `vault.ruyin.ai` | placeholder static response |
 
 ### Stream Config Spec
 
 ```nginx
 stream {
-    map $ssl_preread_server_name $backend {
-        www.microsoft.com   xray_backend;
-        default             http_backend;
+    map $ssl_preread_server_name $upstream_backend {
+        www.microsoft.com   xray_upstream;
+        default             https_upstream;
     }
 
-    upstream xray_backend {
-        server umbra-xray:10443;
+    upstream xray_upstream {
+        server umbra-marzban:10443;
     }
 
-    upstream http_backend {
+    upstream https_upstream {
         server 127.0.0.1:8443;
     }
 
     server {
         listen 443;
-        proxy_pass $backend;
-        ssl_preread on;
+        proxy_pass     $upstream_backend;
+        ssl_preread    on;
+        proxy_protocol on;
     }
 }
 ```
@@ -394,5 +397,5 @@ docker exec umbra-nginx nginx -s reload
 ### Cron
 
 ```cron
-17 3 * * * /srv/vxture/repo/umbra/scripts/renew-cert.sh >> /var/log/umbra-cert-renew.log 2>&1
+17 3 * * * /srv/vxture/repo/umbra/scripts/deploy-certs.sh >> /var/log/umbra-cert-renew.log 2>&1
 ```

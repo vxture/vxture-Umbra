@@ -153,14 +153,18 @@ Creates:
 ```
 DATA_DIR/nginx/conf.d
 DATA_DIR/nginx/stream.d
+DATA_DIR/nginx/snippets
 DATA_DIR/nginx/html/ruyin-landing
 DATA_DIR/nginx/html/www-ruyin
+DATA_DIR/nginx/private
 DATA_DIR/nginx/logs
 DATA_DIR/marzban/templates/clash
+DATA_DIR/marzban/templates/v2ray
+DATA_DIR/marzban/logs
 DATA_DIR/vaultwarden/data
 DATA_DIR/portal/html
 DATA_DIR/letsencrypt
-DATA_DIR/certbot
+DATA_DIR/certbot/www/.well-known/acme-challenge
 DATA_DIR/private
 BACKUP_DIR
 ```
@@ -169,6 +173,7 @@ Permissions:
 
 ```bash
 chmod 700 DATA_DIR/private
+chmod 711 DATA_DIR/nginx/private
 chmod 700 BACKUP_DIR
 ```
 
@@ -202,11 +207,16 @@ Do not run it with `bash scripts/steps/04-render-configs.py`; it is a Python scr
 
 | Source | Output |
 |--------|--------|
+| `configs/nginx/nginx.conf` | `DATA_DIR/nginx/nginx.conf` |
 | `configs/nginx/stream.conf.template` | `DATA_DIR/nginx/stream.d/stream.conf` |
-| `configs/nginx/vhosts/*.conf.template` (×8: 7 domain vhosts + 1 catch-all) | `DATA_DIR/nginx/conf.d/*.conf` |
+| `configs/nginx/vhosts/*.conf.template` (8 templates: 7 domain vhosts + 1 catch-all) | `DATA_DIR/nginx/conf.d/*.conf` |
+| `configs/nginx/snippets/*.conf` | `DATA_DIR/nginx/snippets/*.conf` |
 | `configs/marzban/clash-subscription.j2` | `DATA_DIR/marzban/templates/clash/default.yml` |
+| `configs/xray/config.json.template` | `DATA_DIR/marzban/xray_config.json` |
+| `landing/html/*` | `DATA_DIR/nginx/html/ruyin-landing/` and `DATA_DIR/nginx/html/www-ruyin/` |
+| `portal/html/*` | `DATA_DIR/portal/html/` |
 
-Also injects REALITY public key and short ID into Marzban startup config.
+Also injects REALITY keys into Xray/Marzban config and renders the Clash subscription profile header.
 
 ### `05-up.sh`
 

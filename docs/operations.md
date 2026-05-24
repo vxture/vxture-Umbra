@@ -13,7 +13,7 @@ Runs automatically:
 - Daily via cron at 02:00
 
 ```cron
-0 2 * * * /srv/vxture/repo/umbra/scripts/07-backup.sh >> /var/log/umbra-backup.log 2>&1
+0 2 * * * /srv/vxture/repo/umbra/scripts/steps/07-backup.sh >> /var/log/umbra-backup.log 2>&1
 ```
 
 ### What Gets Backed Up
@@ -86,7 +86,7 @@ crontab BACKUP_DIR/root-crontab-<timestamp>.txt
 docker compose up -d
 
 # 6. Verify
-bash scripts/06-verify.sh
+bash scripts/steps/06-verify.sh
 ```
 
 ---
@@ -96,7 +96,7 @@ bash scripts/06-verify.sh
 ### Renewal Script
 
 ```bash
-bash scripts/renew-cert.sh
+bash scripts/deploy-certs.sh
 ```
 
 What it does:
@@ -109,7 +109,7 @@ docker exec umbra-nginx nginx -s reload
 ### Cron
 
 ```cron
-17 3 * * * /srv/vxture/repo/umbra/scripts/renew-cert.sh >> /var/log/umbra-cert-renew.log 2>&1
+17 3 * * * /srv/vxture/repo/umbra/scripts/deploy-certs.sh >> /var/log/umbra-cert-renew.log 2>&1
 ```
 
 ### Manual Cert Check

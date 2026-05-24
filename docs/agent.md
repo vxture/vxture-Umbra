@@ -32,11 +32,10 @@ Purpose:    Production overseas edge entry node
 | Service | Container | Domain | Purpose |
 |---------|-----------|--------|---------|
 | Nginx | `umbra-nginx` | gateway | SNI stream + HTTP virtual hosts |
-| Xray-core | `umbra-xray` | — | VLESS + REALITY + Vision proxy |
-| Marzban | `umbra-marzban` | sub.ruyin.ai, console.ruyin.ai | VPN user management + subscription |
+| Marzban + Xray | `umbra-marzban` | sub.ruyin.ai, console.ruyin.ai, REALITY ingress | VPN user management, subscription, bundled Xray subprocess |
 | VPN Portal | `umbra-portal` | vpn.ruyin.ai | User onboarding, client downloads, docs |
 | Vaultwarden | `umbra-vaultwarden` | pass.ruyin.ai | Password manager |
-| Certbot | `umbra-certbot` | — | Let's Encrypt cert automation |
+| Certbot | one-shot Docker container | ACME webroot | Let's Encrypt issue/renew automation |
 
 ---
 
