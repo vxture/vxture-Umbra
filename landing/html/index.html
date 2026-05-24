@@ -1,422 +1,786 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="zh-CN">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>如影随形 · Ruyin</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#07101f">
+  <title>如影 Ruyin</title>
   <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    *, *::before, *::after {
+      box-sizing: border-box;
+    }
 
     :root {
-      --accent:   #3a8fb5;
-      --accent2:  #5bbfaa;
-      --text:     #1a2c3d;
-      --muted:    #5a7080;
-      --glass-bg: rgba(255, 255, 255, 0.68);
-      --glass-bd: rgba(255, 255, 255, 0.92);
+      color-scheme: dark;
+      --bg-0: #050814;
+      --bg-1: #0a1730;
+      --bg-2: #05343b;
+      --text: #eefbff;
+      --muted: #9fb2c3;
+      --soft: #d7f6ff;
+      --panel: rgba(7, 16, 31, 0.72);
+      --panel-strong: rgba(11, 25, 45, 0.86);
+      --line: rgba(135, 228, 255, 0.24);
+      --line-strong: rgba(112, 226, 255, 0.48);
+      --accent: #56d9ff;
+      --accent-2: #8bf5c6;
+      --warning: #f5d36e;
+      --shadow: rgba(0, 0, 0, 0.36);
+      --radius: 8px;
+      --max: 1180px;
     }
 
-    html, body {
-      height: 100%;
-      overflow: hidden;
-      font-family: -apple-system, 'PingFang SC', 'Microsoft YaHei', system-ui, sans-serif;
+    body[data-theme="light"] {
+      color-scheme: light;
+      --bg-0: #f6fbff;
+      --bg-1: #e6f0ff;
+      --bg-2: #dff8f1;
+      --text: #0c1a2a;
+      --muted: #526579;
+      --soft: #10263d;
+      --panel: rgba(255, 255, 255, 0.76);
+      --panel-strong: rgba(255, 255, 255, 0.9);
+      --line: rgba(22, 96, 140, 0.2);
+      --line-strong: rgba(21, 118, 156, 0.42);
+      --accent: #0077a8;
+      --accent-2: #08846d;
+      --warning: #8d6500;
+      --shadow: rgba(37, 72, 110, 0.18);
     }
 
-    /* ── Sky gradient background ─────────────────────────────────────────────── */
+    html {
+      min-height: 100%;
+      background: var(--bg-0);
+    }
+
     body {
-      background: linear-gradient(175deg,
-        #c9e8f2 0%,
-        #ddf0f7 25%,
-        #eef7fb 55%,
-        #f6fbfd 80%,
-        #fbfdfe 100%);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      position: relative;
+      min-height: 100%;
+      margin: 0;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+      color: var(--text);
+      background:
+        linear-gradient(126deg, var(--bg-0) 0%, var(--bg-1) 49%, var(--bg-2) 100%);
+      overflow-x: hidden;
     }
 
-    /* ── Subtle dot grid (tech texture) ─────────────────────────────────────── */
     body::before {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background-image: radial-gradient(circle, rgba(80, 150, 195, 0.13) 1px, transparent 1px);
-      background-size: 36px 36px;
-      pointer-events: none;
-    }
-
-    /* ── Mountain layers ─────────────────────────────────────────────────────── */
-    .landscape {
-      position: absolute;
+      content: "";
+      position: fixed;
       inset: 0;
       pointer-events: none;
-      z-index: 0;
+      background-image:
+        linear-gradient(rgba(124, 226, 255, 0.07) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(124, 226, 255, 0.07) 1px, transparent 1px),
+        linear-gradient(135deg, transparent 0 48%, rgba(139, 245, 198, 0.08) 49%, transparent 51% 100%);
+      background-size: 48px 48px, 48px 48px, 240px 240px;
+      mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.86), rgba(0, 0, 0, 0.18));
     }
 
-    .mt {
-      position: absolute;
-      bottom: 0;
+    body::after {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background:
+        linear-gradient(90deg, transparent 0%, rgba(86, 217, 255, 0.08) 48%, transparent 54%),
+        linear-gradient(180deg, transparent 0%, rgba(139, 245, 198, 0.05) 44%, transparent 62%);
+      background-size: 680px 100%, 100% 520px;
+      animation: drift 18s linear infinite;
+    }
+
+    @keyframes drift {
+      from { background-position: -680px 0, 0 -520px; }
+      to { background-position: 680px 0, 0 520px; }
+    }
+
+    .network {
+      position: fixed;
+      inset: 0;
       width: 100%;
-    }
-
-    .mt-far {
-      height: 52vh;
-      background: linear-gradient(180deg, rgba(148, 198, 228, 0.28) 0%, rgba(170, 212, 235, 0.12) 100%);
-      clip-path: polygon(
-        0% 100%, 0% 58%, 6% 42%, 12% 55%, 19% 30%, 27% 48%,
-        34% 18%, 41% 38%, 49% 10%, 56% 34%, 63% 20%, 70% 40%,
-        77% 25%, 85% 45%, 92% 32%, 100% 50%, 100% 100%);
-    }
-
-    .mt-mid {
-      height: 38vh;
-      background: linear-gradient(180deg, rgba(170, 215, 238, 0.35) 0%, rgba(190, 225, 242, 0.18) 100%);
-      clip-path: polygon(
-        0% 100%, 0% 72%, 7% 58%, 14% 70%, 22% 48%, 30% 63%,
-        37% 42%, 45% 60%, 52% 35%, 59% 55%, 66% 42%, 74% 58%,
-        81% 40%, 88% 62%, 95% 50%, 100% 65%, 100% 100%);
-    }
-
-    .mt-near {
-      height: 24vh;
-      background: linear-gradient(180deg, rgba(195, 228, 245, 0.42) 0%, rgba(215, 238, 250, 0.22) 100%);
-      clip-path: polygon(
-        0% 100%, 0% 82%, 8% 68%, 17% 80%, 26% 62%, 35% 75%,
-        44% 58%, 53% 72%, 62% 60%, 71% 74%, 80% 64%, 89% 76%,
-        95% 68%, 100% 78%, 100% 100%);
-    }
-
-    /* ── Mist fade at bottom ─────────────────────────────────────────────────── */
-    .mist {
-      position: absolute;
-      bottom: 0; left: 0; right: 0;
-      height: 32vh;
-      background: linear-gradient(0deg,
-        rgba(246, 252, 255, 0.96) 0%,
-        rgba(246, 252, 255, 0.0) 100%);
+      height: 100%;
       pointer-events: none;
+      opacity: 0.74;
+    }
+
+    .page {
+      position: relative;
       z-index: 1;
-    }
-
-    /* ── Floating particles ──────────────────────────────────────────────────── */
-    .particles { position: absolute; inset: 0; z-index: 1; overflow: hidden; pointer-events: none; }
-
-    .p {
-      position: absolute;
-      border-radius: 50%;
-      background: rgba(80, 160, 210, 0.35);
-      animation: rise linear infinite;
-    }
-
-    @keyframes rise {
-      0%   { transform: translateY(100vh) scale(0.2); opacity: 0; }
-      8%   { opacity: 1; }
-      92%  { opacity: 0.4; }
-      100% { transform: translateY(-8vh) scale(1); opacity: 0; }
-    }
-
-    /* ── Pulsing rings around card ───────────────────────────────────────────── */
-    .rings { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; pointer-events: none; z-index: 2; }
-
-    .ring {
-      position: absolute;
-      border-radius: 50%;
-      border: 1px solid rgba(58, 143, 181, 0.14);
-      animation: ring-pulse 5s ease-in-out infinite;
-    }
-
-    .ring:nth-child(2) { animation-delay: 1.8s; }
-    .ring:nth-child(3) { animation-delay: 3.2s; }
-
-    @keyframes ring-pulse {
-      0%, 100% { opacity: 0.2; transform: scale(1); }
-      50%       { opacity: 0.5; transform: scale(1.04); }
-    }
-
-    /* ── Content ─────────────────────────────────────────────────────────────── */
-    .content {
-      position: relative;
-      z-index: 10;
-      text-align: center;
-      padding: 24px;
-    }
-
-    .card {
-      background: var(--glass-bg);
-      backdrop-filter: blur(28px);
-      -webkit-backdrop-filter: blur(28px);
-      border: 1px solid var(--glass-bd);
-      border-radius: 28px;
-      padding: 60px 80px;
-      box-shadow:
-        0 12px 48px rgba(80, 150, 200, 0.12),
-        0 2px 8px  rgba(80, 150, 200, 0.08),
-        inset 0 1px 0 rgba(255, 255, 255, 0.95);
-      animation: appear 1.4s cubic-bezier(0.16, 1, 0.3, 1) both;
-      position: relative;
-    }
-
-    /* Corner brackets */
-    .card::before,
-    .card::after {
-      content: '';
-      position: absolute;
-      width: 18px; height: 18px;
-      opacity: 0.4;
-    }
-    .card::before {
-      top: 16px; left: 16px;
-      border-top: 1.5px solid var(--accent);
-      border-left: 1.5px solid var(--accent);
-    }
-    .card::after {
-      bottom: 16px; right: 16px;
-      border-bottom: 1.5px solid var(--accent);
-      border-right: 1.5px solid var(--accent);
-    }
-
-    @keyframes appear {
-      from { opacity: 0; transform: translateY(28px) scale(0.97); }
-      to   { opacity: 1; transform: translateY(0)   scale(1); }
-    }
-
-    /* Brand label */
-    .label {
-      font-size: 11px;
-      font-weight: 500;
-      letter-spacing: 4px;
-      text-transform: uppercase;
-      color: var(--accent);
-      opacity: 0.75;
-      margin-bottom: 28px;
-    }
-
-    /* Main headline */
-    .headline {
-      font-size: clamp(56px, 10vw, 96px);
-      font-weight: 200;
-      letter-spacing: 0.25em;
-      line-height: 1;
-      margin-bottom: 20px;
-      background: linear-gradient(140deg, #1a2c3d 0%, #2a5070 45%, #1a3a50 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-    }
-
-    /* Divider */
-    .divider {
-      margin: 0 auto 22px;
-      width: 40px; height: 1px;
-      background: linear-gradient(90deg, transparent, var(--accent), var(--accent2), transparent);
-    }
-
-    /* Three pillars */
-    .pillars {
-      display: flex;
-      justify-content: center;
-      gap: 32px;
-      margin-bottom: 36px;
-    }
-
-    .pillar {
+      min-height: 100vh;
+      padding: 22px;
       display: flex;
       flex-direction: column;
+    }
+
+    .topbar {
+      width: min(100%, var(--max));
+      margin: 0 auto;
+      min-height: 60px;
+      display: flex;
       align-items: center;
-      gap: 6px;
+      justify-content: space-between;
+      gap: 18px;
     }
 
-    .pillar-zh {
-      font-size: 18px;
-      font-weight: 300;
-      letter-spacing: 0.25em;
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 0;
       color: var(--text);
+      text-decoration: none;
     }
 
-    .pillar-en {
-      font-size: 9px;
-      letter-spacing: 3px;
-      color: var(--accent);
-      opacity: 0.6;
-      text-transform: uppercase;
+    .brand-mark {
+      width: 38px;
+      height: 38px;
+      display: grid;
+      place-items: center;
+      border: 1px solid var(--line-strong);
+      border-radius: var(--radius);
+      background: linear-gradient(145deg, rgba(86, 217, 255, 0.18), rgba(139, 245, 198, 0.08));
+      box-shadow: 0 18px 52px var(--shadow);
+      font-weight: 800;
     }
 
-    .pillar-dot {
-      width: 4px; height: 4px;
-      border-radius: 50%;
-      background: linear-gradient(135deg, var(--accent), var(--accent2));
-      margin-bottom: 2px;
+    .brand-text {
+      display: grid;
+      gap: 2px;
+      min-width: 0;
     }
 
-    .pillar-divider {
-      width: 1px;
-      height: 36px;
-      background: linear-gradient(180deg, transparent, rgba(58,143,181,0.25), transparent);
-      align-self: center;
+    .brand-name {
+      font-size: 1rem;
+      font-weight: 800;
+      line-height: 1.1;
     }
 
-    /* Tagline below pillars */
-    .tagline {
-      font-size: 13px;
+    .brand-line {
+      font-size: 0.78rem;
       color: var(--muted);
-      letter-spacing: 0.15em;
-      line-height: 1.8;
-      margin-bottom: 40px;
-      opacity: 0.8;
+      line-height: 1.2;
+      white-space: nowrap;
     }
 
-    .tagline em {
-      font-style: normal;
-      font-size: 10px;
-      letter-spacing: 3px;
-      opacity: 0.55;
-      display: block;
-      margin-top: 4px;
-      text-transform: uppercase;
+    .controls {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 10px;
+      flex-wrap: wrap;
     }
 
-    /* CTA button */
-    .btn {
+    .segmented {
+      display: inline-flex;
+      align-items: center;
+      padding: 3px;
+      gap: 3px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: rgba(8, 18, 32, 0.28);
+      backdrop-filter: blur(18px);
+    }
+
+    body[data-theme="light"] .segmented {
+      background: rgba(255, 255, 255, 0.54);
+    }
+
+    .toggle-option {
+      min-width: 52px;
+      min-height: 32px;
+      border: 0;
+      border-radius: 6px;
+      color: var(--muted);
+      background: transparent;
+      font: inherit;
+      font-size: 0.82rem;
+      cursor: pointer;
+    }
+
+    .toggle-option.is-active {
+      color: var(--text);
+      background: var(--panel-strong);
+      box-shadow: 0 8px 20px var(--shadow);
+    }
+
+    .portal {
+      width: min(100%, var(--max));
+      margin: auto;
+      padding: 54px 0 34px;
+    }
+
+    .hero {
+      max-width: 920px;
+    }
+
+    .eyebrow {
       display: inline-flex;
       align-items: center;
       gap: 10px;
-      padding: 13px 32px;
-      border-radius: 40px;
-      border: 1px solid rgba(58, 143, 181, 0.35);
-      color: var(--accent);
-      text-decoration: none;
-      font-size: 13px;
-      letter-spacing: 2px;
-      background: rgba(58, 143, 181, 0.06);
-      transition: all 0.3s ease;
+      margin-bottom: 18px;
+      color: var(--accent-2);
+      font-size: 0.88rem;
+      font-weight: 700;
     }
 
-    .btn:hover {
-      background: rgba(58, 143, 181, 0.13);
-      border-color: rgba(58, 143, 181, 0.65);
-      transform: translateY(-2px);
-      box-shadow: 0 6px 20px rgba(58, 143, 181, 0.18);
+    .eyebrow::before {
+      content: "";
+      width: 34px;
+      height: 1px;
+      background: var(--accent-2);
     }
 
-    .btn svg { transition: transform 0.3s ease; }
-    .btn:hover svg { transform: translateX(4px); }
-
-    .btn-brand {
-      font-size: 15px;
-      font-weight: 600;
-      letter-spacing: 1px;
-      color: var(--accent);
+    h1 {
+      margin: 0;
+      max-width: 780px;
+      color: var(--soft);
+      font-size: 4.15rem;
+      line-height: 1.02;
+      font-weight: 860;
     }
 
-    .btn-sep {
-      display: inline-block;
-      width: 1px;
-      height: 14px;
-      background: rgba(58, 143, 181, 0.3);
-      margin: 0 2px;
-    }
-
-    /* Footer */
-    footer {
-      position: absolute;
-      bottom: 20px; left: 0; right: 0;
-      text-align: center;
-      font-size: 11px;
-      letter-spacing: 2px;
+    .lead {
+      max-width: 720px;
+      margin: 22px 0 0;
       color: var(--muted);
-      opacity: 0.4;
-      z-index: 10;
+      font-size: 1.12rem;
+      line-height: 1.78;
     }
 
-    /* Responsive */
-    @media (max-width: 560px) {
-      .card { padding: 44px 32px; }
-      .headline { letter-spacing: 0.18em; }
+    .hero-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-top: 30px;
+      flex-wrap: wrap;
+    }
+
+    .action {
+      min-height: 44px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 0 18px;
+      border: 1px solid var(--line-strong);
+      border-radius: var(--radius);
+      color: var(--text);
+      background: var(--panel);
+      text-decoration: none;
+      font-weight: 750;
+      box-shadow: 0 14px 34px var(--shadow);
+      transition: transform 160ms ease, border-color 160ms ease, background 160ms ease;
+    }
+
+    .action:hover,
+    .service:hover {
+      transform: translateY(-2px);
+      border-color: var(--accent);
+    }
+
+    .action.primary {
+      color: #03121d;
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      border-color: transparent;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 44px;
+    }
+
+    .stat {
+      min-height: 90px;
+      padding: 16px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: rgba(8, 18, 32, 0.36);
+      backdrop-filter: blur(18px);
+    }
+
+    body[data-theme="light"] .stat {
+      background: rgba(255, 255, 255, 0.58);
+    }
+
+    .stat-code {
+      color: var(--accent);
+      font-size: 0.82rem;
+      font-weight: 800;
+      margin-bottom: 8px;
+    }
+
+    .stat-text {
+      color: var(--text);
+      font-size: 0.95rem;
+      font-weight: 720;
+      line-height: 1.45;
+    }
+
+    .services {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 16px;
+      margin-top: 24px;
+    }
+
+    .service {
+      position: relative;
+      min-height: 248px;
+      padding: 22px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--panel);
+      backdrop-filter: blur(22px);
+      color: var(--text);
+      text-decoration: none;
+      box-shadow: 0 18px 48px var(--shadow);
+      overflow: hidden;
+      transition: transform 160ms ease, border-color 160ms ease, background 160ms ease;
+    }
+
+    .service::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        linear-gradient(135deg, rgba(86, 217, 255, 0.16), transparent 44%),
+        linear-gradient(315deg, rgba(139, 245, 198, 0.1), transparent 42%);
+      opacity: 0.82;
+      pointer-events: none;
+    }
+
+    .service::after {
+      content: "";
+      position: absolute;
+      left: 22px;
+      right: 22px;
+      bottom: 18px;
+      height: 1px;
+      background: linear-gradient(90deg, var(--accent), transparent);
+      opacity: 0.62;
+    }
+
+    .service-inner {
+      position: relative;
+      z-index: 1;
+      min-height: 204px;
+      display: grid;
+      grid-template-rows: auto auto 1fr auto;
+      gap: 14px;
+    }
+
+    .service-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+    }
+
+    .service-mark {
+      width: 44px;
+      height: 44px;
+      display: grid;
+      place-items: center;
+      border-radius: var(--radius);
+      border: 1px solid var(--line-strong);
+      background: rgba(86, 217, 255, 0.1);
+      color: var(--accent);
+      font-weight: 900;
+    }
+
+    .service-index {
+      color: var(--muted);
+      font-size: 0.85rem;
+      font-weight: 760;
+    }
+
+    .service h2 {
+      margin: 0;
+      font-size: 1.32rem;
+      line-height: 1.2;
+    }
+
+    .service p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.98rem;
+      line-height: 1.66;
+    }
+
+    .service-cta {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--accent);
+      font-weight: 760;
+      font-size: 0.92rem;
+    }
+
+    .service-cta::after {
+      content: ">";
+      font-weight: 900;
+    }
+
+    .footer {
+      width: min(100%, var(--max));
+      margin: 0 auto;
+      padding: 20px 0 2px;
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      color: var(--muted);
+      font-size: 0.84rem;
+    }
+
+    .status {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .status::before {
+      content: "";
+      width: 7px;
+      height: 7px;
+      border-radius: 99px;
+      background: var(--accent-2);
+      box-shadow: 0 0 18px var(--accent-2);
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation: none !important;
+        scroll-behavior: auto !important;
+      }
+    }
+
+    @media (max-width: 920px) {
+      .portal {
+        padding-top: 32px;
+      }
+
+      h1 {
+        font-size: 3.25rem;
+      }
+
+      .stats,
+      .services {
+        grid-template-columns: 1fr;
+      }
+
+      .service {
+        min-height: 216px;
+      }
+
+      .service-inner {
+        min-height: 172px;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .page {
+        padding: 16px;
+      }
+
+      .topbar {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      .controls {
+        width: 100%;
+        justify-content: space-between;
+      }
+
+      .segmented {
+        flex: 1;
+      }
+
+      .toggle-option {
+        flex: 1;
+        min-width: 0;
+      }
+
+      h1 {
+        font-size: 2.45rem;
+      }
+
+      .lead {
+        font-size: 1rem;
+      }
+
+      .action {
+        width: 100%;
+      }
+
+      .footer {
+        flex-direction: column;
+      }
     }
   </style>
 </head>
-<body>
+<body data-theme="dark">
+  <canvas class="network" id="network" aria-hidden="true"></canvas>
 
-  <!-- Landscape -->
-  <div class="landscape">
-    <div class="mt mt-far"></div>
-    <div class="mt mt-mid"></div>
-    <div class="mt mt-near"></div>
-  </div>
-  <div class="mist"></div>
-
-  <!-- Particles -->
-  <div class="particles" id="pts"></div>
-
-  <!-- Rings -->
-  <div class="rings">
-    <div class="ring" style="width:360px;height:360px"></div>
-    <div class="ring" style="width:560px;height:560px"></div>
-    <div class="ring" style="width:760px;height:760px"></div>
-  </div>
-
-  <!-- Card -->
-  <div class="content">
-    <div class="card">
-      <div class="label">Ruyin · Private Network</div>
-      <div class="headline">如影随形</div>
-      <div class="divider"></div>
-      <div class="pillars">
-        <div class="pillar">
-          <div class="pillar-dot"></div>
-          <div class="pillar-zh">随时</div>
-          <div class="pillar-en">Anytime</div>
-        </div>
-        <div class="pillar-divider"></div>
-        <div class="pillar">
-          <div class="pillar-dot"></div>
-          <div class="pillar-zh">随地</div>
-          <div class="pillar-en">Anywhere</div>
-        </div>
-        <div class="pillar-divider"></div>
-        <div class="pillar">
-          <div class="pillar-dot"></div>
-          <div class="pillar-zh">随身</div>
-          <div class="pillar-en">With You</div>
-        </div>
-      </div>
-      <div class="tagline">
-        你的智能影子，形影不离
-        <em>Your intelligent shadow · Always beside you</em>
-      </div>
-      <a class="btn" href="https://{{ EDGE_DOMAIN }}">
-        <span class="btn-brand">ruyin</span>
-        <span class="btn-sep"></span>
-        进入服务
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M5 12h14"/><path d="M12 5l7 7-7 7"/>
-        </svg>
+  <div class="page">
+    <header class="topbar" aria-label="Ruyin">
+      <a class="brand" href="https://{{ APEX_DOMAIN }}" aria-label="Ruyin home">
+        <span class="brand-mark">R</span>
+        <span class="brand-text">
+          <span class="brand-name">Ruyin</span>
+          <span class="brand-line" data-i18n="brandLine">智能服务门户</span>
+        </span>
       </a>
-    </div>
-  </div>
 
-  <footer>{{ APEX_DOMAIN }} &nbsp;·&nbsp; Private Edge Network</footer>
+      <div class="controls" aria-label="Display controls">
+        <div class="segmented" role="group" aria-label="Language">
+          <button class="toggle-option is-active" type="button" data-lang="zh" aria-pressed="true">中文</button>
+          <button class="toggle-option" type="button" data-lang="en" aria-pressed="false">EN</button>
+        </div>
+        <div class="segmented" role="group" aria-label="Theme">
+          <button class="toggle-option is-active" type="button" data-theme-choice="dark" aria-pressed="true" data-i18n="themeDark">深色</button>
+          <button class="toggle-option" type="button" data-theme-choice="light" aria-pressed="false" data-i18n="themeLight">浅色</button>
+        </div>
+      </div>
+    </header>
+
+    <main class="portal">
+      <section class="hero" aria-labelledby="hero-title">
+        <div class="eyebrow" data-i18n="eyebrow">Autonomous Secure Edge</div>
+        <h1 id="hero-title" data-i18n="title">如影智能网络入口</h1>
+        <p class="lead" data-i18n="lead">
+          面向个人工作流的安全服务门户，将智能应用、代理网络与密码柜统一在一个清晰入口。
+        </p>
+        <div class="hero-actions">
+          <a class="action primary" href="https://hermes.vxture.com" data-i18n="primaryAction">进入 Hermes</a>
+          <a class="action" href="https://{{ EDGE_DOMAIN }}" data-i18n="secondaryAction">打开 Proxy</a>
+        </div>
+      </section>
+
+      <section class="stats" aria-label="Ruyin capabilities">
+        <div class="stat">
+          <div class="stat-code">01</div>
+          <div class="stat-text" data-i18n="statOne">智能工作流聚合</div>
+        </div>
+        <div class="stat">
+          <div class="stat-code">02</div>
+          <div class="stat-text" data-i18n="statTwo">安全边缘网络</div>
+        </div>
+        <div class="stat">
+          <div class="stat-code">03</div>
+          <div class="stat-text" data-i18n="statThree">个人凭据保护</div>
+        </div>
+      </section>
+
+      <section class="services" aria-label="Ruyin services">
+        <a class="service" href="https://hermes.vxture.com">
+          <span class="service-inner">
+            <span class="service-top">
+              <span class="service-mark">H</span>
+              <span class="service-index">01</span>
+            </span>
+            <h2 data-i18n="hermesTitle">Hermes 智能工作台</h2>
+            <p data-i18n="hermesText">进入 Hermes，连接任务编排、智能协作与自动化工作流。</p>
+            <span class="service-cta" data-i18n="openService">打开服务</span>
+          </span>
+        </a>
+
+        <a class="service" href="https://{{ EDGE_DOMAIN }}">
+          <span class="service-inner">
+            <span class="service-top">
+              <span class="service-mark">P</span>
+              <span class="service-index">02</span>
+            </span>
+            <h2 data-i18n="proxyTitle">Proxy 私有代理网络</h2>
+            <p data-i18n="proxyText">通过 Ruyin Proxy 访问订阅、节点与安全网络能力。</p>
+            <span class="service-cta" data-i18n="openService">打开服务</span>
+          </span>
+        </a>
+
+        <a class="service" href="https://{{ PASS_DOMAIN }}">
+          <span class="service-inner">
+            <span class="service-top">
+              <span class="service-mark">K</span>
+              <span class="service-index">03</span>
+            </span>
+            <h2 data-i18n="passTitle">个人密码柜</h2>
+            <p data-i18n="passText">管理账号、密钥与敏感信息，将重要凭据放在受保护的位置。</p>
+            <span class="service-cta" data-i18n="openService">打开服务</span>
+          </span>
+        </a>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <span>{{ APEX_DOMAIN }}</span>
+      <span class="status" data-i18n="status">Edge portal online</span>
+    </footer>
+  </div>
 
   <script>
     (function () {
-      var c = document.getElementById('pts');
-      for (var i = 0; i < 20; i++) {
-        var el = document.createElement('div');
-        el.className = 'p';
-        var s = Math.random() * 3 + 2;
-        el.style.cssText = [
-          'width:'  + s + 'px',
-          'height:' + s + 'px',
-          'left:'   + (Math.random() * 100) + '%',
-          'animation-duration:' + (Math.random() * 14 + 10) + 's',
-          'animation-delay:'    + (Math.random() * 12) + 's',
-          'opacity:' + (Math.random() * 0.35 + 0.1)
-        ].join(';');
-        c.appendChild(el);
+      var copy = {
+        zh: {
+          brandLine: "智能服务门户",
+          themeDark: "深色",
+          themeLight: "浅色",
+          eyebrow: "Autonomous Secure Edge",
+          title: "如影智能网络入口",
+          lead: "面向个人工作流的安全服务门户，将智能应用、代理网络与密码柜统一在一个清晰入口。",
+          primaryAction: "进入 Hermes",
+          secondaryAction: "打开 Proxy",
+          statOne: "智能工作流聚合",
+          statTwo: "安全边缘网络",
+          statThree: "个人凭据保护",
+          hermesTitle: "Hermes 智能工作台",
+          hermesText: "进入 Hermes，连接任务编排、智能协作与自动化工作流。",
+          proxyTitle: "Proxy 私有代理网络",
+          proxyText: "通过 Ruyin Proxy 访问订阅、节点与安全网络能力。",
+          passTitle: "个人密码柜",
+          passText: "管理账号、密钥与敏感信息，将重要凭据放在受保护的位置。",
+          openService: "打开服务",
+          status: "Edge portal online"
+        },
+        en: {
+          brandLine: "Intelligent service portal",
+          themeDark: "Dark",
+          themeLight: "Light",
+          eyebrow: "Autonomous Secure Edge",
+          title: "Ruyin intelligent network gateway",
+          lead: "A secure portal for personal workflows, unifying intelligent apps, private proxy access, and a password vault.",
+          primaryAction: "Enter Hermes",
+          secondaryAction: "Open Proxy",
+          statOne: "Intelligent workflow hub",
+          statTwo: "Secure edge network",
+          statThree: "Private credential vault",
+          hermesTitle: "Hermes workspace",
+          hermesText: "Open Hermes for task orchestration, intelligent collaboration, and automated workflows.",
+          proxyTitle: "Proxy private network",
+          proxyText: "Use Ruyin Proxy for subscriptions, nodes, and secure network access.",
+          passTitle: "Personal password vault",
+          passText: "Manage accounts, keys, and sensitive information in a protected vault.",
+          openService: "Open service",
+          status: "Edge portal online"
+        }
+      };
+
+      var html = document.documentElement;
+      var body = document.body;
+
+      function setLang(lang) {
+        var table = copy[lang] || copy.zh;
+        html.lang = lang === "zh" ? "zh-CN" : "en";
+        document.querySelectorAll("[data-i18n]").forEach(function (node) {
+          var key = node.getAttribute("data-i18n");
+          if (table[key]) node.textContent = table[key];
+        });
+        document.querySelectorAll("[data-lang]").forEach(function (button) {
+          var active = button.getAttribute("data-lang") === lang;
+          button.classList.toggle("is-active", active);
+          button.setAttribute("aria-pressed", String(active));
+        });
+        localStorage.setItem("ruyin.lang", lang);
       }
+
+      function setTheme(theme) {
+        body.setAttribute("data-theme", theme);
+        document.querySelectorAll("[data-theme-choice]").forEach(function (button) {
+          var active = button.getAttribute("data-theme-choice") === theme;
+          button.classList.toggle("is-active", active);
+          button.setAttribute("aria-pressed", String(active));
+        });
+        localStorage.setItem("ruyin.theme", theme);
+      }
+
+      document.querySelectorAll("[data-lang]").forEach(function (button) {
+        button.addEventListener("click", function () {
+          setLang(button.getAttribute("data-lang"));
+        });
+      });
+
+      document.querySelectorAll("[data-theme-choice]").forEach(function (button) {
+        button.addEventListener("click", function () {
+          setTheme(button.getAttribute("data-theme-choice"));
+        });
+      });
+
+      setTheme(localStorage.getItem("ruyin.theme") || "dark");
+      setLang(localStorage.getItem("ruyin.lang") || "zh");
+
+      var canvas = document.getElementById("network");
+      var ctx = canvas.getContext("2d");
+      var points = [];
+      var reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+      if (!ctx) return;
+
+      function resize() {
+        var ratio = Math.min(window.devicePixelRatio || 1, 2);
+        canvas.width = Math.floor(window.innerWidth * ratio);
+        canvas.height = Math.floor(window.innerHeight * ratio);
+        canvas.style.width = window.innerWidth + "px";
+        canvas.style.height = window.innerHeight + "px";
+        ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+        seed();
+      }
+
+      function seed() {
+        var count = window.innerWidth < 720 ? 34 : 58;
+        points = [];
+        for (var i = 0; i < count; i++) {
+          points.push({
+            x: Math.random() * window.innerWidth,
+            y: Math.random() * window.innerHeight,
+            vx: (Math.random() - 0.5) * 0.32,
+            vy: (Math.random() - 0.5) * 0.32
+          });
+        }
+      }
+
+      function color(alpha) {
+        return body.getAttribute("data-theme") === "light"
+          ? "rgba(0, 119, 168, " + alpha + ")"
+          : "rgba(86, 217, 255, " + alpha + ")";
+      }
+
+      function draw() {
+        ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+        for (var i = 0; i < points.length; i++) {
+          var p = points[i];
+          if (!reduce) {
+            p.x += p.vx;
+            p.y += p.vy;
+            if (p.x < -20) p.x = window.innerWidth + 20;
+            if (p.x > window.innerWidth + 20) p.x = -20;
+            if (p.y < -20) p.y = window.innerHeight + 20;
+            if (p.y > window.innerHeight + 20) p.y = -20;
+          }
+          ctx.fillStyle = color(0.58);
+          ctx.fillRect(p.x, p.y, 2, 2);
+
+          for (var j = i + 1; j < points.length; j++) {
+            var q = points[j];
+            var dx = p.x - q.x;
+            var dy = p.y - q.y;
+            var distance = Math.sqrt(dx * dx + dy * dy);
+            if (distance < 138) {
+              ctx.strokeStyle = color((1 - distance / 138) * 0.22);
+              ctx.lineWidth = 1;
+              ctx.beginPath();
+              ctx.moveTo(p.x, p.y);
+              ctx.lineTo(q.x, q.y);
+              ctx.stroke();
+            }
+          }
+        }
+        if (!reduce) requestAnimationFrame(draw);
+      }
+
+      window.addEventListener("resize", resize);
+      resize();
+      draw();
     })();
   </script>
-
 </body>
 </html>
