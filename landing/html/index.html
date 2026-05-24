@@ -133,41 +133,53 @@
       display: flex;
       align-items: center;
       justify-content: flex-end;
-      gap: 10px;
-      flex-wrap: wrap;
+      gap: 8px;
     }
 
-    .segmented {
-      display: inline-flex;
-      align-items: center;
-      padding: 3px;
-      gap: 3px;
+    .icon-button {
+      width: 36px;
+      height: 36px;
+      display: inline-grid;
+      place-items: center;
       border: 1px solid var(--line);
       border-radius: var(--radius);
-      background: rgba(8, 18, 32, 0.28);
-      backdrop-filter: blur(18px);
+      color: var(--muted);
+      background: rgba(8, 18, 32, 0.24);
+      backdrop-filter: blur(16px);
+      cursor: pointer;
+      transition: transform 160ms ease, color 160ms ease, border-color 160ms ease, background 160ms ease;
     }
 
-    body[data-theme="light"] .segmented {
+    body[data-theme="light"] .icon-button {
       background: rgba(255, 255, 255, 0.54);
     }
 
-    .toggle-option {
-      min-width: 52px;
-      min-height: 32px;
-      border: 0;
-      border-radius: 6px;
-      color: var(--muted);
-      background: transparent;
-      font: inherit;
-      font-size: 0.82rem;
-      cursor: pointer;
+    .icon-button:hover {
+      color: var(--text);
+      border-color: var(--line-strong);
+      transform: translateY(-1px);
     }
 
-    .toggle-option.is-active {
-      color: var(--text);
-      background: var(--panel-strong);
-      box-shadow: 0 8px 20px var(--shadow);
+    .icon-button svg {
+      width: 17px;
+      height: 17px;
+      stroke: currentColor;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      fill: none;
+    }
+
+    .theme-icon-moon {
+      display: none;
+    }
+
+    body[data-theme="light"] .theme-icon-sun {
+      display: none;
+    }
+
+    body[data-theme="light"] .theme-icon-moon {
+      display: block;
     }
 
     .portal {
@@ -388,16 +400,7 @@
 
       .controls {
         width: 100%;
-        justify-content: space-between;
-      }
-
-      .segmented {
-        flex: 1;
-      }
-
-      .toggle-option {
-        flex: 1;
-        min-width: 0;
+        justify-content: flex-end;
       }
 
       .signature {
@@ -428,14 +431,29 @@
       </a>
 
       <div class="controls" aria-label="Display controls">
-        <div class="segmented" role="group" aria-label="Language">
-          <button class="toggle-option is-active" type="button" data-lang="zh" aria-pressed="true">中文</button>
-          <button class="toggle-option" type="button" data-lang="en" aria-pressed="false">EN</button>
-        </div>
-        <div class="segmented" role="group" aria-label="Theme">
-          <button class="toggle-option is-active" type="button" data-theme-choice="dark" aria-pressed="true" data-i18n="themeDark">深色</button>
-          <button class="toggle-option" type="button" data-theme-choice="light" aria-pressed="false" data-i18n="themeLight">浅色</button>
-        </div>
+        <button class="icon-button" type="button" id="lang-toggle" aria-label="Switch language" title="Switch language">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <circle cx="12" cy="12" r="10"></circle>
+            <path d="M2 12h20"></path>
+            <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+          </svg>
+        </button>
+        <button class="icon-button" type="button" id="theme-toggle" aria-label="Switch theme" title="Switch theme">
+          <svg class="theme-icon-moon" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M21 12.8A8.5 8.5 0 1 1 11.2 3 6.7 6.7 0 0 0 21 12.8z"></path>
+          </svg>
+          <svg class="theme-icon-sun" viewBox="0 0 24 24" aria-hidden="true">
+            <circle cx="12" cy="12" r="4"></circle>
+            <path d="M12 2v2"></path>
+            <path d="M12 20v2"></path>
+            <path d="m4.93 4.93 1.41 1.41"></path>
+            <path d="m17.66 17.66 1.41 1.41"></path>
+            <path d="M2 12h2"></path>
+            <path d="M20 12h2"></path>
+            <path d="m6.34 17.66-1.41 1.41"></path>
+            <path d="m19.07 4.93-1.41 1.41"></path>
+          </svg>
+        </button>
       </div>
     </header>
 
@@ -501,8 +519,10 @@
       var copy = {
         zh: {
           brandLine: "智能服务门户",
-          themeDark: "深色",
-          themeLight: "浅色",
+          langToEn: "切换到英文",
+          langToZh: "切换到中文",
+          themeToDark: "切换到深色主题",
+          themeToLight: "切换到浅色主题",
           eyebrow: "Ruyin Digital Entry",
           title: "如影随形",
           lead: "如影智能网络入口，连接智能工作台、代理网络与个人密码柜。",
@@ -517,8 +537,10 @@
         },
         en: {
           brandLine: "Intelligent service portal",
-          themeDark: "Dark",
-          themeLight: "Light",
+          langToEn: "Switch to English",
+          langToZh: "Switch to Chinese",
+          themeToDark: "Switch to dark theme",
+          themeToLight: "Switch to light theme",
           eyebrow: "Ruyin Digital Entry",
           title: "Ruyin, always with you",
           lead: "The Ruyin intelligent network entry for workspace, proxy access, and your personal password vault.",
@@ -536,6 +558,24 @@
       var html = document.documentElement;
       var body = document.body;
 
+      function updateControlLabels() {
+        var lang = html.lang === "zh-CN" ? "zh" : "en";
+        var table = copy[lang] || copy.zh;
+        var theme = body.getAttribute("data-theme") || "dark";
+        var langToggle = document.getElementById("lang-toggle");
+        var themeToggle = document.getElementById("theme-toggle");
+        if (langToggle) {
+          var langLabel = lang === "zh" ? table.langToEn : table.langToZh;
+          langToggle.setAttribute("aria-label", langLabel);
+          langToggle.setAttribute("title", langLabel);
+        }
+        if (themeToggle) {
+          var themeLabel = theme === "dark" ? table.themeToLight : table.themeToDark;
+          themeToggle.setAttribute("aria-label", themeLabel);
+          themeToggle.setAttribute("title", themeLabel);
+        }
+      }
+
       function setLang(lang) {
         var table = copy[lang] || copy.zh;
         html.lang = lang === "zh" ? "zh-CN" : "en";
@@ -543,11 +583,7 @@
           var key = node.getAttribute("data-i18n");
           if (table[key]) node.textContent = table[key];
         });
-        document.querySelectorAll("[data-lang]").forEach(function (button) {
-          var active = button.getAttribute("data-lang") === lang;
-          button.classList.toggle("is-active", active);
-          button.setAttribute("aria-pressed", String(active));
-        });
+        updateControlLabels();
         localStorage.setItem("ruyin.lang", lang);
       }
 
@@ -559,24 +595,16 @@
             ? "assets/brand/ruyin-light.png"
             : "assets/brand/ruyin-dark.png";
         }
-        document.querySelectorAll("[data-theme-choice]").forEach(function (button) {
-          var active = button.getAttribute("data-theme-choice") === theme;
-          button.classList.toggle("is-active", active);
-          button.setAttribute("aria-pressed", String(active));
-        });
+        updateControlLabels();
         localStorage.setItem("ruyin.theme", theme);
       }
 
-      document.querySelectorAll("[data-lang]").forEach(function (button) {
-        button.addEventListener("click", function () {
-          setLang(button.getAttribute("data-lang"));
-        });
+      document.getElementById("lang-toggle").addEventListener("click", function () {
+        setLang(html.lang === "zh-CN" ? "en" : "zh");
       });
 
-      document.querySelectorAll("[data-theme-choice]").forEach(function (button) {
-        button.addEventListener("click", function () {
-          setTheme(button.getAttribute("data-theme-choice"));
-        });
+      document.getElementById("theme-toggle").addEventListener("click", function () {
+        setTheme(body.getAttribute("data-theme") === "light" ? "dark" : "light");
       });
 
       setTheme(localStorage.getItem("ruyin.theme") || "dark");
