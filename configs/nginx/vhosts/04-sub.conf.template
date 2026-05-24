@@ -8,15 +8,21 @@ server {
     include /etc/nginx/snippets/ssl-params.conf;
     include /etc/nginx/snippets/security-headers.conf;
 
-    # Only expose subscription paths — no admin UI leaked here
-    location ~ ^/sub/ {
+    # Clean subscription URL: /{username}-{token}
+    # Rewrites to Marzban's internal path /sub/{token}/clash-meta.
+    # $1 = username (for profile-title header), $2 = Marzban subscription token.
+    location ~ "^/([a-zA-Z0-9_]{1,32})-([^/\s]{20,})$" {
         limit_req zone=sub_limit burst=10 nodelay;
-        proxy_pass https://umbra-marzban:8000;
+        proxy_pass https://umbra-marzban:8000/sub/$2/clash-meta;
         proxy_ssl_verify off;
         include /etc/nginx/snippets/proxy-headers.conf;
+        # Override Marzban's profile-title (which JSON-escapes the username)
+        # with a clean {username} value that Clash displays correctly.
+        proxy_hide_header profile-title;
+        add_header profile-title "Ruyin-$1";
     }
 
-    # Block all other paths (including /dashboard, /api/admin, etc.)
+    # Block all other paths — /sub/ base URLs, /dashboard, /api/admin, etc.
     location / {
         return 404;
     }

@@ -137,7 +137,7 @@ ctx.verify_mode = ssl.CERT_NONE
 
 payload = json.dumps({
     "VLESS_TCP_REALITY": [{
-        "remark": "{USERNAME}",
+        "remark": "${NODE_NAME}",
         "address": "${EDGE_DOMAIN}",
         "port": 443,
         "sni": "${REALITY_SNI}",
@@ -214,7 +214,8 @@ PYEOF
 
   if [[ "$exists" != "NOT_FOUND" ]]; then
     log_info "User $username already exists — skipping"
-    SUB_URLS[$username]="${exists}/clash-meta"
+    token="${exists##*/sub/}"
+    SUB_URLS[$username]="${SUBSCRIPTION_URL_PREFIX}/${username}-${token}"
     (( ++SKIPPED ))
     continue
   fi
@@ -254,7 +255,8 @@ except Exception as e:
 PYEOF
 )
 
-  SUB_URLS[$username]="${sub_url}/clash-meta"
+  token="${sub_url##*/sub/}"
+  SUB_URLS[$username]="${SUBSCRIPTION_URL_PREFIX}/${username}-${token}"
   log_ok "Created: $username"
   (( ++CREATED ))
 done
