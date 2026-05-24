@@ -48,6 +48,7 @@ services:
       UVICORN_PORT: "8000"
       UVICORN_SSL_CERTFILE: "/var/lib/marzban/tls/cert.pem"
       UVICORN_SSL_KEYFILE: "/var/lib/marzban/tls/key.pem"
+      UVICORN_SSL_CA_TYPE: "${MARZBAN_SSL_CA_TYPE:-public}"
       SQLALCHEMY_DATABASE_URL: "sqlite:////var/lib/marzban/db.sqlite3"
       XRAY_JSON: "/var/lib/marzban/xray_config.json"
       XRAY_EXECUTABLE_PATH: "/usr/local/bin/xray"
@@ -87,5 +88,4 @@ services:
       - ${DATA_DIR}/portal/html:/usr/share/nginx/html:ro
     networks:
       - umbra-net
-
 
