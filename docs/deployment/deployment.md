@@ -232,7 +232,7 @@ See Verification Checklist below.
 
 ### `07-backup.sh`
 
-See `operations.md`.
+See `../operations/operations.md`.
 
 ---
 

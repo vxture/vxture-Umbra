@@ -89,11 +89,18 @@ Phase 4 — Hardening
 | Document | Content |
 |----------|---------|
 | [`agent.md`](agent.md) | **This file.** Identity, service inventory, domain map, constraints |
-| [`architecture.md`](architecture.md) | Traffic flow, SNI routing, container topology, directory layout |
-| [`modules.md`](modules.md) | Per-service spec: config, volumes, ports, environment variables |
-| [`design.md`](design.md) | Design decisions: security model, B++ rules, subscription design |
-| [`deployment.md`](deployment.md) | Deploy steps, .env reference, verification checklist, migration |
-| [`operations.md`](operations.md) | Backup, rollback, cert renewal, user management, monitoring |
+| [`specs/product.md`](specs/product.md) | Product scope and non-goals |
+| [`specs/domains.md`](specs/domains.md) | Domain responsibilities and public URL contracts |
+| [`specs/security.md`](specs/security.md) | Security boundaries and certificate modes |
+| [`design/architecture.md`](design/architecture.md) | Traffic flow, SNI routing, container topology, directory layout |
+| [`design/modules.md`](design/modules.md) | Per-service spec: config, volumes, ports, environment variables |
+| [`design/decisions.md`](design/decisions.md) | Design decisions: security model, B++ rules, subscription design |
+| [`implementation/repository.md`](implementation/repository.md) | Current repository layout and source-of-truth paths |
+| [`implementation/config-rendering.md`](implementation/config-rendering.md) | Template renderer inputs, syntax, and outputs |
+| [`implementation/scripts.md`](implementation/scripts.md) | Deployment script entrypoints and ordered steps |
+| [`implementation/subscriptions.md`](implementation/subscriptions.md) | Native Marzban subscription rules and Clash title behavior |
+| [`deployment/deployment.md`](deployment/deployment.md) | Deploy steps, .env reference, verification checklist, migration |
+| [`operations/operations.md`](operations/operations.md) | Backup, rollback, cert renewal, user management, monitoring |
 
 ---
 
@@ -103,7 +110,7 @@ Phase 4 — Hardening
 2. **All traffic enters on 443** — Nginx SNI stream routes to correct internal service.
 3. **SQLite** — all services (Marzban, Vaultwarden) use SQLite for data storage. No PostgreSQL.
 4. **Secrets never in Git** — `.env`, keys, certs, DB passwords all stay in `DATA_DIR/private/`.
-5. **console.ruyin.ai is IP-restricted before Marzban login** — see Security Model in `design.md`.
+5. **console.ruyin.ai is IP-restricted before Marzban login** — see `specs/security.md`.
 6. **All containers in one Docker network** — `umbra-net`, internal service discovery by container name.
 7. **Subscription B++ rules built into Marzban template** — no external URL dependencies.
 8. **Microsoft / Cloudflare must NOT be forced to PROXY** in B++ rules.

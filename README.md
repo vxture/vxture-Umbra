@@ -318,4 +318,4 @@ Internet
                                                └─ vault.ruyin.ai    → placeholder
 ```
 
-See [`docs/architecture.md`](docs/architecture.md) for full design reference.
+See [`docs/agent.md`](docs/agent.md) for the AI-maintainer document map and [`docs/design/architecture.md`](docs/design/architecture.md) for the full architecture reference.

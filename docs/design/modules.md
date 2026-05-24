@@ -247,7 +247,7 @@ CLASH_SUBSCRIPTION_TEMPLATE=clash/default.yml
 DATA_DIR/marzban/templates/clash/default.yml
 ```
 
-This file is rendered from `configs/marzban/clash-subscription.j2` — it contains the B++ proxy rules. See `design.md` for full rules content.
+This file is rendered from `configs/marzban/clash-subscription.j2` — it contains the B++ proxy rules. See `decisions.md` and `../implementation/subscriptions.md` for full subscription context.
 
 ### Docker Config
 
