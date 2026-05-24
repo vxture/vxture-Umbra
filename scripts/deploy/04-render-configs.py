@@ -12,6 +12,23 @@ import shutil
 import sys
 from pathlib import Path
 
+TEXT_ASSET_SUFFIXES = {
+    ".conf",
+    ".css",
+    ".html",
+    ".htm",
+    ".js",
+    ".json",
+    ".map",
+    ".md",
+    ".svg",
+    ".template",
+    ".txt",
+    ".xml",
+    ".yaml",
+    ".yml",
+}
+
 # ── Paths ─────────────────────────────────────────────────────────────────────
 SCRIPT_DIR = Path(__file__).resolve().parent
 PROJECT_ROOT = SCRIPT_DIR.parent.parent
@@ -54,9 +71,9 @@ def render(template_text: str, variables: dict) -> str:
 
 def render_file(src: Path, dst: Path, variables: dict, mode: int = 0o644):
     dst.parent.mkdir(parents=True, exist_ok=True)
-    text = src.read_text()
+    text = src.read_text(encoding="utf-8")
     rendered = render(text, variables)
-    dst.write_text(rendered)
+    dst.write_text(rendered, encoding="utf-8")
     os.chmod(dst, mode)
     print(f"[OK]   {src.name}  →  {dst}")
 
@@ -66,6 +83,19 @@ def copy_file(src: Path, dst: Path, mode: int = 0o644):
     shutil.copy2(src, dst)
     os.chmod(dst, mode)
     print(f"[COPY] {src.name}  →  {dst}")
+
+
+# ── Static file rendering ─────────────────────────────────────────────────────
+def render_static_tree(src_dir: Path, dst_dir: Path, variables: dict):
+    for src in sorted(src_dir.rglob("*")):
+        if src.is_dir():
+            continue
+        rel = src.relative_to(src_dir)
+        dst = dst_dir / rel
+        if src.suffix.lower() in TEXT_ASSET_SUFFIXES:
+            render_file(src, dst, variables)
+        else:
+            copy_file(src, dst)
 
 
 # ── Load variables ─────────────────────────────────────────────────────────────
@@ -144,8 +174,7 @@ print("\n── Rendering VPN portal ──────────────�
 portal_src = REPO_DIR / "portal" / "html"
 portal_dst = DATA_DIR / "portal" / "html"
 if portal_src.exists():
-    for f in portal_src.iterdir():
-        render_file(f, portal_dst / f.name, variables)
+    render_static_tree(portal_src, portal_dst, variables)
 else:
     print(f"[WARN] portal/html/ not found in repo — skipping")
 
@@ -154,8 +183,7 @@ landing_src = REPO_DIR / "landing" / "html"
 if landing_src.exists():
     for dst_dir in [DATA_DIR / "nginx" / "html" / "ruyin-landing",
                     DATA_DIR / "nginx" / "html" / "www-ruyin"]:
-        for f in landing_src.iterdir():
-            render_file(f, dst_dir / f.name, variables)
+        render_static_tree(landing_src, dst_dir, variables)
 else:
     print(f"[WARN] landing/html/ not found in repo — skipping")
 

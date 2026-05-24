@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#07101f">
-  <title>如影 Ruyin</title>
+  <title>如影随形 Ruyin</title>
   <style>
     *, *::before, *::after {
       box-sizing: border-box;
@@ -173,18 +173,24 @@
     .portal {
       width: min(100%, var(--max));
       margin: auto;
-      padding: 54px 0 34px;
+      padding: 44px 0 30px;
+      display: grid;
+      gap: 32px;
+      justify-items: center;
+      text-align: center;
     }
 
     .hero {
-      max-width: 920px;
+      width: min(100%, 900px);
+      display: grid;
+      justify-items: center;
     }
 
     .eyebrow {
       display: inline-flex;
       align-items: center;
       gap: 10px;
-      margin-bottom: 18px;
+      margin-bottom: 10px;
       color: var(--accent-2);
       font-size: 0.88rem;
       font-weight: 700;
@@ -197,105 +203,65 @@
       background: var(--accent-2);
     }
 
+    .signature {
+      width: min(74vw, 640px);
+      margin: 0 auto;
+    }
+
+    .signature img {
+      display: block;
+      width: 100%;
+      height: auto;
+      filter: drop-shadow(0 24px 52px rgba(0, 0, 0, 0.34));
+    }
+
+    .signature-light {
+      display: none;
+    }
+
+    body[data-theme="light"] .signature-dark {
+      display: none;
+    }
+
+    body[data-theme="light"] .signature-light {
+      display: block;
+      filter: drop-shadow(0 18px 34px rgba(29, 83, 154, 0.18));
+    }
+
     h1 {
       margin: 0;
-      max-width: 780px;
-      color: var(--soft);
-      font-size: 4.15rem;
-      line-height: 1.02;
-      font-weight: 860;
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      clip: rect(0 0 0 0);
+      white-space: nowrap;
     }
 
     .lead {
-      max-width: 720px;
-      margin: 22px 0 0;
+      max-width: 680px;
+      margin: 10px 0 0;
       color: var(--muted);
-      font-size: 1.12rem;
-      line-height: 1.78;
+      font-size: 1.02rem;
+      line-height: 1.72;
     }
 
-    .hero-actions {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      margin-top: 30px;
-      flex-wrap: wrap;
-    }
-
-    .action {
-      min-height: 44px;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 10px;
-      padding: 0 18px;
-      border: 1px solid var(--line-strong);
-      border-radius: var(--radius);
-      color: var(--text);
-      background: var(--panel);
-      text-decoration: none;
-      font-weight: 750;
-      box-shadow: 0 14px 34px var(--shadow);
-      transition: transform 160ms ease, border-color 160ms ease, background 160ms ease;
-    }
-
-    .action:hover,
     .service:hover {
       transform: translateY(-2px);
       border-color: var(--accent);
     }
 
-    .action.primary {
-      color: #03121d;
-      background: linear-gradient(90deg, var(--accent), var(--accent-2));
-      border-color: transparent;
-    }
-
-    .stats {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 12px;
-      margin-top: 44px;
-    }
-
-    .stat {
-      min-height: 90px;
-      padding: 16px;
-      border: 1px solid var(--line);
-      border-radius: var(--radius);
-      background: rgba(8, 18, 32, 0.36);
-      backdrop-filter: blur(18px);
-    }
-
-    body[data-theme="light"] .stat {
-      background: rgba(255, 255, 255, 0.58);
-    }
-
-    .stat-code {
-      color: var(--accent);
-      font-size: 0.82rem;
-      font-weight: 800;
-      margin-bottom: 8px;
-    }
-
-    .stat-text {
-      color: var(--text);
-      font-size: 0.95rem;
-      font-weight: 720;
-      line-height: 1.45;
-    }
-
     .services {
+      width: min(100%, 940px);
       display: grid;
       grid-template-columns: repeat(3, minmax(0, 1fr));
       gap: 16px;
-      margin-top: 24px;
     }
 
     .service {
       position: relative;
-      min-height: 248px;
-      padding: 22px;
+      min-height: 152px;
+      padding: 18px;
       border: 1px solid var(--line);
       border-radius: var(--radius);
       background: var(--panel);
@@ -309,10 +275,11 @@
 
     .service-inner {
       position: relative;
-      min-height: 204px;
+      min-height: 116px;
       display: grid;
-      grid-template-rows: auto auto 1fr auto;
-      gap: 14px;
+      grid-template-rows: auto auto auto;
+      gap: 10px;
+      text-align: left;
     }
 
     .service-top {
@@ -342,15 +309,15 @@
 
     .service h2 {
       margin: 0;
-      font-size: 1.32rem;
+      font-size: 1.08rem;
       line-height: 1.2;
     }
 
     .service p {
       margin: 0;
       color: var(--muted);
-      font-size: 0.98rem;
-      line-height: 1.66;
+      font-size: 0.9rem;
+      line-height: 1.45;
     }
 
     .service-cta {
@@ -359,7 +326,7 @@
       gap: 8px;
       color: var(--accent);
       font-weight: 760;
-      font-size: 0.92rem;
+      font-size: 0.9rem;
     }
 
     .service-cta::after {
@@ -405,21 +372,16 @@
         padding-top: 32px;
       }
 
-      h1 {
-        font-size: 3.25rem;
-      }
-
-      .stats,
       .services {
         grid-template-columns: 1fr;
       }
 
       .service {
-        min-height: 216px;
+        min-height: 132px;
       }
 
       .service-inner {
-        min-height: 172px;
+        min-height: 96px;
       }
     }
 
@@ -447,16 +409,12 @@
         min-width: 0;
       }
 
-      h1 {
-        font-size: 2.45rem;
+      .signature {
+        width: min(92vw, 520px);
       }
 
       .lead {
         font-size: 1rem;
-      }
-
-      .action {
-        width: 100%;
       }
 
       .footer {
@@ -492,30 +450,15 @@
 
     <main class="portal">
       <section class="hero" aria-labelledby="hero-title">
-        <div class="eyebrow" data-i18n="eyebrow">Autonomous Secure Edge</div>
-        <h1 id="hero-title" data-i18n="title">如影智能网络入口</h1>
+        <div class="eyebrow" data-i18n="eyebrow">Ruyin Digital Entry</div>
+        <div class="signature" aria-hidden="true">
+          <img class="signature-dark" src="assets/brand/ruyin-dark.png" alt="">
+          <img class="signature-light" src="assets/brand/ruyin-light.png" alt="">
+        </div>
+        <h1 id="hero-title" data-i18n="title">如影随形</h1>
         <p class="lead" data-i18n="lead">
-          面向个人工作流的安全服务门户，将智能应用、代理网络与密码柜统一在一个清晰入口。
+          如影智能网络入口，连接智能工作台、代理网络与个人密码柜。
         </p>
-        <div class="hero-actions">
-          <a class="action primary" href="https://hermes.vxture.com" data-i18n="primaryAction">进入 Hermes</a>
-          <a class="action" href="https://{{ EDGE_DOMAIN }}" data-i18n="secondaryAction">打开 Proxy</a>
-        </div>
-      </section>
-
-      <section class="stats" aria-label="Ruyin capabilities">
-        <div class="stat">
-          <div class="stat-code">01</div>
-          <div class="stat-text" data-i18n="statOne">智能工作流聚合</div>
-        </div>
-        <div class="stat">
-          <div class="stat-code">02</div>
-          <div class="stat-text" data-i18n="statTwo">安全边缘网络</div>
-        </div>
-        <div class="stat">
-          <div class="stat-code">03</div>
-          <div class="stat-text" data-i18n="statThree">个人凭据保护</div>
-        </div>
       </section>
 
       <section class="services" aria-label="Ruyin services">
@@ -526,7 +469,7 @@
               <span class="service-index">01</span>
             </span>
             <h2 data-i18n="hermesTitle">Hermes 智能工作台</h2>
-            <p data-i18n="hermesText">进入 Hermes，连接任务编排、智能协作与自动化工作流。</p>
+            <p data-i18n="hermesText">任务编排与智能协作。</p>
             <span class="service-cta" data-i18n="openService">打开服务</span>
           </span>
         </a>
@@ -538,7 +481,7 @@
               <span class="service-index">02</span>
             </span>
             <h2 data-i18n="proxyTitle">Proxy 私有代理网络</h2>
-            <p data-i18n="proxyText">通过 Ruyin Proxy 访问订阅、节点与安全网络能力。</p>
+            <p data-i18n="proxyText">订阅、节点与安全访问。</p>
             <span class="service-cta" data-i18n="openService">打开服务</span>
           </span>
         </a>
@@ -550,7 +493,7 @@
               <span class="service-index">03</span>
             </span>
             <h2 data-i18n="passTitle">个人密码柜</h2>
-            <p data-i18n="passText">管理账号、密钥与敏感信息，将重要凭据放在受保护的位置。</p>
+            <p data-i18n="passText">账号、密钥与敏感信息。</p>
             <span class="service-cta" data-i18n="openService">打开服务</span>
           </span>
         </a>
@@ -570,20 +513,15 @@
           brandLine: "智能服务门户",
           themeDark: "深色",
           themeLight: "浅色",
-          eyebrow: "Autonomous Secure Edge",
-          title: "如影智能网络入口",
-          lead: "面向个人工作流的安全服务门户，将智能应用、代理网络与密码柜统一在一个清晰入口。",
-          primaryAction: "进入 Hermes",
-          secondaryAction: "打开 Proxy",
-          statOne: "智能工作流聚合",
-          statTwo: "安全边缘网络",
-          statThree: "个人凭据保护",
+          eyebrow: "Ruyin Digital Entry",
+          title: "如影随形",
+          lead: "如影智能网络入口，连接智能工作台、代理网络与个人密码柜。",
           hermesTitle: "Hermes 智能工作台",
-          hermesText: "进入 Hermes，连接任务编排、智能协作与自动化工作流。",
+          hermesText: "任务编排与智能协作。",
           proxyTitle: "Proxy 私有代理网络",
-          proxyText: "通过 Ruyin Proxy 访问订阅、节点与安全网络能力。",
+          proxyText: "订阅、节点与安全访问。",
           passTitle: "个人密码柜",
-          passText: "管理账号、密钥与敏感信息，将重要凭据放在受保护的位置。",
+          passText: "账号、密钥与敏感信息。",
           openService: "打开服务",
           status: "Edge portal online"
         },
@@ -591,20 +529,15 @@
           brandLine: "Intelligent service portal",
           themeDark: "Dark",
           themeLight: "Light",
-          eyebrow: "Autonomous Secure Edge",
-          title: "Ruyin intelligent network gateway",
-          lead: "A secure portal for personal workflows, unifying intelligent apps, private proxy access, and a password vault.",
-          primaryAction: "Enter Hermes",
-          secondaryAction: "Open Proxy",
-          statOne: "Intelligent workflow hub",
-          statTwo: "Secure edge network",
-          statThree: "Private credential vault",
+          eyebrow: "Ruyin Digital Entry",
+          title: "Ruyin, always with you",
+          lead: "The Ruyin intelligent network entry for workspace, proxy access, and your personal password vault.",
           hermesTitle: "Hermes workspace",
-          hermesText: "Open Hermes for task orchestration, intelligent collaboration, and automated workflows.",
+          hermesText: "Task orchestration and intelligent collaboration.",
           proxyTitle: "Proxy private network",
-          proxyText: "Use Ruyin Proxy for subscriptions, nodes, and secure network access.",
+          proxyText: "Subscriptions, nodes, and secure access.",
           passTitle: "Personal password vault",
-          passText: "Manage accounts, keys, and sensitive information in a protected vault.",
+          passText: "Accounts, keys, and sensitive information.",
           openService: "Open service",
           status: "Edge portal online"
         }

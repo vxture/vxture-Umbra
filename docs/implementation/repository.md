@@ -24,7 +24,7 @@ Key implementation paths:
 | `configs/nginx/snippets/*.conf` | Shared nginx snippets copied to `DATA_DIR/nginx/snippets/` |
 | `configs/xray/config.json.template` | Marzban-managed Xray config rendered to `DATA_DIR/marzban/xray_config.json` |
 | `configs/marzban/clash-subscription.j2` | Marzban Clash template rendered to `DATA_DIR/marzban/templates/clash/default.yml` |
-| `landing/html/` | Source for `ruyin.ai` and `www.ruyin.ai` static pages |
+| `landing/html/` | Source for `ruyin.ai` and `www.ruyin.ai` static pages, including `assets/` |
 | `portal/html/` | Source for the VPN portal container |
 | `scripts/server/` | Server lifecycle implementation |
 | `scripts/deploy/` | Deploy pipeline implementation |

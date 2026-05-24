@@ -15,6 +15,7 @@ Do not run it with `bash`.
 - `.env`
 - `DATA_DIR/private/reality.json`
 - templates and static files under `configs/`, `landing/`, and `portal/`
+- static assets under `landing/html/assets/` are deployed with the landing page
 
 ## Template Syntax
 
@@ -37,5 +38,15 @@ Lowercase or mixed-case Jinja variables are intentionally left for Marzban's sec
 | `configs/nginx/snippets/*.conf` | `DATA_DIR/nginx/snippets/*.conf` |
 | `configs/xray/config.json.template` | `DATA_DIR/marzban/xray_config.json` |
 | `configs/marzban/clash-subscription.j2` | `DATA_DIR/marzban/templates/clash/default.yml` |
-| `landing/html/*` | `DATA_DIR/nginx/html/ruyin-landing/` and `DATA_DIR/nginx/html/www-ruyin/` |
-| `portal/html/*` | `DATA_DIR/portal/html/` |
+| `landing/html/**` | `DATA_DIR/nginx/html/ruyin-landing/` and `DATA_DIR/nginx/html/www-ruyin/` |
+| `portal/html/**` | `DATA_DIR/portal/html/` |
+
+## Landing Assets
+
+Landing page images live under `landing/html/assets/`.
+
+Use relative URLs from `landing/html/index.html`, for example:
+
+```html
+<img src="assets/brand/ruyin-dark.png" alt="">
+```
