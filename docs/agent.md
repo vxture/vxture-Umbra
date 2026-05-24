@@ -48,7 +48,7 @@ Purpose:    Production overseas edge entry node
 | `www.ruyin.ai` | Nginx → static content | Independent content from apex |
 | `vpn.ruyin.ai` | Nginx → umbra-portal | VPN user entry, onboarding, client DL |
 | `sub.ruyin.ai` | Nginx → umbra-marzban | Marzban subscription endpoint |
-| `console.ruyin.ai` | Nginx → umbra-marzban (VPN-only + Basic Auth) | Marzban admin panel |
+| `console.ruyin.ai` | Nginx → umbra-marzban (IP-restricted + Marzban login) | Marzban admin panel |
 | `pass.ruyin.ai` | Nginx → umbra-vaultwarden | Password manager |
 | `vault.ruyin.ai` | Nginx → static placeholder | Reserved for future use |
 
@@ -104,7 +104,7 @@ Phase 4 — Hardening
 2. **All traffic enters on 443** — Nginx SNI stream routes to correct internal service.
 3. **SQLite** — all services (Marzban, Vaultwarden) use SQLite for data storage. No PostgreSQL.
 4. **Secrets never in Git** — `.env`, keys, certs, DB passwords all stay in `DATA_DIR/private/`.
-5. **console.ruyin.ai has three access layers** — see Security Model in `design.md`.
+5. **console.ruyin.ai is IP-restricted before Marzban login** — see Security Model in `design.md`.
 6. **All containers in one Docker network** — `umbra-net`, internal service discovery by container name.
 7. **Subscription B++ rules built into Marzban template** — no external URL dependencies.
 8. **Microsoft / Cloudflare must NOT be forced to PROXY** in B++ rules.

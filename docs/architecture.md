@@ -25,7 +25,7 @@ Internet
                                     ├── www.ruyin.ai         → static content
                                     ├── vpn.ruyin.ai         → umbra-portal:80
                                     ├── sub.ruyin.ai         → umbra-marzban:8000
-                                    ├── console.ruyin.ai     → umbra-marzban:8000 (VPN-only + Basic Auth)
+                                    ├── console.ruyin.ai     → umbra-marzban:8000 (IP-restricted + Marzban login)
                                     ├── pass.ruyin.ai        → umbra-vaultwarden:80
                                     └── vault.ruyin.ai       → placeholder (200 static)
 ```

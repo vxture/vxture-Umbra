@@ -9,6 +9,11 @@ Goal: one-click deploy → fresh server operational with three commands.
 
 | File | Problem | Fix |
 |---|---|---|
+| `configs/nginx/vhosts/00-default.conf.template` | Duplicate `$connection_upgrade` `map` existed both in `nginx.conf` and default vhost include, risking nginx config-test failure | Removed duplicate vhost-level `map`; `nginx.conf` remains the single source |
+| `configs/nginx/vhosts/05-console.conf.template` | Console vhost had Marzban login only but no nginx IP allow/deny after Basic Auth was removed | Added allow list for `127.0.0.1` and Docker/Xray subnet, with `deny all` for public requests |
+| `scripts/deploy-all.sh`, `.env.example`, docs | Legacy console Basic Auth setup was still required even though the vhost intentionally does not use `auth_basic` | Removed unused htpasswd generation and `CONSOLE_HTPASSWD_PASSWORD` requirement; docs now describe IP restriction plus Marzban login |
+| `scripts/steps/01-init-dirs.sh` | Nginx snippets were copied only if missing, so repo snippet updates could be skipped on redeploy | Always overwrite snippets from repo during directory initialization |
+| `scripts/deploy-post.sh` | Unicode box drawing in subscription output had been corrupted in one line and could break shell parsing | Replaced the decorative subscription output box with ASCII-only lines |
 | `configs/nginx/vhosts/04-sub.conf.template` | Subscription endpoint was being rewritten to `/sub/<token>/clash-meta`; requested public format is Marzban native `/sub/<token>` only | Proxied `/sub/<token>` unchanged to Marzban and kept every other path, including `/sub/<token>/clash-meta`, at 404 |
 | `scripts/deploy-post.sh` | Post-deploy script had been converting API subscription URLs into custom username-token URLs | Kept Marzban API `subscription_url` as-is, so saved links stay in native `/sub/<token>` format |
 | `scripts/steps/06-verify.sh` | Verification did not encode the subscription-domain edge cases discovered in live testing | Added explicit 404 checks for root, `/sub`, `/sub/`, and `/sub/<token>/clash-meta`; verifies a saved real subscription URL with GET when available |

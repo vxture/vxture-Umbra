@@ -92,7 +92,6 @@ XRAY_INTERNAL_PORT=10443
 # ── Marzban ─────────────────────────────────────────────
 MARZBAN_ADMIN_USER=<admin-username>
 MARZBAN_ADMIN_PASSWORD=<strong-password>
-CONSOLE_HTPASSWD_PASSWORD=<strong-password>   # Nginx Basic Auth for console.ruyin.ai
 SUBSCRIPTION_URL_PREFIX=https://sub.ruyin.ai
 
 # ── Vaultwarden ─────────────────────────────────────────

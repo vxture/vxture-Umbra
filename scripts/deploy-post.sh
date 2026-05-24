@@ -265,14 +265,14 @@ log_info "Users: created=$CREATED  skipped=$SKIPPED"
 # ── [2/4] Subscription URLs ───────────────────────────────────────────────────
 echo ""
 log_step "[2/4] Subscription URLs"
-echo "  ┌─────────────────────────────────────────────────────────────────────"
+echo "  ---------------------------------------------------------------------"
 for i in $(seq -w 1 "$USER_COUNT"); do
   username="${USER_PREFIX}${i}"
-  echo "  │  $username"
-  echo "  │    ${SUB_URLS[$username]}"
-  echo "  │"
+  echo "  $username"
+  echo "    ${SUB_URLS[$username]}"
+  echo ""
 done
-echo "  └─────────────────────────────────────────────────────────────────────"
+echo "  ---------------------------------------------------------------------"
 
 # Save to file
 SUB_FILE="$BACKUP_DIR/subscription-urls-$(date +%Y%m%d).txt"

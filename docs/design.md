@@ -391,22 +391,20 @@ BACKUP_DIR/          chmod 700
 BACKUP_DIR/*         chmod 600
 ```
 
-### Layer 3: console.ruyin.ai — Three-Layer Access Control
+### Layer 3: console.ruyin.ai — Access Control
 
-`console.ruyin.ai` (Marzban admin) has three sequential access barriers:
+`console.ruyin.ai` (Marzban admin) has two sequential access barriers:
 
 | Layer | Mechanism | Bypass if missing |
 |-------|-----------|-------------------|
 | 1 | Nginx network restriction: `allow 172.16.0.0/12; allow 127.0.0.1; deny all` | 403, before any auth |
-| 2 | Nginx HTTP Basic Auth (`.htpasswd_console`) | 401, browser credential prompt |
-| 3 | Marzban web login (username + password) | Marzban login form |
+| 2 | Marzban web login (username + password) | Marzban login form |
 
 **Layer 1 implementation detail:** VPN clients' traffic is proxied through Xray (inside Docker), so their requests arrive at Nginx from a Docker internal IP (`172.x.x.x`). Direct public access arrives with a public IP and is rejected before authentication.
 
 This means the admin panel is invisible to anyone not connected to the VPN — no 401, no login form — just 403.
 
 **Credentials storage:**
-- `.htpasswd_console` → `DATA_DIR/nginx/private/.htpasswd_console` (chmod 600)
 - Marzban credentials → `.env` (`MARZBAN_ADMIN_USER`, `MARZBAN_ADMIN_PASSWORD`)
 
 ### Layer 4: Service Isolation

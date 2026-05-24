@@ -85,7 +85,6 @@ VAULT_DOMAIN=vault.ruyin.ai
 # ── Marzban admin credentials ──────────────────────────
 MARZBAN_ADMIN_USER=admin
 MARZBAN_ADMIN_PASSWORD=              # openssl rand -base64 32
-CONSOLE_HTPASSWD_PASSWORD=           # Nginx Basic Auth for console (bcrypt)
 
 # ── Vaultwarden ─────────────────────────────────────────
 VAULTWARDEN_ADMIN_TOKEN=             # openssl rand -base64 48

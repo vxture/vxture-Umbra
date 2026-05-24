@@ -65,10 +65,8 @@ mk "$SNIPPETS_DST"
 
 for f in "$SNIPPETS_SRC"/*.conf; do
   fname="$(basename "$f")"
-  if [[ ! -f "$SNIPPETS_DST/$fname" ]]; then
-    cp "$f" "$SNIPPETS_DST/$fname"
-    log_ok "Copied snippet: $fname"
-  fi
+  cp "$f" "$SNIPPETS_DST/$fname"
+  log_ok "Copied snippet: $fname"
 done
 
 log_ok "Directory init complete."

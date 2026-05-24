@@ -61,14 +61,13 @@ stream {
 }
 ```
 
-### console.ruyin.ai — Three-Layer Access Control
+### console.ruyin.ai — Access Control
 
-Access to `console.ruyin.ai` requires passing all three layers in sequence:
+Access to `console.ruyin.ai` requires passing both layers in sequence:
 
 ```
 Layer 1: VPN network restriction (Nginx allow/deny)
-Layer 2: Nginx HTTP Basic Auth
-Layer 3: Marzban web login
+Layer 2: Marzban web login
 ```
 
 #### Layer 1: VPN Network Restriction
@@ -90,12 +89,8 @@ server {
     allow 127.0.0.1;
     deny all;
 
-    # Layer 2: Nginx Basic Auth
-    auth_basic "Umbra Console";
-    auth_basic_user_file /etc/nginx/.htpasswd_console;
-
     location / {
-        # Layer 3: Marzban handles its own login
+        # Layer 2: Marzban handles its own login
         proxy_pass http://umbra-marzban:8000;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
@@ -105,35 +100,23 @@ server {
 }
 ```
 
-#### Basic Auth Credential Generation
+#### Console Authentication
 
-```bash
-# Generate .htpasswd_console (run once, store result in DATA_DIR/private/)
-htpasswd -c DATA_DIR/nginx/private/.htpasswd_console <admin-username>
-chmod 600 DATA_DIR/nginx/private/.htpasswd_console
-```
-
-Mount into Nginx container:
-
-```yaml
-volumes:
-  - DATA_DIR/nginx/private/.htpasswd_console:/etc/nginx/.htpasswd_console:ro
-```
+Nginx only performs the IP allow/deny check. Marzban handles the web login and API JWT session itself; do not add `auth_basic` to this vhost because it intercepts Bearer-token API calls.
 
 #### Access Flow Summary
 
 ```
 Operator connects VPN → opens browser → console.ruyin.ai
   Layer 1: source IP = 172.x.x.x → PASS
-  Layer 2: browser prompts Basic Auth credentials → PASS
-  Layer 3: Marzban login form → PASS
+  Layer 2: Marzban login form → PASS
   → Admin dashboard accessible
 ```
 
 ```
 Anyone without VPN → console.ruyin.ai
   Layer 1: source IP = public IP → 403 DENIED
-  → Never reaches Basic Auth or Marzban
+  → Never reaches Marzban
 ```
 
 ### Docker Volumes

@@ -142,7 +142,7 @@ Requires Cloudflare API token. Consider in v1.1.
 ### Access
 
 Marzban admin panel: `https://console.ruyin.ai`
-Access requires: operator IP in `CONSOLE_HTPASSWD`
+Access is IP-restricted by nginx. Public internet requests return `403`; requests that arrive through the local stream proxy or Docker/Xray are passed to Marzban's own login.
 
 ### Common Operations (via Marzban UI or API)
 

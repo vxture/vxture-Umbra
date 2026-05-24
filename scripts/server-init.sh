@@ -27,7 +27,6 @@ command -v openssl &>/dev/null || PKGS+=(openssl)
 command -v dig     &>/dev/null || PKGS+=(dnsutils)
 command -v python3 &>/dev/null || PKGS+=(python3)
 command -v git     &>/dev/null || PKGS+=(git)
-dpkg -s apache2-utils &>/dev/null 2>&1 || PKGS+=(apache2-utils)
 
 if [[ ${#PKGS[@]} -gt 0 ]]; then
   apt-get install -y "${PKGS[@]}" -qq
