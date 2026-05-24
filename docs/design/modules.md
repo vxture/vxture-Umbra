@@ -277,7 +277,7 @@ All services use SQLite on this 1C1G node. No PostgreSQL container.
 
 ### Backup
 
-SQLite databases are backed up via file copy in `07-backup.sh`. Vaultwarden's full `data/` directory is archived (includes attachments and sends).
+SQLite databases are backed up via file copy in `scripts/ops/backup.sh`. Vaultwarden's full `data/` directory is archived (includes attachments and sends).
 
 ---
 
@@ -397,5 +397,5 @@ docker exec umbra-nginx nginx -s reload
 ### Cron
 
 ```cron
-17 3 * * * /srv/vxture/repo/umbra/scripts/deploy-certs.sh >> /var/log/umbra-cert-renew.log 2>&1
+17 3 * * * /srv/vxture/repo/umbra/scripts/ops.sh certs --renew >> /var/log/umbra-cert-renew.log 2>&1
 ```

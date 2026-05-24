@@ -2,7 +2,7 @@
 # Generate self-signed certificates for all domains.
 # Use this when DNS is not yet pointed to this server and real certs
 # cannot be issued. Allows the rest of the deployment to proceed.
-# Replace with real certs: bash scripts/deploy-certs.sh --upgrade
+# Replace with real certs: bash scripts/ops.sh certs --upgrade
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -11,7 +11,7 @@ source "$SCRIPT_DIR/../lib/log.sh"
 
 log_banner "Umbra — Self-Signed Certificates (debug mode)"
 log_warn "These certs are NOT trusted by browsers."
-log_warn "Run deploy-certs.sh --upgrade once DNS is pointed to this server."
+log_warn "Run ops.sh certs --upgrade once DNS is pointed to this server."
 log_warn "Set MARZBAN_SSL_CA_TYPE=private in .env while using self-signed certs."
 echo ""
 
@@ -50,4 +50,4 @@ done
 echo ""
 log_ok "All self-signed certificates ready."
 log_info "To upgrade to real certs once DNS is ready:"
-log_info "  bash scripts/deploy-certs.sh --upgrade"
+log_info "  bash scripts/ops.sh certs --upgrade"

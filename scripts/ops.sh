@@ -1,0 +1,102 @@
+#!/usr/bin/env bash
+# Operations lifecycle dispatcher.
+#
+# Usage:
+#   bash scripts/ops.sh <command> [args]
+#
+# Commands:
+#   status                         Show container status
+#   logs [service]                 Tail container logs
+#   restart [service]              Restart one or all services
+#   reload                         Reload nginx config without restart
+#   backup                         Create backup archive
+#   certs --status                 Show certificate expiry
+#   certs --renew                  Run renewal check
+#   certs --upgrade                Replace self-signed certs with trusted LE certs
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/lib/env.sh"
+source "$SCRIPT_DIR/lib/log.sh"
+
+CMD="${1:-}"
+shift || true
+
+_usage() {
+  echo ""
+  echo "  Usage: bash scripts/ops.sh <command> [args]"
+  echo ""
+  echo "  Runtime operations:"
+  echo "    status                                Container status"
+  echo "    logs [service]                        Tail logs"
+  echo "    restart [service]                     Restart service(s)"
+  echo "    reload                                Reload nginx (no restart)"
+  echo "    backup                                Create backup"
+  echo "    certs --status                        Show certificate expiry"
+  echo "    certs --renew                         Run certificate renewal check"
+  echo "    certs --upgrade                       Upgrade self-signed -> real LE certs"
+  echo ""
+}
+
+case "$CMD" in
+
+  status)
+    cd "$REPO_DIR"
+    docker compose ps
+    ;;
+
+  logs)
+    SERVICE="${1:-}"
+    cd "$REPO_DIR"
+    if [[ -z "$SERVICE" ]]; then
+      docker compose logs -f --tail=50
+    else
+      docker compose logs -f --tail=50 "$SERVICE"
+    fi
+    ;;
+
+  restart)
+    SERVICE="${1:-}"
+    cd "$REPO_DIR"
+    if [[ -z "$SERVICE" ]]; then
+      log_step "Restarting all services..."
+      docker compose restart
+      log_ok "All services restarted"
+    else
+      log_step "Restarting $SERVICE..."
+      docker compose restart "$SERVICE"
+      log_ok "$SERVICE restarted"
+    fi
+    ;;
+
+  reload)
+    log_step "Testing nginx config..."
+    if docker exec "$NGINX_CONTAINER" nginx -t 2>/dev/null; then
+      docker exec "$NGINX_CONTAINER" nginx -s reload
+      log_ok "Nginx reloaded"
+    else
+      log_error "Nginx config test failed — not reloaded"
+      exit 1
+    fi
+    ;;
+
+  backup)
+    exec bash "$SCRIPT_DIR/ops/backup.sh"
+    ;;
+
+  certs)
+    exec bash "$SCRIPT_DIR/ops/certs.sh" "$@"
+    ;;
+
+  "")
+    _usage
+    exit 1
+    ;;
+
+  *)
+    log_error "Unknown ops command: $CMD"
+    _usage
+    exit 1
+    ;;
+
+esac

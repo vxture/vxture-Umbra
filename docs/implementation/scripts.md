@@ -1,30 +1,56 @@
 # Script Implementation
 
-The deployment flow is intentionally script-first.
+Scripts are organized by lifecycle boundary.
 
 ## Entrypoints
 
-| Script | Purpose |
+| Entrypoint | Scope | Purpose |
+|---|---|---|
+| `scripts/server.sh` | Server | Bootstrap or reset the host machine |
+| `scripts/deploy.sh` | Deploy | Build the service from repo/config into running containers |
+| `scripts/ops.sh` | Ops | Operate an already deployed node |
+
+## Internal Directories
+
+| Directory | Purpose |
 |---|---|
-| `scripts/server-init.sh` | Prepare a fresh server: packages, user, directories, firewall |
-| `scripts/deploy-all.sh` | Full deployment pipeline |
-| `scripts/deploy.sh` | Dispatcher for common operations such as verify, config, logs, restart |
-| `scripts/deploy-certs.sh` | Issue, renew, upgrade, restore, and sync TLS certificates |
-| `scripts/deploy-post.sh` | Post-deploy Marzban host config, user creation, subscription URL export |
-| `scripts/server-reset.sh` | Server reset helper; treat as destructive |
+| `scripts/server/` | Server lifecycle implementation |
+| `scripts/deploy/` | Deploy pipeline implementation |
+| `scripts/ops/` | Runtime operations implementation |
+| `scripts/lib/` | Shared shell helpers |
 
-## Ordered Steps
+## Server Commands
 
-| Step | Purpose |
+| Command | Purpose |
 |---|---|
-| `00-check-env.sh` | Validate env, Docker, DNS, ports |
-| `01-init-dirs.sh` | Create `DATA_DIR` and `BACKUP_DIR`, copy nginx static config/snippets |
-| `02-generate-reality.sh` | Generate or reuse REALITY keys |
-| `03-issue-certs.sh` | Issue Let's Encrypt certs |
-| `03-self-signed.sh` | Generate self-signed recovery certs |
-| `04-render-configs.py` | Render all templates |
-| `05-up.sh` | Validate Marzban TLS and start containers |
-| `06-verify.sh` | Verify runtime behavior |
-| `07-backup.sh` | Create backup archives |
+| `bash scripts/server.sh init` | Install packages, Docker, admin user, SSH keys, firewall |
+| `bash scripts/server.sh reset [--full]` | Stop containers or wipe runtime data after confirmation |
 
-Do not move step files back to the `scripts/` root. The `steps/` directory is part of the current project layout.
+## Deploy Commands
+
+| Command | Purpose |
+|---|---|
+| `bash scripts/deploy.sh all` | Run the full deploy pipeline and install cron jobs |
+| `bash scripts/deploy.sh check` | Validate env, Docker, DNS, ports |
+| `bash scripts/deploy.sh dirs` | Create runtime directories |
+| `bash scripts/deploy.sh keys` | Generate or reuse REALITY keys |
+| `bash scripts/deploy.sh certs` | Issue initial Let's Encrypt certificates |
+| `bash scripts/deploy.sh config` | Render configs and reload nginx if running |
+| `bash scripts/deploy.sh up` | Start containers |
+| `bash scripts/deploy.sh verify` | Verify runtime behavior |
+| `bash scripts/deploy.sh post` | Configure Marzban hosts, users, and subscription URLs |
+
+## Ops Commands
+
+| Command | Purpose |
+|---|---|
+| `bash scripts/ops.sh status` | Show container status |
+| `bash scripts/ops.sh logs [service]` | Tail logs |
+| `bash scripts/ops.sh restart [service]` | Restart services |
+| `bash scripts/ops.sh reload` | Reload nginx |
+| `bash scripts/ops.sh backup` | Create backup archives |
+| `bash scripts/ops.sh certs --status` | Show certificate expiry |
+| `bash scripts/ops.sh certs --renew` | Run certificate renewal check |
+| `bash scripts/ops.sh certs --upgrade` | Replace self-signed recovery certs with trusted certs |
+
+Compatibility wrappers remain in the `scripts/` root for old server habits. Do not use them in new docs.

@@ -37,7 +37,7 @@ sudo apt install -y python3 python3-pip
 | `pass.ruyin.ai` | A | server public IP |
 | `vault.ruyin.ai` | A | server public IP |
 
-Verify all resolve before running `deploy-all.sh`:
+Verify all resolve before running `deploy.sh all`:
 
 ```bash
 for d in ruyin.ai www.ruyin.ai vpn.ruyin.ai sub.ruyin.ai console.ruyin.ai pass.ruyin.ai vault.ruyin.ai; do
@@ -113,7 +113,7 @@ No database passwords needed — SQLite requires no credentials. The only secret
 ### One-shot deploy
 
 ```bash
-bash scripts/deploy-all.sh
+bash scripts/deploy.sh all
 ```
 
 ### Step-by-step
@@ -126,8 +126,9 @@ bash scripts/deploy-all.sh
 04-render-configs.py   Render all templates → DATA_DIR
 05-up.sh               docker compose up -d
 06-verify.sh           Full verification suite
-07-backup.sh           Create timestamped backup archive
-```
+`
+
+deploy.sh all also calls ops.sh backup at the end unless --skip-backup is passed.``
 
 ---
 
@@ -198,12 +199,12 @@ Renders all templates with variables from `.env` and `private/`:
 Run this step with Python, or via the deployment dispatcher:
 
 ```bash
-python3 scripts/steps/04-render-configs.py
+python3 scripts/deploy/04-render-configs.py
 # or
 bash scripts/deploy.sh config
 ```
 
-Do not run it with `bash scripts/steps/04-render-configs.py`; it is a Python script.
+Do not run it with `bash scripts/deploy/04-render-configs.py`; it is a Python script.
 
 | Source | Output |
 |--------|--------|
@@ -229,10 +230,6 @@ Waits for each service to report healthy before proceeding.
 ### `06-verify.sh`
 
 See Verification Checklist below.
-
-### `07-backup.sh`
-
-See `../operations/operations.md`.
 
 ---
 
@@ -347,7 +344,7 @@ Expected: both files exist and are non-zero size.
 5.  Copy .env from old node
 6.  Copy DATA_DIR/private/ from old node
     (preserves REALITY keys — clients keep same public key)
-7.  Run deploy-all on new VPS
+7.  Run `bash scripts/deploy.sh all` on new VPS
 8.  Verify using /etc/hosts override (point domains to new IP locally)
 9.  Switch DNS to new VPS IP
 10. Notify users to refresh subscription in Clash

@@ -64,7 +64,7 @@ SQLite is the database backend for all services (Marzban, Vaultwarden) on this 1
 | `DATA_DIR/marzban/db.sqlite3` | Marzban |
 | `DATA_DIR/vaultwarden/data/db.sqlite3` | Vaultwarden |
 
-Backed up via timestamped file copies in `07-backup.sh`.
+Backed up via timestamped file copies in `scripts/ops/backup.sh`.
 
 ---
 
@@ -433,7 +433,7 @@ This means the admin panel is invisible to anyone not connected to the VPN — n
 | `04-render-configs.py` | Overwrites rendered configs (templates are source of truth) |
 | `05-up.sh` | `docker compose up -d` is idempotent |
 | `06-verify.sh` | Read-only, always safe |
-| `07-backup.sh` | Always creates new timestamped archive |
+| `scripts/ops/backup.sh` | Always creates new timestamped archive |
 
 ---
 

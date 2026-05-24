@@ -130,25 +130,29 @@ Services:
 |       |-- portal/
 |       |   `-- html/
 |       |-- scripts/
+|       |   |-- server.sh
 |       |   |-- deploy.sh
-|       |   |-- deploy-all.sh
-|       |   |-- deploy-certs.sh
-|       |   |-- deploy-post.sh
-|       |   |-- server-init.sh
-|       |   |-- server-reset.sh
+|       |   |-- ops.sh
 |       |   |-- lib/
 |       |   |   |-- env.sh
 |       |   |   `-- log.sh
-|       |   `-- steps/
-|       |       |-- 00-check-env.sh
-|       |       |-- 01-init-dirs.sh
-|       |       |-- 02-generate-reality.sh
-|       |       |-- 03-issue-certs.sh
-|       |       |-- 03-self-signed.sh
-|       |       |-- 04-render-configs.py
-|       |       |-- 05-up.sh
-|       |       |-- 06-verify.sh
-|       |       `-- 07-backup.sh
+|       |   |-- server/
+|       |   |   |-- init.sh
+|       |   |   `-- reset.sh
+|       |   |-- deploy/
+|       |   |   |-- 00-check-env.sh
+|       |   |   |-- 01-init-dirs.sh
+|       |   |   |-- 02-generate-reality.sh
+|       |   |   |-- 03-issue-certs.sh
+|       |   |   |-- 03-self-signed.sh
+|       |   |   |-- 04-render-configs.py
+|       |   |   |-- 05-up.sh
+|       |   |   |-- 06-verify.sh
+|       |   |   |-- all.sh
+|       |   |   `-- post.sh
+|       |   `-- ops/
+|       |       |-- backup.sh
+|       |       `-- certs.sh
 |       `-- docs/
 |-- data/
 |   `-- umbra/                         # Runtime data, not in Git

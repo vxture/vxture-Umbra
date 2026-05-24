@@ -98,7 +98,7 @@ if [[ -n "$latest_sub_file" ]]; then
     log_warn "No subscription URL found in $latest_sub_file"
   fi
 else
-  log_warn "No saved subscription URL file found in $BACKUP_DIR; run deploy-post.sh after first deploy"
+  log_warn "No saved subscription URL file found in $BACKUP_DIR; run deploy.sh post after first deploy"
 fi
 
 # ── CONSOLE_DOMAIN access control ────────────────────────────────────────────

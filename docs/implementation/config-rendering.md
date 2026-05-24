@@ -1,11 +1,11 @@
 # Config Rendering
 
-`scripts/steps/04-render-configs.py` is the only config renderer.
+`scripts/deploy/04-render-configs.py` is the only config renderer.
 
 Run it with Python:
 
 ```bash
-python3 scripts/steps/04-render-configs.py
+python3 scripts/deploy/04-render-configs.py
 ```
 
 Do not run it with `bash`.

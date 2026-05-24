@@ -26,7 +26,9 @@ Key implementation paths:
 | `configs/marzban/clash-subscription.j2` | Marzban Clash template rendered to `DATA_DIR/marzban/templates/clash/default.yml` |
 | `landing/html/` | Source for `ruyin.ai` and `www.ruyin.ai` static pages |
 | `portal/html/` | Source for the VPN portal container |
-| `scripts/steps/` | Ordered deploy step implementations |
+| `scripts/server/` | Server lifecycle implementation |
+| `scripts/deploy/` | Deploy pipeline implementation |
+| `scripts/ops/` | Runtime operations implementation |
 | `scripts/lib/` | Shared shell helpers |
 
 Avoid adding generated files, runtime data, certificates, SQLite databases, or server backups to the repo.

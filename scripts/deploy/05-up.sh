@@ -30,8 +30,8 @@ if [[ -f "$LE_CERT" ]]; then
 else
   log_error "LE cert not found: $LE_CERT"
   log_error "Marzban requires /var/lib/marzban/tls/cert.pem and will restart without it."
-  log_info  "Run certificate issuance first: bash scripts/steps/03-issue-certs.sh"
-  log_info  "Or upgrade/repair certs:      bash scripts/deploy-certs.sh --upgrade"
+  log_info  "Run certificate issuance first: bash scripts/deploy.sh certs"
+  log_info  "Or upgrade/repair certs:      bash scripts/ops.sh certs --upgrade"
   exit 1
 fi
 
