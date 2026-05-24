@@ -27,8 +27,11 @@ if [[ -f "$LE_CERT" ]]; then
   chmod 600 "$MARZBAN_TLS_DIR/key.pem"
   log_ok "Marzban TLS: copied LE cert for $EDGE_DOMAIN"
 else
-  log_warn "LE cert not found ($LE_CERT) — Marzban will bind to 127.0.0.1 (console/sub unavailable)"
-  log_warn "Run step 03 first: bash scripts/steps/03-issue-certs.sh"
+  log_error "LE cert not found: $LE_CERT"
+  log_error "Marzban requires /var/lib/marzban/tls/cert.pem and will restart without it."
+  log_info  "Run certificate issuance first: bash scripts/steps/03-issue-certs.sh"
+  log_info  "Or upgrade/repair certs:      bash scripts/deploy-certs.sh --upgrade"
+  exit 1
 fi
 
 log_step "Pulling latest images..."

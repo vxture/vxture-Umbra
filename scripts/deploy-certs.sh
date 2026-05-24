@@ -21,6 +21,25 @@ DOMAINS=(
   "$CONSOLE_DOMAIN" "$PASS_DOMAIN" "$VAULT_DOMAIN"
 )
 
+sync_marzban_tls() {
+  local cert="$CERT_DIR/live/$EDGE_DOMAIN/fullchain.pem"
+  local key="$CERT_DIR/live/$EDGE_DOMAIN/privkey.pem"
+  local tls_dir="$DATA_DIR/marzban/tls"
+
+  if [[ ! -f "$cert" ]] || [[ ! -f "$key" ]]; then
+    log_error "Cannot sync Marzban TLS; missing cert or key for $EDGE_DOMAIN"
+    log_info  "Expected: $cert"
+    log_info  "Expected: $key"
+    return 1
+  fi
+
+  mkdir -p "$tls_dir"
+  cp "$cert" "$tls_dir/cert.pem"
+  cp "$key"  "$tls_dir/key.pem"
+  chmod 600 "$tls_dir/key.pem"
+  log_ok "Marzban TLS synced from $EDGE_DOMAIN certificate"
+}
+
 # ── Status mode ───────────────────────────────────────────────────────────────
 if [[ "$MODE" == "--status" ]]; then
   log_banner "Umbra — Certificate Status"
@@ -84,6 +103,9 @@ if [[ "$MODE" == "--upgrade" ]]; then
   log_step "Issuing real Let's Encrypt certificates..."
   CERTBOT_STAGING=false bash "$SCRIPT_DIR/steps/03-issue-certs.sh"
 
+  log_step "Syncing Marzban TLS certificate..."
+  sync_marzban_tls
+
   log_step "Restarting Nginx and Marzban with new certificates..."
   # Full restart (not reload) after cert replacement: certbot writes new
   # archive files as root; a restart guarantees nginx re-opens all file
@@ -112,6 +134,9 @@ docker run --rm \
     --webroot-path /var/www/certbot \
     --non-interactive \
     --quiet
+
+log_step "Syncing Marzban TLS certificate..."
+sync_marzban_tls
 
 log_step "Reloading Nginx..."
 if docker exec "$NGINX_CONTAINER" nginx -s reload 2>/dev/null; then
