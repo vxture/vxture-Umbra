@@ -224,6 +224,7 @@ Renewal runs daily at 03:17 via cron (added by `deploy.sh all`). Services reload
 # Normal redeploy, data preserved
 git pull origin main
 bash scripts/ops.sh backup
+bash scripts/server.sh reset
 bash scripts/deploy.sh all
 bash scripts/deploy.sh post
 
@@ -235,6 +236,7 @@ bash scripts/deploy.sh post
 ```
 
 > `--full` uses Docker internally to remove root-owned certbot files.
+> `server.sh reset` prints a reset result and exits non-zero if Umbra containers are still running or ports 80/443 remain occupied.
 
 ### Manual backup
 
