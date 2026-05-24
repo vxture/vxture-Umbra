@@ -13,8 +13,9 @@ cd "$REPO_DIR"
 # ── Marzban TLS cert ──────────────────────────────────────────────────────────
 # Marzban (newer versions) binds to 127.0.0.1 when no SSL cert is provided,
 # making it unreachable from other Docker containers (nginx gets 502).
-# It also rejects self-signed certs. Copy the LE cert issued in step 03 so
-# Marzban binds to 0.0.0.0. nginx proxies https:// with proxy_ssl_verify off.
+# Copy the edge cert issued in step 03 so Marzban binds to 0.0.0.0.
+# When using self-signed certs, set MARZBAN_SSL_CA_TYPE=private in .env.
+# nginx proxies https:// with proxy_ssl_verify off.
 MARZBAN_TLS_DIR="$DATA_DIR/marzban/tls"
 mkdir -p "$MARZBAN_TLS_DIR"
 

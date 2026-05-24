@@ -139,6 +139,22 @@ docker exec umbra-nginx nginx -t
 
 `deploy-all.sh` runs checks, initializes directories, creates or reuses REALITY keys, issues certificates, renders configs, starts containers, verifies, and backs up. `deploy-post.sh` configures Marzban hosts, creates users if missing, and saves subscription URLs.
 
+For normal production deploys, keep:
+
+```env
+CERTBOT_SKIP=false
+MARZBAN_SSL_CA_TYPE=public
+```
+
+If Let's Encrypt is temporarily unavailable or rate-limited, use self-signed recovery mode only until real certificates can be issued:
+
+```env
+CERTBOT_SKIP=true
+MARZBAN_SSL_CA_TYPE=private
+```
+
+After the rate limit window passes, switch back to `MARZBAN_SSL_CA_TYPE=public` and run `bash scripts/deploy-certs.sh --upgrade`.
+
 Marzban subscription URLs use the native format `https://sub.ruyin.ai/sub/<token>`. The console may show a different token after refresh; older saved URLs can remain valid. Verify subscriptions with GET, not HEAD:
 
 ```bash

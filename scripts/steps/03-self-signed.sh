@@ -12,6 +12,7 @@ source "$SCRIPT_DIR/../lib/log.sh"
 log_banner "Umbra — Self-Signed Certificates (debug mode)"
 log_warn "These certs are NOT trusted by browsers."
 log_warn "Run deploy-certs.sh --upgrade once DNS is pointed to this server."
+log_warn "Set MARZBAN_SSL_CA_TYPE=private in .env while using self-signed certs."
 echo ""
 
 CERT_DIR="$DATA_DIR/letsencrypt"

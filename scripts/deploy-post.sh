@@ -32,7 +32,10 @@ confirm() {
   if [[ -t 0 ]]; then
     read -r -p "  $question [y/N]: " answer
   fi
-  [[ "${answer,,}" == "y" ]]
+  case "${answer,,}" in
+    y|yes) return 0 ;;
+    *) return 1 ;;
+  esac
 }
 
 # Marzban runs HTTPS internally (self-signed cert). All API calls use https://
