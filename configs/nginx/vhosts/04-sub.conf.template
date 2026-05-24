@@ -11,7 +11,7 @@ server {
     # Clean subscription URL: /{username}-{token}
     # Rewrites to Marzban's internal path /sub/{token}/clash-meta.
     # $1 = username (for profile-title header), $2 = Marzban subscription token.
-    location ~ "^/([a-zA-Z0-9_]{1,32})-([^/\s]{20,})$" {
+    location ~ "^/sub/([a-zA-Z0-9_]{1,32})-([^/\s]{20,})$" {
         limit_req zone=sub_limit burst=10 nodelay;
         proxy_pass https://umbra-marzban:8000/sub/$2/clash-meta;
         proxy_ssl_verify off;

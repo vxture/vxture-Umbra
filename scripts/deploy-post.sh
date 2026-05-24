@@ -215,7 +215,7 @@ PYEOF
   if [[ "$exists" != "NOT_FOUND" ]]; then
     log_info "User $username already exists — skipping"
     token="${exists##*/sub/}"
-    SUB_URLS[$username]="${SUBSCRIPTION_URL_PREFIX}/${username}-${token}"
+    SUB_URLS[$username]="${SUBSCRIPTION_URL_PREFIX}/sub/${username}-${token}"
     (( ++SKIPPED ))
     continue
   fi
