@@ -44,6 +44,7 @@ Lowercase or mixed-case Jinja variables are intentionally left for Marzban's sec
 ## Landing Assets
 
 Landing page images live under `landing/html/assets/`.
+The site favicon lives at `landing/html/favicon.ico`.
 
 Use relative URLs from `landing/html/index.html`, for example:
 

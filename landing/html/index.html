@@ -4,6 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#07101f">
+  <link rel="icon" href="favicon.ico" sizes="64x64">
   <title>如影随形 Ruyin</title>
   <style>
     *, *::before, *::after {
@@ -107,7 +108,14 @@
       border-radius: var(--radius);
       background: linear-gradient(180deg, rgba(86, 217, 255, 0.16), rgba(139, 245, 198, 0.08));
       box-shadow: 0 18px 52px var(--shadow);
-      font-weight: 800;
+      overflow: hidden;
+    }
+
+    .brand-logo {
+      width: 28px;
+      height: 28px;
+      display: block;
+      object-fit: contain;
     }
 
     .brand-text {
@@ -304,10 +312,12 @@
       font-weight: 900;
     }
 
-    .service-index {
-      color: var(--muted);
-      font-size: 0.85rem;
-      font-weight: 760;
+    .service-badge {
+      width: 34px;
+      height: 34px;
+      display: block;
+      object-fit: contain;
+      filter: drop-shadow(0 8px 18px rgba(86, 217, 255, 0.18));
     }
 
     .service h2 {
@@ -423,7 +433,9 @@
   <div class="page">
     <header class="topbar" aria-label="Ruyin">
       <a class="brand" href="https://{{ APEX_DOMAIN }}" aria-label="Ruyin home">
-        <span class="brand-mark">R</span>
+        <span class="brand-mark">
+          <img class="brand-logo" src="assets/brand/vxture-logo-white.png" alt="">
+        </span>
         <span class="brand-text">
           <span class="brand-name">Ruyin</span>
           <span class="brand-line" data-i18n="brandLine">智能服务门户</span>
@@ -474,7 +486,7 @@
           <span class="service-inner">
             <span class="service-top">
               <span class="service-mark">H</span>
-              <span class="service-index">01</span>
+              <img class="service-badge" src="assets/icons/agent-icon-64.gif" alt="">
             </span>
             <h2 data-i18n="hermesTitle">Hermes 智能工作台</h2>
             <p data-i18n="hermesText">任务编排与智能协作。</p>
@@ -486,7 +498,7 @@
           <span class="service-inner">
             <span class="service-top">
               <span class="service-mark">P</span>
-              <span class="service-index">02</span>
+              <img class="service-badge" src="assets/icons/agent-icon-64.gif" alt="">
             </span>
             <h2 data-i18n="proxyTitle">Proxy 私有代理网络</h2>
             <p data-i18n="proxyText">订阅、节点与安全访问。</p>
@@ -498,7 +510,7 @@
           <span class="service-inner">
             <span class="service-top">
               <span class="service-mark">K</span>
-              <span class="service-index">03</span>
+              <img class="service-badge" src="assets/icons/agent-icon-64.gif" alt="">
             </span>
             <h2 data-i18n="passTitle">个人密码柜</h2>
             <p data-i18n="passText">账号、密钥与敏感信息。</p>
