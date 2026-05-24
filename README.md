@@ -97,35 +97,47 @@ USER_COUNT=10
 USER_PREFIX=user
 ```
 
-Run the one-command deployment:
+### First Deploy
 
 ```bash
 bash scripts/deploy-all.sh
+bash scripts/deploy-post.sh
+bash scripts/deploy.sh verify
+docker exec umbra-nginx nginx -t
 ```
 
-| Step | Script | Action |
-|------|--------|--------|
-| 00 | `00-check-env.sh` | Validate env vars, Docker, DNS, ports |
-| 01 | `01-init-dirs.sh` | Create data directory structure |
-| 02 | `02-generate-reality.sh` | Generate REALITY x25519 keypair *(skip if exists)* |
-| 03 | `03-issue-certs.sh` | Issue Let's Encrypt certs via certbot webroot *(skip if valid LE cert >30d)* |
-| 04 | `04-render-configs.py` | Render all templates into `DATA_DIR` |
-| 05 | `05-up.sh` | Pull images and start all containers |
-| 06 | `06-verify.sh` | Verify all endpoints, containers, certs, databases |
-| 07 | `07-backup.sh` | Create initial config backup |
+### Redeploy, Keep Data
 
-After the deploy completes, run the post-deploy wizard:
+Use this for normal code/config updates. It preserves existing certs, REALITY keys, databases, Vaultwarden data, and users.
 
 ```bash
+cd /srv/vxture/repo/umbra
+git pull origin main
+
+bash scripts/steps/07-backup.sh
+bash scripts/deploy-all.sh
 bash scripts/deploy-post.sh
+bash scripts/deploy.sh verify
+docker exec umbra-nginx nginx -t
 ```
 
-The wizard automatically:
-1. Authenticates with the Marzban API and configures the inbound REALITY host
-2. Creates VPN users (`USER_COUNT` × `USER_PREFIX` from `.env`)
-3. Prints and saves Clash subscription URLs for each user
-4. Checks that all 7 DNS records resolve to this server
-5. Guides you through Vaultwarden account creation
+### Full Reset and Redeploy
+
+Use this only when you intentionally want to destroy runtime data and rebuild from scratch. Make sure the backup command has completed first.
+
+```bash
+cd /srv/vxture/repo/umbra
+git pull origin main
+
+bash scripts/steps/07-backup.sh
+bash scripts/server-reset.sh --full
+bash scripts/deploy-all.sh
+bash scripts/deploy-post.sh
+bash scripts/deploy.sh verify
+docker exec umbra-nginx nginx -t
+```
+
+`deploy-all.sh` runs checks, initializes directories, creates or reuses REALITY keys, issues certificates, renders configs, starts containers, verifies, and backs up. `deploy-post.sh` configures Marzban hosts, creates users if missing, and saves subscription URLs.
 
 Marzban subscription URLs use the native format `https://sub.ruyin.ai/sub/<token>`. The console may show a different token after refresh; older saved URLs can remain valid. Verify subscriptions with GET, not HEAD:
 
@@ -188,14 +200,17 @@ Renewal runs daily at 03:17 via cron (added by `deploy-all.sh`).
 ### Reset and redeploy
 
 ```bash
-# Soft reset: stop containers only, data preserved
-bash scripts/server-reset.sh
-
-# Full reset: destroy all data (prompts for YES)
-bash scripts/server-reset.sh --full
-
-# Redeploy after either reset
+# Normal redeploy, data preserved
+git pull origin main
+bash scripts/steps/07-backup.sh
 bash scripts/deploy-all.sh
+bash scripts/deploy-post.sh
+
+# Full reset, destroys runtime data after confirmation
+bash scripts/steps/07-backup.sh
+bash scripts/server-reset.sh --full
+bash scripts/deploy-all.sh
+bash scripts/deploy-post.sh
 ```
 
 > `--full` uses Docker internally to remove root-owned certbot files.
