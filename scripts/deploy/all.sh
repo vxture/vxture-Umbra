@@ -55,6 +55,44 @@ run_step_warn() {
   echo ""
 }
 
+needs_staged_cert_upgrade() {
+  local cert_dir="$DATA_DIR/letsencrypt"
+  local domain cert_path live_path issuer
+  local domains=(
+    "$APEX_DOMAIN" "$WWW_DOMAIN" "$EDGE_DOMAIN" "$SUB_DOMAIN"
+    "$CONSOLE_DOMAIN" "$PASS_DOMAIN" "$VAULT_DOMAIN"
+  )
+
+  for domain in "${domains[@]}"; do
+    live_path="$cert_dir/live/$domain"
+    cert_path="$live_path/fullchain.pem"
+
+    if [[ -e "$live_path" ]] && [[ ! -f "$cert_path" ]]; then
+      log_info "Existing non-standard cert directory detected: $live_path"
+      return 0
+    fi
+
+    if [[ -f "$cert_path" ]]; then
+      issuer=$(openssl x509 -noout -issuer -in "$cert_path" 2>/dev/null || echo "")
+      if ! echo "$issuer" | grep -qi "let's encrypt" || echo "$issuer" | grep -qi "staging\|fake"; then
+        log_info "Existing non-trusted cert detected for $domain; staged upgrade required"
+        return 0
+      fi
+    fi
+  done
+
+  return 1
+}
+
+run_staged_cert_upgrade() {
+  log_step "[certs --upgrade] Safe staged certificate upgrade"
+  bash "$SCRIPT_DIR/../ops/certs.sh" --upgrade || {
+    log_error "Staged certificate upgrade failed. Deployment aborted."
+    exit 1
+  }
+  echo ""
+}
+
 run_step "00-check-env.sh"        "Environment check"
 run_step "01-init-dirs.sh"        "Initialize directories"
 run_step "02-generate-reality.sh" "Generate REALITY keys"
@@ -64,6 +102,8 @@ run_step "02-generate-reality.sh" "Generate REALITY keys"
 # Upgrade later: bash scripts/ops.sh certs --upgrade
 if [[ "${CERTBOT_SKIP:-false}" == "true" ]]; then
   run_step "03-self-signed.sh"    "Generate self-signed certificates (debug)"
+elif needs_staged_cert_upgrade; then
+  run_staged_cert_upgrade
 else
   run_step "03-issue-certs.sh"    "Issue TLS certificates"
 fi

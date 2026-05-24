@@ -155,7 +155,7 @@ CERTBOT_SKIP=true
 MARZBAN_SSL_CA_TYPE=private
 ```
 
-After the rate limit window passes, switch back to `MARZBAN_SSL_CA_TYPE=public` and run `bash scripts/ops.sh certs --upgrade`. The upgrade command stages new certificates first; if issuance fails, the existing production certificates are left untouched.
+After the rate limit window passes, switch back to `MARZBAN_SSL_CA_TYPE=public` and run `bash scripts/ops.sh certs --upgrade`. The upgrade command stages new certificates first; valid existing LE certs are reused, and if issuance fails the existing production certificates are left untouched.
 
 Marzban subscription URLs use the native format `https://sub.ruyin.ai/sub/<token>`. The console may show a different token after refresh; older saved URLs can remain valid. Verify subscriptions with GET, not HEAD:
 

@@ -65,14 +65,18 @@ Compatibility wrappers remain in the `scripts/` root for old server habits. Do n
 
 `scripts/ops.sh certs --upgrade` must never clear `DATA_DIR/letsencrypt` before issuance succeeds.
 
-The required flow is:
+`deploy.sh all` must detect existing self-signed, staging, fake, unreadable, or otherwise non-trusted cert directories and route certificate replacement through `scripts/ops.sh certs --upgrade`.
 
-1. Issue into `DATA_DIR/letsencrypt.new.<timestamp>`.
-2. If any domain fails, delete the staged directory and leave production certs untouched.
-3. If all domains succeed, move the existing `DATA_DIR/letsencrypt` to `DATA_DIR/letsencrypt.backup.<timestamp>`.
-4. Move the staged directory into `DATA_DIR/letsencrypt`.
-5. Sync the edge certificate into `DATA_DIR/marzban/tls`.
-6. Restart nginx and Marzban.
+The required upgrade flow is:
+
+1. Copy the current `DATA_DIR/letsencrypt` into `DATA_DIR/letsencrypt.new.<timestamp>` so valid existing LE certs can be reused.
+2. Remove non-trusted domain state from the staged directory only.
+3. Issue missing or non-trusted certs inside the staged directory.
+4. If any domain fails, delete the staged directory and leave production certs untouched.
+5. If all domains succeed, move the existing `DATA_DIR/letsencrypt` to `DATA_DIR/letsencrypt.backup.<timestamp>`.
+6. Move the staged directory into `DATA_DIR/letsencrypt`.
+7. Sync the edge certificate into `DATA_DIR/marzban/tls`.
+8. Restart nginx and Marzban.
 
 If Marzban TLS sync or the service restart fails after activation, the script attempts to restore `DATA_DIR/letsencrypt.backup.<timestamp>` and moves the failed new directory to `DATA_DIR/letsencrypt.failed.<timestamp>`.
 

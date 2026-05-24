@@ -34,6 +34,30 @@ remove_staged_certs() {
     alpine sh -c 'rm -rf "/data/$STAGED_NAME"' >/dev/null 2>&1 || true
 }
 
+prepare_staged_certs() {
+  local staged_name="$1"
+
+  docker run --rm \
+    -v "$DATA_DIR:/data" \
+    -e STAGED_NAME="$staged_name" \
+    alpine sh -c '
+      set -eu
+      staged="/data/$STAGED_NAME"
+      rm -rf "$staged"
+      if [ -d /data/letsencrypt ]; then
+        cp -a /data/letsencrypt "$staged"
+      else
+        mkdir -p "$staged"
+      fi
+
+      for dir in "$staged/live" "$staged/archive" "$staged/renewal"; do
+        if [ -d "$dir" ]; then
+          find "$dir" -type d -exec chmod a+rx {} +
+        fi
+      done
+    '
+}
+
 activate_staged_certs() {
   local staged_name="$1"
   local backup_name="$2"
@@ -178,9 +202,9 @@ if [[ "$MODE" == "--upgrade" ]]; then
 
   log_step "Issuing real Let's Encrypt certificates into staging directory..."
   log_info "Existing production certs remain untouched until all domains issue successfully."
-  remove_staged_certs "$STAGED_NAME"
+  prepare_staged_certs "$STAGED_NAME"
 
-  if ! CERTBOT_STAGING=false CERTBOT_CERT_DIR="$DATA_DIR/$STAGED_NAME" bash "$SCRIPT_DIR/../deploy/03-issue-certs.sh"; then
+  if ! CERTBOT_STAGING=false CERTBOT_REPLACE_UNTRUSTED=true CERTBOT_CERT_DIR="$DATA_DIR/$STAGED_NAME" bash "$SCRIPT_DIR/../deploy/03-issue-certs.sh"; then
     log_error "Certificate issuance failed; existing production certificates were not touched."
     remove_staged_certs "$STAGED_NAME"
     log_info "If Let's Encrypt rate-limited this host, wait until the retry-after time and run again."

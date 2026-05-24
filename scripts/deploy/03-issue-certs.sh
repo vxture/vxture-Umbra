@@ -7,7 +7,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/../lib/env.sh"
 source "$SCRIPT_DIR/../lib/log.sh"
 
-log_banner "Umbra — Issue TLS Certificates"
+log_banner "Umbra - Issue TLS Certificates"
 
 WEBROOT="${CERTBOT_WEBROOT:-$DATA_DIR/certbot/www}"
 CERT_DIR="${CERTBOT_CERT_DIR:-$DATA_DIR/letsencrypt}"
@@ -24,18 +24,29 @@ DOMAINS=(
   "$VAULT_DOMAIN"
 )
 
-# ── Start temporary Nginx for ACME challenge ──────────────────────────────────
+remove_domain_state() {
+  local domain="$1"
+
+  docker run --rm \
+    -v "$CERT_DIR:/etc/letsencrypt" \
+    -e DOMAIN="$domain" \
+    alpine sh -c '
+      set -eu
+      rm -rf "/etc/letsencrypt/live/$DOMAIN"
+      rm -rf "/etc/letsencrypt/archive/$DOMAIN"
+      rm -f  "/etc/letsencrypt/renewal/$DOMAIN.conf"
+    '
+}
+
 log_step "Starting temporary Nginx for ACME webroot challenge..."
 
-# Clean up any stale container from a previous interrupted run
 if docker ps -a --format '{{.Names}}' 2>/dev/null | grep -q "^certbot-nginx-tmp$"; then
-  docker rm -f certbot-nginx-tmp &>/dev/null
+  docker rm -f certbot-nginx-tmp >/dev/null 2>&1
   log_info "Removed stale certbot-nginx-tmp container"
 fi
 
-# If umbra-nginx is already running, use it; otherwise start a temp one
 if docker ps --format '{{.Names}}' | grep -q "^umbra-nginx$"; then
-  log_info "umbra-nginx is running — using it for ACME challenge"
+  log_info "umbra-nginx is running; using it for ACME challenge"
   TEMP_NGINX=false
 else
   log_info "Starting temporary certbot-nginx..."
@@ -50,23 +61,22 @@ fi
 
 cleanup() {
   if [[ "${TEMP_NGINX:-false}" == "true" ]]; then
-    docker rm -f certbot-nginx-tmp &>/dev/null || true
+    docker rm -f certbot-nginx-tmp >/dev/null 2>&1 || true
   fi
 }
 trap cleanup EXIT
 
-# ── Issue cert per domain ─────────────────────────────────────────────────────
 ISSUED=0
 SKIPPED=0
 FAILED=0
 
 for domain in "${DOMAINS[@]}"; do
-  cert_path="$CERT_DIR/live/$domain/fullchain.pem"
+  live_path="$CERT_DIR/live/$domain"
+  cert_path="$live_path/fullchain.pem"
 
   if [[ -f "$cert_path" ]]; then
-    # Skip only if cert is from a trusted (non-staging) Let's Encrypt CA AND valid for > 30 days.
-    # Self-signed, staging, or other non-LE certs must always be replaced.
     issuer=$(openssl x509 -noout -issuer -in "$cert_path" 2>/dev/null || echo "")
+
     if echo "$issuer" | grep -qi "let's encrypt" && ! echo "$issuer" | grep -qi "staging\|fake"; then
       expiry=$(openssl x509 -noout -enddate -in "$cert_path" 2>/dev/null | cut -d= -f2)
       expiry_epoch=$(date -d "$expiry" +%s 2>/dev/null || date -j -f "%b %d %T %Y %Z" "$expiry" +%s 2>/dev/null || echo 0)
@@ -74,12 +84,30 @@ for domain in "${DOMAINS[@]}"; do
       days_left=$(( (expiry_epoch - now_epoch) / 86400 ))
 
       if (( days_left > 30 )); then
-        log_info "Cert for $domain valid for $days_left days — skipping"
+        log_info "Cert for $domain valid for $days_left days; skipping"
         (( ++SKIPPED ))
         continue
       fi
     else
-      log_info "Cert for $domain is not a trusted LE cert — replacing"
+      log_info "Cert for $domain is not a trusted LE cert; replacing"
+      if [[ "${CERTBOT_REPLACE_UNTRUSTED:-false}" == "true" ]]; then
+        remove_domain_state "$domain"
+      else
+        log_error "Non-trusted cert already exists in $CERT_DIR for $domain."
+        log_info  "Use safe staged replacement: bash scripts/ops.sh certs --upgrade"
+        (( ++FAILED ))
+        continue
+      fi
+    fi
+  elif [[ -e "$live_path" ]]; then
+    log_warn "Existing cert directory for $domain has no readable fullchain.pem"
+    if [[ "${CERTBOT_REPLACE_UNTRUSTED:-false}" == "true" ]]; then
+      remove_domain_state "$domain"
+    else
+      log_error "Refusing in-place replacement of existing cert directory: $live_path"
+      log_info  "Use safe staged replacement: bash scripts/ops.sh certs --upgrade"
+      (( ++FAILED ))
+      continue
     fi
   fi
 
@@ -93,7 +121,7 @@ for domain in "${DOMAINS[@]}"; do
   STAGING_ARG=""
   if [[ "${CERTBOT_STAGING:-false}" == "true" ]]; then
     STAGING_ARG="--staging"
-    log_warn "STAGING mode — cert will NOT be trusted by browsers (testing only)"
+    log_warn "STAGING mode; cert will not be trusted by browsers"
   fi
 
   if docker run --rm \
@@ -117,7 +145,6 @@ for domain in "${DOMAINS[@]}"; do
   fi
 done
 
-# ── Summary ───────────────────────────────────────────────────────────────────
 echo ""
 log_info "Certificates: issued=$ISSUED  skipped=$SKIPPED  failed=$FAILED"
 

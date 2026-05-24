@@ -129,11 +129,13 @@ bash scripts/ops.sh certs --upgrade
 
 Upgrade is staged:
 
-1. New certificates are issued into `DATA_DIR/letsencrypt.new.<timestamp>`.
-2. Existing production certificates stay in `DATA_DIR/letsencrypt` while issuance runs.
-3. If any domain fails or Let's Encrypt rate-limits the request, the staged directory is removed and the running system keeps the old certificates.
-4. Only after every domain succeeds does the script move the old directory to `DATA_DIR/letsencrypt.backup.<timestamp>` and activate the staged directory.
-5. If TLS sync or service restart fails after activation, the script attempts to restore the backup and saves the failed new directory as `DATA_DIR/letsencrypt.failed.<timestamp>`.
+1. Current certificates are copied into `DATA_DIR/letsencrypt.new.<timestamp>`.
+2. Valid existing LE certs are reused; non-trusted domain state is removed only from the staged copy.
+3. Missing or non-trusted certs are issued inside the staged directory.
+4. Existing production certificates stay in `DATA_DIR/letsencrypt` while issuance runs.
+5. If any domain fails or Let's Encrypt rate-limits the request, the staged directory is removed and the running system keeps the old certificates.
+6. Only after every domain succeeds does the script move the old directory to `DATA_DIR/letsencrypt.backup.<timestamp>` and activate the staged directory.
+7. If TLS sync or service restart fails after activation, the script attempts to restore the backup and saves the failed new directory as `DATA_DIR/letsencrypt.failed.<timestamp>`.
 
 ### Wildcard Cert (Future Option)
 

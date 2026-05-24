@@ -193,6 +193,7 @@ chmod 700 BACKUP_DIR
 - Issues cert for each domain sequentially
 - Certs are stored in `DATA_DIR/letsencrypt/` by default
 - `CERTBOT_CERT_DIR` can override the destination for staged issuance
+- Refuses in-place replacement when a non-trusted cert directory already exists
 - Verifies each cert was issued before proceeding
 
 ### `04-render-configs.py`
