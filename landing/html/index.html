@@ -208,23 +208,14 @@
       margin: 0 auto;
     }
 
-    .signature img {
+    .signature-art {
       display: block;
       width: 100%;
       height: auto;
       filter: drop-shadow(0 24px 52px rgba(0, 0, 0, 0.34));
     }
 
-    .signature-light {
-      display: none;
-    }
-
-    body[data-theme="light"] .signature-dark {
-      display: none;
-    }
-
-    body[data-theme="light"] .signature-light {
-      display: block;
+    body[data-theme="light"] .signature-art {
       filter: drop-shadow(0 18px 34px rgba(29, 83, 154, 0.18));
     }
 
@@ -451,9 +442,8 @@
     <main class="portal">
       <section class="hero" aria-labelledby="hero-title">
         <div class="eyebrow" data-i18n="eyebrow">Ruyin Digital Entry</div>
-        <div class="signature" aria-hidden="true">
-          <img class="signature-dark" src="assets/brand/ruyin-dark.png" alt="">
-          <img class="signature-light" src="assets/brand/ruyin-light.png" alt="">
+        <div class="signature">
+          <img class="signature-art" id="signature-art" src="assets/brand/ruyin-dark.png" alt="如影随形">
         </div>
         <h1 id="hero-title" data-i18n="title">如影随形</h1>
         <p class="lead" data-i18n="lead">
@@ -563,6 +553,12 @@
 
       function setTheme(theme) {
         body.setAttribute("data-theme", theme);
+        var signature = document.getElementById("signature-art");
+        if (signature) {
+          signature.src = theme === "light"
+            ? "assets/brand/ruyin-light.png"
+            : "assets/brand/ruyin-dark.png";
+        }
         document.querySelectorAll("[data-theme-choice]").forEach(function (button) {
           var active = button.getAttribute("data-theme-choice") === theme;
           button.classList.toggle("is-active", active);
