@@ -94,14 +94,24 @@ if [[ "$MODE" == "--upgrade" ]]; then
     exit 1
   fi
 
-  log_step "Removing existing certificates..."
-  # certbot runs as root in Docker — files are root-owned and cannot be removed
-  # by the host user directly. Use an alpine container to clean them up.
-  docker run --rm -v "$CERT_DIR:/target" alpine sh -c 'rm -rf /target/*'
-  log_ok "Removed old certs"
+  BACKUP_NAME="letsencrypt.backup.$(date +%Y%m%d-%H%M%S)"
+
+  log_step "Backing up existing certificates before replacement..."
+  docker run --rm \
+    -v "$DATA_DIR:/data" \
+    alpine sh -c "rm -rf /data/$BACKUP_NAME && cp -a /data/letsencrypt /data/$BACKUP_NAME && rm -rf /data/letsencrypt/*"
+  log_ok "Certificate backup created: $DATA_DIR/$BACKUP_NAME"
 
   log_step "Issuing real Let's Encrypt certificates..."
-  CERTBOT_STAGING=false bash "$SCRIPT_DIR/steps/03-issue-certs.sh"
+  if ! CERTBOT_STAGING=false bash "$SCRIPT_DIR/steps/03-issue-certs.sh"; then
+    log_error "Certificate issuance failed; restoring previous certificates."
+    docker run --rm \
+      -v "$DATA_DIR:/data" \
+      alpine sh -c "rm -rf /data/letsencrypt/* && cp -a /data/$BACKUP_NAME/. /data/letsencrypt/"
+    log_ok "Previous certificates restored from $DATA_DIR/$BACKUP_NAME"
+    log_info "If Let's Encrypt rate-limited this host, wait until the retry-after time and run again."
+    exit 1
+  fi
 
   log_step "Syncing Marzban TLS certificate..."
   sync_marzban_tls
