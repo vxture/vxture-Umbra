@@ -10,6 +10,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/../lib/env.sh"
 source "$SCRIPT_DIR/../lib/log.sh"
+source "$SCRIPT_DIR/../lib/certs.sh"
 
 MODE="${1:-}"
 
@@ -22,51 +23,127 @@ DOMAINS=(
 )
 
 sync_marzban_tls() {
-  local cert="$CERT_DIR/live/$EDGE_DOMAIN/fullchain.pem"
-  local key="$CERT_DIR/live/$EDGE_DOMAIN/privkey.pem"
-  local tls_dir="$DATA_DIR/marzban/tls"
-
-  if [[ ! -f "$cert" ]] || [[ ! -f "$key" ]]; then
-    log_error "Cannot sync Marzban TLS; missing cert or key for $EDGE_DOMAIN"
-    log_info  "Expected: $cert"
-    log_info  "Expected: $key"
-    return 1
-  fi
-
-  mkdir -p "$tls_dir"
-  cp "$cert" "$tls_dir/cert.pem"
-  cp "$key"  "$tls_dir/key.pem"
-  chmod 600 "$tls_dir/key.pem"
-  log_ok "Marzban TLS synced from $EDGE_DOMAIN certificate"
+  umbra_sync_marzban_tls "$CERT_DIR" "$EDGE_DOMAIN" "$DATA_DIR/marzban/tls"
 }
 
-# ── Status mode ───────────────────────────────────────────────────────────────
-if [[ "$MODE" == "--status" ]]; then
-  log_banner "Umbra — Certificate Status"
+remove_staged_certs() {
+  local staged_name="$1"
+  docker run --rm \
+    -v "$DATA_DIR:/data" \
+    -e STAGED_NAME="$staged_name" \
+    alpine sh -c 'rm -rf "/data/$STAGED_NAME"' >/dev/null 2>&1 || true
+}
 
-  for domain in "${DOMAINS[@]}"; do
-    cert_path="$CERT_DIR/live/$domain/fullchain.pem"
-    if [[ -f "$cert_path" ]]; then
-      expiry=$(openssl x509 -noout -enddate -in "$cert_path" 2>/dev/null | cut -d= -f2 || echo "?")
-      expiry_epoch=$(date -d "$expiry" +%s 2>/dev/null || echo 0)
-      days_left=$(( (expiry_epoch - $(date +%s)) / 86400 ))
-      if (( days_left > 30 )); then
-        log_ok "$domain — $days_left days remaining ($expiry)"
-      elif (( days_left > 0 )); then
-        log_warn "$domain — $days_left days remaining (renew soon)"
-      else
-        log_fail "$domain — EXPIRED or unreadable"
+activate_staged_certs() {
+  local staged_name="$1"
+  local backup_name="$2"
+
+  docker run --rm \
+    -v "$DATA_DIR:/data" \
+    -e STAGED_NAME="$staged_name" \
+    -e BACKUP_NAME="$backup_name" \
+    alpine sh -c '
+      set -eu
+      current="/data/letsencrypt"
+      staged="/data/$STAGED_NAME"
+      backup="/data/$BACKUP_NAME"
+
+      if [ ! -d "$staged/live" ]; then
+        echo "Staged certificate directory is incomplete: $staged" >&2
+        exit 1
       fi
-    else
-      log_warn "$domain — no cert found at $cert_path"
-    fi
-  done
+
+      rm -rf "$backup"
+      if [ -d "$current" ]; then
+        mv "$current" "$backup"
+      fi
+
+      if ! mv "$staged" "$current"; then
+        rm -rf "$current"
+        if [ -d "$backup" ]; then
+          mv "$backup" "$current"
+        fi
+        exit 1
+      fi
+    '
+}
+
+restore_backup_certs() {
+  local backup_name="$1"
+  local failed_name="$2"
+
+  docker run --rm \
+    -v "$DATA_DIR:/data" \
+    -e BACKUP_NAME="$backup_name" \
+    -e FAILED_NAME="$failed_name" \
+    alpine sh -c '
+      set -eu
+      current="/data/letsencrypt"
+      backup="/data/$BACKUP_NAME"
+      failed="/data/$FAILED_NAME"
+
+      if [ ! -d "$backup" ]; then
+        echo "Backup certificate directory does not exist: $backup" >&2
+        exit 1
+      fi
+
+      rm -rf "$failed"
+      if [ -d "$current" ]; then
+        mv "$current" "$failed"
+      fi
+      mv "$backup" "$current"
+    '
+}
+
+if [[ "$MODE" == "--status" ]]; then
+  log_banner "Umbra - Certificate Status"
+  log_info "Reading certs inside Docker so root-owned certbot files are visible."
+
+  if [[ ! -d "$CERT_DIR" ]]; then
+    log_warn "Certificate directory does not exist: $CERT_DIR"
+    exit 0
+  fi
+
+  if ! docker run --rm \
+    --entrypoint python \
+    -v "$CERT_DIR:/certs:ro" \
+    -e DOMAINS="${DOMAINS[*]}" \
+    certbot/certbot \
+    -c '
+import datetime
+import os
+import ssl
+
+domains = os.environ["DOMAINS"].split()
+now = datetime.datetime.now(datetime.timezone.utc)
+
+for domain in domains:
+    path = f"/certs/live/{domain}/fullchain.pem"
+    try:
+        cert = ssl._ssl._test_decode_cert(path)
+        expiry_text = cert["notAfter"]
+        expiry = datetime.datetime.strptime(
+            expiry_text, "%b %d %H:%M:%S %Y %Z"
+        ).replace(tzinfo=datetime.timezone.utc)
+        days_left = (expiry - now).days
+
+        if days_left > 30:
+            print(f"[ OK ]  {domain} - {days_left} days remaining ({expiry_text})")
+        elif days_left >= 0:
+            print(f"[WARN]  {domain} - {days_left} days remaining; renew soon ({expiry_text})")
+        else:
+            print(f"[FAIL]  {domain} - expired ({expiry_text})")
+    except Exception as exc:
+        print(f"[WARN]  {domain} - no readable cert at {path}: {exc}")
+'; then
+    log_error "Certificate status check failed."
+    exit 1
+  fi
   exit 0
 fi
 
-# ── Upgrade mode: self-signed → real LE certs ────────────────────────────────
 if [[ "$MODE" == "--upgrade" ]]; then
-  log_banner "Umbra — Upgrade to Real TLS Certificates"
+  log_banner "Umbra - Upgrade to Real TLS Certificates"
 
   log_step "Verifying DNS points to this server..."
   SERVER_IP=$(curl -sf --max-time 5 https://api.ipify.org 2>/dev/null \
@@ -82,10 +159,10 @@ if [[ "$MODE" == "--upgrade" ]]; then
   for domain in "${DOMAINS[@]}"; do
     resolved=$(dig +short "$domain" 2>/dev/null | grep -E '^[0-9]+\.' | tail -1 || echo "")
     if [[ "$resolved" != "$SERVER_IP" ]]; then
-      log_fail "$domain → $resolved (expected $SERVER_IP)"
+      log_fail "$domain -> $resolved (expected $SERVER_IP)"
       (( ++FAILED ))
     else
-      log_ok "$domain → $resolved"
+      log_ok "$domain -> $resolved"
     fi
   done
 
@@ -94,36 +171,59 @@ if [[ "$MODE" == "--upgrade" ]]; then
     exit 1
   fi
 
-  BACKUP_NAME="letsencrypt.backup.$(date +%Y%m%d-%H%M%S)"
+  STAMP="$(date +%Y%m%d-%H%M%S)"
+  BACKUP_NAME="letsencrypt.backup.$STAMP"
+  STAGED_NAME="letsencrypt.new.$STAMP"
+  FAILED_NAME="letsencrypt.failed.$STAMP"
 
-  log_step "Backing up existing certificates before replacement..."
-  docker run --rm \
-    -v "$DATA_DIR:/data" \
-    alpine sh -c "rm -rf /data/$BACKUP_NAME && cp -a /data/letsencrypt /data/$BACKUP_NAME && rm -rf /data/letsencrypt/*"
-  log_ok "Certificate backup created: $DATA_DIR/$BACKUP_NAME"
+  log_step "Issuing real Let's Encrypt certificates into staging directory..."
+  log_info "Existing production certs remain untouched until all domains issue successfully."
+  remove_staged_certs "$STAGED_NAME"
 
-  log_step "Issuing real Let's Encrypt certificates..."
-  if ! CERTBOT_STAGING=false bash "$SCRIPT_DIR/../deploy/03-issue-certs.sh"; then
-    log_error "Certificate issuance failed; restoring previous certificates."
-    docker run --rm \
-      -v "$DATA_DIR:/data" \
-      alpine sh -c "rm -rf /data/letsencrypt/* && cp -a /data/$BACKUP_NAME/. /data/letsencrypt/"
-    log_ok "Previous certificates restored from $DATA_DIR/$BACKUP_NAME"
+  if ! CERTBOT_STAGING=false CERTBOT_CERT_DIR="$DATA_DIR/$STAGED_NAME" bash "$SCRIPT_DIR/../deploy/03-issue-certs.sh"; then
+    log_error "Certificate issuance failed; existing production certificates were not touched."
+    remove_staged_certs "$STAGED_NAME"
     log_info "If Let's Encrypt rate-limited this host, wait until the retry-after time and run again."
     exit 1
   fi
 
+  log_step "Activating newly issued certificates..."
+  if ! activate_staged_certs "$STAGED_NAME" "$BACKUP_NAME"; then
+    log_error "Activation failed; previous certificates were restored if they existed."
+    log_info "Staged certificates, if present, are at: $DATA_DIR/$STAGED_NAME"
+    exit 1
+  fi
+  log_ok "Activated new certificates"
+  log_ok "Previous certificates saved at: $DATA_DIR/$BACKUP_NAME"
+
   log_step "Syncing Marzban TLS certificate..."
-  sync_marzban_tls
+  if ! sync_marzban_tls; then
+    log_error "Marzban TLS sync failed after activation; restoring previous certificates."
+    if restore_backup_certs "$BACKUP_NAME" "$FAILED_NAME"; then
+      log_ok "Previous certificates restored. Failed new certs saved at: $DATA_DIR/$FAILED_NAME"
+      sync_marzban_tls || log_warn "Could not resync Marzban TLS after rollback"
+    else
+      log_error "Automatic certificate rollback failed."
+    fi
+    exit 1
+  fi
 
   log_step "Restarting Nginx and Marzban with new certificates..."
-  # Full restart (not reload) after cert replacement: certbot writes new
-  # archive files as root; a restart guarantees nginx re-opens all file
-  # descriptors cleanly rather than relying on the reload config-test path.
   if docker compose -f "$REPO_DIR/docker-compose.yml" restart umbra-nginx umbra-marzban 2>/dev/null; then
     log_ok "Nginx and Marzban restarted"
   else
-    log_warn "Restart failed — check: docker compose ps"
+    log_error "Restart failed after certificate activation."
+    log_step "Restoring previous certificates..."
+    if restore_backup_certs "$BACKUP_NAME" "$FAILED_NAME"; then
+      log_ok "Previous certificates restored. Failed new certs saved at: $DATA_DIR/$FAILED_NAME"
+      sync_marzban_tls || log_warn "Could not resync Marzban TLS after rollback"
+      docker compose -f "$REPO_DIR/docker-compose.yml" restart umbra-nginx umbra-marzban >/dev/null 2>&1 || true
+    else
+      log_error "Automatic certificate rollback failed."
+      log_info "Previous certificates may still be available at: $DATA_DIR/$BACKUP_NAME"
+    fi
+    log_info "Check: docker compose ps && docker compose logs umbra-nginx umbra-marzban --tail=120"
+    exit 1
   fi
 
   echo ""
@@ -131,41 +231,53 @@ if [[ "$MODE" == "--upgrade" ]]; then
   exit 0
 fi
 
-# ── Default / --renew: renewal check (run daily via cron) ─────────────────────
 if [[ -n "$MODE" ]] && [[ "$MODE" != "--renew" ]]; then
   log_error "Unknown certs mode: $MODE"
   log_info "Usage: bash scripts/ops.sh certs [--renew|--status|--upgrade]"
   exit 1
 fi
 
-log_banner "Umbra — Certificate Renewal"
+log_banner "Umbra - Certificate Renewal"
+
+RENEW_MARKER_DIR="$DATA_DIR/certbot/hooks"
+RENEW_MARKER="$RENEW_MARKER_DIR/renewed"
+mkdir -p "$CERT_DIR" "$WEBROOT" "$DATA_DIR/certbot/config" "$RENEW_MARKER_DIR"
+rm -f "$RENEW_MARKER"
 
 log_step "Running certbot renew..."
 docker run --rm \
   -v "$CERT_DIR:/etc/letsencrypt" \
   -v "$DATA_DIR/certbot/config:/var/lib/letsencrypt" \
   -v "$WEBROOT:/var/www/certbot" \
+  -v "$RENEW_MARKER_DIR:/hooks" \
   certbot/certbot renew \
     --webroot \
     --webroot-path /var/www/certbot \
     --non-interactive \
-    --quiet
+    --quiet \
+    --deploy-hook "sh -c 'date -u +%Y-%m-%dT%H:%M:%SZ > /hooks/renewed'"
+
+if [[ ! -f "$RENEW_MARKER" ]]; then
+  log_ok "No certificates renewed; services left untouched."
+  exit 0
+fi
 
 log_step "Syncing Marzban TLS certificate..."
 sync_marzban_tls
 
-log_step "Reloading Nginx..."
-if docker exec "$NGINX_CONTAINER" nginx -s reload 2>/dev/null; then
+log_step "Testing and reloading Nginx..."
+if docker exec "$NGINX_CONTAINER" nginx -t >/dev/null 2>&1 \
+   && docker exec "$NGINX_CONTAINER" nginx -s reload >/dev/null 2>&1; then
   log_ok "Nginx reloaded"
 else
-  log_warn "Nginx reload failed — container may not be running"
+  log_warn "Nginx reload failed; container may not be running or config may be invalid"
 fi
 
 log_step "Restarting Marzban (picks up renewed cert on startup)..."
 if docker compose -f "$REPO_DIR/docker-compose.yml" restart umbra-marzban 2>/dev/null; then
   log_ok "Marzban restarted"
 else
-  log_warn "Marzban restart failed — container may not be running"
+  log_warn "Marzban restart failed; container may not be running"
 fi
 
 log_ok "Certificate renewal check complete."

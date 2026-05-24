@@ -9,8 +9,10 @@ source "$SCRIPT_DIR/../lib/log.sh"
 
 log_banner "Umbra — Issue TLS Certificates"
 
-WEBROOT="$DATA_DIR/certbot/www"
-CERT_DIR="$DATA_DIR/letsencrypt"
+WEBROOT="${CERTBOT_WEBROOT:-$DATA_DIR/certbot/www}"
+CERT_DIR="${CERTBOT_CERT_DIR:-$DATA_DIR/letsencrypt}"
+
+mkdir -p "$WEBROOT/.well-known/acme-challenge" "$CERT_DIR" "$DATA_DIR/certbot/config"
 
 DOMAINS=(
   "$APEX_DOMAIN"

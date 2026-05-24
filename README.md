@@ -155,7 +155,7 @@ CERTBOT_SKIP=true
 MARZBAN_SSL_CA_TYPE=private
 ```
 
-After the rate limit window passes, switch back to `MARZBAN_SSL_CA_TYPE=public` and run `bash scripts/ops.sh certs --upgrade`.
+After the rate limit window passes, switch back to `MARZBAN_SSL_CA_TYPE=public` and run `bash scripts/ops.sh certs --upgrade`. The upgrade command stages new certificates first; if issuance fails, the existing production certificates are left untouched.
 
 Marzban subscription URLs use the native format `https://sub.ruyin.ai/sub/<token>`. The console may show a different token after refresh; older saved URLs can remain valid. Verify subscriptions with GET, not HEAD:
 
@@ -213,10 +213,10 @@ bash scripts/deploy.sh verify                    # run full verification suite
 ```bash
 bash scripts/ops.sh certs --renew              # manual renewal check (also runs daily via cron)
 bash scripts/ops.sh certs --status     # show expiry for all domains
-bash scripts/ops.sh certs --upgrade    # force replace existing certs with new LE certs
+bash scripts/ops.sh certs --upgrade    # staged upgrade to trusted LE certs
 ```
 
-Renewal runs daily at 03:17 via cron (added by `deploy.sh all`).
+Renewal runs daily at 03:17 via cron (added by `deploy.sh all`). Services reload only when certbot actually renews a certificate.
 
 ### Reset and redeploy
 

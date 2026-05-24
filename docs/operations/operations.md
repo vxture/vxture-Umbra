@@ -103,8 +103,9 @@ What it does:
 
 ```bash
 certbot renew --quiet --webroot --webroot-path DATA_DIR/certbot
-docker exec umbra-nginx nginx -s reload
 ```
+
+If certbot does not renew any certificate, services are left untouched. If a renewal happens, the script syncs the edge cert into `DATA_DIR/marzban/tls`, reloads nginx after a config test, and restarts Marzban so it reopens the TLS files.
 
 ### Cron
 
@@ -115,13 +116,24 @@ docker exec umbra-nginx nginx -s reload
 ### Manual Cert Check
 
 ```bash
-# Check all cert expiries
-for d in ruyin.ai www.ruyin.ai vpn.ruyin.ai sub.ruyin.ai console.ruyin.ai pass.ruyin.ai vault.ruyin.ai; do
-  expiry=$(echo | openssl s_client -connect $d:443 -servername $d 2>/dev/null \
-    | openssl x509 -noout -enddate 2>/dev/null | cut -d= -f2)
-  echo "$d: $expiry"
-done
+bash scripts/ops.sh certs --status
 ```
+
+The status command reads certificates inside Docker because certbot-owned files may not be readable by the deploy user on the host.
+
+### Real Certificate Upgrade
+
+```bash
+bash scripts/ops.sh certs --upgrade
+```
+
+Upgrade is staged:
+
+1. New certificates are issued into `DATA_DIR/letsencrypt.new.<timestamp>`.
+2. Existing production certificates stay in `DATA_DIR/letsencrypt` while issuance runs.
+3. If any domain fails or Let's Encrypt rate-limits the request, the staged directory is removed and the running system keeps the old certificates.
+4. Only after every domain succeeds does the script move the old directory to `DATA_DIR/letsencrypt.backup.<timestamp>` and activate the staged directory.
+5. If TLS sync or service restart fails after activation, the script attempts to restore the backup and saves the failed new directory as `DATA_DIR/letsencrypt.failed.<timestamp>`.
 
 ### Wildcard Cert (Future Option)
 

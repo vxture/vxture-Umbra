@@ -390,9 +390,10 @@ certbot certonly --dns-cloudflare \
 ### Renewal Script
 
 ```bash
-certbot renew --quiet
-docker exec umbra-nginx nginx -s reload
+bash scripts/ops.sh certs --renew
 ```
+
+Renewal uses certbot's deploy hook marker. If no certificate is renewed, nginx and Marzban are left untouched. If a renewal happens, nginx is config-tested and reloaded, and Marzban is restarted after the edge cert is synced into `DATA_DIR/marzban/tls`.
 
 ### Cron
 

@@ -31,6 +31,10 @@ Public TLS certificates live under `DATA_DIR/letsencrypt`.
 
 Marzban also requires TLS files under `DATA_DIR/marzban/tls` so its HTTP service binds to `0.0.0.0` and nginx can proxy to it over HTTPS.
 
+Certificate replacement is a safety boundary. `ops.sh certs --upgrade` issues into a staged directory first and must leave the current `DATA_DIR/letsencrypt` untouched if any Let's Encrypt request fails.
+
+Certbot writes files as root from inside Docker. Do not copy `privkey.pem` directly from shell scripts as the deploy user; use the Docker helper in `scripts/lib/certs.sh`.
+
 Self-signed recovery mode requires:
 
 ```env

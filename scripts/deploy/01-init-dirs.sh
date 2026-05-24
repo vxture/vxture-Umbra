@@ -30,6 +30,8 @@ mk "$DATA_DIR/portal/html"
 
 mk "$DATA_DIR/letsencrypt"
 mk "$DATA_DIR/certbot/www/.well-known/acme-challenge"
+mk "$DATA_DIR/certbot/config"
+mk "$DATA_DIR/certbot/hooks"
 mk "$DATA_DIR/private"
 
 # ── Backup directory ──────────────────────────────────────────────────────────

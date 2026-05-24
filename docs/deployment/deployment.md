@@ -126,9 +126,9 @@ bash scripts/deploy.sh all
 04-render-configs.py   Render all templates → DATA_DIR
 05-up.sh               docker compose up -d
 06-verify.sh           Full verification suite
-`
+```
 
-deploy.sh all also calls ops.sh backup at the end unless --skip-backup is passed.``
+`deploy.sh all` also calls `ops.sh backup` at the end unless `--skip-backup` is passed.
 
 ---
 
@@ -166,6 +166,8 @@ DATA_DIR/vaultwarden/data
 DATA_DIR/portal/html
 DATA_DIR/letsencrypt
 DATA_DIR/certbot/www/.well-known/acme-challenge
+DATA_DIR/certbot/config
+DATA_DIR/certbot/hooks
 DATA_DIR/private
 BACKUP_DIR
 ```
@@ -189,7 +191,8 @@ chmod 700 BACKUP_DIR
 
 - Starts a temporary Nginx container serving ACME challenge on port 80
 - Issues cert for each domain sequentially
-- All certs stored in `DATA_DIR/letsencrypt/`
+- Certs are stored in `DATA_DIR/letsencrypt/` by default
+- `CERTBOT_CERT_DIR` can override the destination for staged issuance
 - Verifies each cert was issued before proceeding
 
 ### `04-render-configs.py`

@@ -434,6 +434,7 @@ This means the admin panel is invisible to anyone not connected to the VPN — n
 | `05-up.sh` | `docker compose up -d` is idempotent |
 | `06-verify.sh` | Read-only, always safe |
 | `scripts/ops/backup.sh` | Always creates new timestamped archive |
+| `scripts/ops/certs.sh --upgrade` | Issues into a staged directory; production certs are untouched unless all domains succeed |
 
 ---
 

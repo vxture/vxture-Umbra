@@ -50,7 +50,24 @@ Scripts are organized by lifecycle boundary.
 | `bash scripts/ops.sh reload` | Reload nginx |
 | `bash scripts/ops.sh backup` | Create backup archives |
 | `bash scripts/ops.sh certs --status` | Show certificate expiry |
-| `bash scripts/ops.sh certs --renew` | Run certificate renewal check |
-| `bash scripts/ops.sh certs --upgrade` | Replace self-signed recovery certs with trusted certs |
+| `bash scripts/ops.sh certs --renew` | Run certificate renewal check; reload services only when certbot renews something |
+| `bash scripts/ops.sh certs --upgrade` | Stage new trusted certs, then activate only after all domains issue successfully |
 
 Compatibility wrappers remain in the `scripts/` root for old server habits. Do not use them in new docs.
+
+## Certificate Safety Rules
+
+`scripts/ops.sh certs --upgrade` must never clear `DATA_DIR/letsencrypt` before issuance succeeds.
+
+The required flow is:
+
+1. Issue into `DATA_DIR/letsencrypt.new.<timestamp>`.
+2. If any domain fails, delete the staged directory and leave production certs untouched.
+3. If all domains succeed, move the existing `DATA_DIR/letsencrypt` to `DATA_DIR/letsencrypt.backup.<timestamp>`.
+4. Move the staged directory into `DATA_DIR/letsencrypt`.
+5. Sync the edge certificate into `DATA_DIR/marzban/tls`.
+6. Restart nginx and Marzban.
+
+If Marzban TLS sync or the service restart fails after activation, the script attempts to restore `DATA_DIR/letsencrypt.backup.<timestamp>` and moves the failed new directory to `DATA_DIR/letsencrypt.failed.<timestamp>`.
+
+Certbot writes certificate files as root from inside Docker. Scripts must use `scripts/lib/certs.sh` for Marzban TLS sync instead of reading `privkey.pem` directly as the deploy user.

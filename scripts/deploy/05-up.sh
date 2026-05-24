@@ -5,6 +5,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/../lib/env.sh"
 source "$SCRIPT_DIR/../lib/log.sh"
+source "$SCRIPT_DIR/../lib/certs.sh"
 
 log_banner "Umbra — Start Services"
 
@@ -16,19 +17,7 @@ cd "$REPO_DIR"
 # Copy the edge cert issued in step 03 so Marzban binds to 0.0.0.0.
 # When using self-signed certs, set MARZBAN_SSL_CA_TYPE=private in .env.
 # nginx proxies https:// with proxy_ssl_verify off.
-MARZBAN_TLS_DIR="$DATA_DIR/marzban/tls"
-mkdir -p "$MARZBAN_TLS_DIR"
-
-LE_CERT="$DATA_DIR/letsencrypt/live/$EDGE_DOMAIN/fullchain.pem"
-LE_KEY="$DATA_DIR/letsencrypt/live/$EDGE_DOMAIN/privkey.pem"
-
-if [[ -f "$LE_CERT" ]]; then
-  cp "$LE_CERT" "$MARZBAN_TLS_DIR/cert.pem"
-  cp "$LE_KEY"  "$MARZBAN_TLS_DIR/key.pem"
-  chmod 600 "$MARZBAN_TLS_DIR/key.pem"
-  log_ok "Marzban TLS: copied LE cert for $EDGE_DOMAIN"
-else
-  log_error "LE cert not found: $LE_CERT"
+if ! umbra_sync_marzban_tls "$DATA_DIR/letsencrypt" "$EDGE_DOMAIN" "$DATA_DIR/marzban/tls"; then
   log_error "Marzban requires /var/lib/marzban/tls/cert.pem and will restart without it."
   log_info  "Run certificate issuance first: bash scripts/deploy.sh certs"
   log_info  "Or upgrade/repair certs:      bash scripts/ops.sh certs --upgrade"
