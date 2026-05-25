@@ -64,6 +64,11 @@ Scripts are organized by lifecycle boundary.
 
 Compatibility wrappers remain in the `scripts/` root for old server habits. Do not use them in new docs.
 
+Before changing script behavior, use `docs/deployment/checklists.md` to choose
+the intended scenario, preservation contract, and validation checklist. The
+checklist is the operational contract for what a command may keep, overwrite, or
+delete.
+
 ## Certificate Safety Rules
 
 `scripts/ops.sh certs --upgrade` must never clear `DATA_DIR/letsencrypt` before issuance succeeds.

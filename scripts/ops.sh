@@ -75,11 +75,13 @@ case "$CMD" in
 
   reload)
     log_step "Testing nginx config..."
-    if docker exec "$NGINX_CONTAINER" nginx -t 2>/dev/null; then
+    if nginx_test_output="$(docker exec "$NGINX_CONTAINER" nginx -t 2>&1)"; then
+      printf '%s\n' "$nginx_test_output"
       docker exec "$NGINX_CONTAINER" nginx -s reload
       log_ok "Nginx reloaded"
     else
-      log_error "Nginx config test failed — not reloaded"
+      printf '%s\n' "$nginx_test_output" >&2
+      log_error "Nginx config test failed; nginx was not reloaded"
       exit 1
     fi
     ;;

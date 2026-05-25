@@ -4,7 +4,7 @@ Production VPN edge node — SNI routing, VLESS+REALITY proxy, subscription deli
 
 **Stack:** Nginx · Xray REALITY · Marzban · Vaultwarden
 
-**AI coding entry:** start with [docs/agent.md](docs/agent.md). The docs/ tree is organized for AI maintainers by specs, design, implementation, deployment, and operations.
+**AI coding entry:** start with [docs/agent.md](docs/agent.md). For deploy/reset/cert changes, use [docs/deployment/checklists.md](docs/deployment/checklists.md) before editing scripts.
 
 ---
 
