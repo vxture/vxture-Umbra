@@ -35,6 +35,8 @@ Certificate replacement is a safety boundary. `ops.sh certs --upgrade` copies th
 
 Existing trusted Let's Encrypt certificates must be reused unless they are due for renewal. Failed certbot runs may leave zero-byte `renewal/*.conf` files; scripts may remove only those invalid renewal configs and must not treat them as issued certificates.
 
+Obsolete certificate workdirs may be cleaned only when they are not active state: `letsencrypt.new.*` and `letsencrypt.failed.*` are disposable after the newest legacy staged dir is migrated to `letsencrypt.staged`. `letsencrypt.backup.*` directories are rollback state and must not be automatically pruned.
+
 Certbot writes files as root from inside Docker. Do not copy `privkey.pem` directly from shell scripts as the deploy user; use the Docker helper in `scripts/lib/certs.sh`.
 
 Self-signed recovery mode requires:

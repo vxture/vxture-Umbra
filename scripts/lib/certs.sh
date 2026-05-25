@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 # Certificate helpers shared by deployment and operations scripts.
 
+# CERT-011: Never build certificate paths from unvalidated input. A malformed
+# domain can otherwise turn a scoped rm into a directory-wide delete.
 umbra_validate_cert_domain() {
   local domain="${1:-}"
 
@@ -15,6 +17,89 @@ umbra_validate_cert_domain() {
      || [[ "$domain" == *..* ]]; then
     log_error "Invalid certificate domain: $domain"
     return 1
+  fi
+}
+
+# Work directories are safe to inspect from the host but may contain root-owned
+# files from Certbot containers, so Docker is the consistent read path.
+umbra_list_cert_workdirs() {
+  local data_dir="$1"
+
+  if [[ ! -d "$data_dir" ]]; then
+    return 0
+  fi
+
+  docker run --rm \
+    -v "$data_dir:/data:ro" \
+    alpine sh -c '
+      set -eu
+      for dir in /data/letsencrypt.staged /data/letsencrypt.new.* /data/letsencrypt.failed.* /data/letsencrypt.backup.*; do
+        [ -d "$dir" ] && basename "$dir"
+      done | sort
+    ' 2>/dev/null || true
+}
+
+# Older code used timestamped letsencrypt.new.* directories and deleted them on
+# failed runs. Keep the newest legacy staged directory if it exists, because it
+# may contain already-issued LE certs that must not be requested again.
+umbra_migrate_legacy_staged_certs() {
+  local data_dir="$1"
+  local output
+
+  if [[ ! -d "$data_dir" ]]; then
+    return 0
+  fi
+
+  output="$(docker run --rm \
+    -v "$data_dir:/data" \
+    alpine sh -c '
+      set -eu
+      staged="/data/letsencrypt.staged"
+
+      if [ -d "$staged" ]; then
+        exit 0
+      fi
+
+      legacy="$(for dir in /data/letsencrypt.new.*; do [ -d "$dir" ] && echo "$dir"; done | sort | tail -n 1 || true)"
+      if [ -n "$legacy" ]; then
+        mv "$legacy" "$staged"
+        echo "migrated:${legacy#/data/}:letsencrypt.staged"
+      fi
+    ' 2>/dev/null || true)"
+
+  if [[ -n "$output" ]]; then
+    while IFS=: read -r action from to; do
+      [[ "$action" == "migrated" ]] && log_warn "Migrated legacy staged cert workdir: $from -> $to"
+    done <<< "$output"
+  fi
+}
+
+# Remove only obsolete work directories. Production certs and timestamped
+# backups are deliberately excluded from this cleanup.
+umbra_clean_obsolete_cert_workdirs() {
+  local data_dir="$1"
+  local removed
+
+  if [[ ! -d "$data_dir" ]]; then
+    return 0
+  fi
+
+  removed="$(docker run --rm \
+    -v "$data_dir:/data" \
+    alpine sh -c '
+      set -eu
+      for dir in /data/letsencrypt.new.* /data/letsencrypt.failed.*; do
+        if [ -d "$dir" ]; then
+          rm -rf "$dir"
+          echo "$dir"
+        fi
+      done
+    ' 2>/dev/null || true)"
+
+  if [[ -n "$removed" ]]; then
+    while IFS= read -r path; do
+      [[ -n "$path" ]] && log_warn "Removed obsolete cert workdir: ${path#/data/}"
+    done <<< "$removed"
   fi
 }
 
@@ -35,6 +120,8 @@ umbra_list_empty_renewal_configs() {
     ' 2>/dev/null || true
 }
 
+# Failed/interrupted Certbot runs can leave 0-byte renewal configs. They are
+# not certificates, and keeping them makes status/renewal misleading.
 umbra_clean_empty_renewal_configs() {
   local cert_dir="$1"
   local removed
@@ -59,6 +146,8 @@ umbra_clean_empty_renewal_configs() {
   fi
 }
 
+# Clean the exact domain's 0-byte renewal config after a failed certonly run.
+# This intentionally does not remove non-empty renewal configs.
 umbra_clean_empty_domain_renewal_config() {
   local cert_dir="$1"
   local domain="$2"
@@ -87,6 +176,8 @@ umbra_clean_empty_domain_renewal_config() {
   fi
 }
 
+# Marzban opens its TLS certificate on startup, so sync the selected edge cert
+# into its private TLS directory after issuance or renewal.
 umbra_sync_marzban_tls() {
   local cert_dir="$1"
   local domain="$2"

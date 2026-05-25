@@ -198,6 +198,7 @@ chmod 700 BACKUP_DIR
 - Verifies each cert was issued and trusted before proceeding
 - Removes invalid zero-byte renewal configs left by failed certbot attempts
 - When used by `certs --upgrade`, partial staged successes are kept for the next retry
+- Activation is blocked unless every staged domain verifies as trusted, unexpired, name-matched LE
 
 ### `04-render-configs.py`
 

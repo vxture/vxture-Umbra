@@ -14,6 +14,8 @@ WEBROOT="${CERTBOT_WEBROOT:-$DATA_DIR/certbot/www}"
 CERT_DIR="${CERTBOT_CERT_DIR:-$DATA_DIR/letsencrypt}"
 
 mkdir -p "$WEBROOT/.well-known/acme-challenge" "$CERT_DIR" "$DATA_DIR/certbot/config"
+# CERT-002: Empty renewal configs are leftovers from failed Certbot runs. They
+# are safe to remove and unsafe to renew.
 umbra_clean_empty_renewal_configs "$CERT_DIR"
 
 DOMAINS=(
@@ -31,6 +33,9 @@ remove_domain_state() {
 
   umbra_validate_cert_domain "$domain" || return 1
 
+  # CERT-003: Domain state removal is allowed only for the current domain and
+  # only when the caller explicitly set CERTBOT_REPLACE_UNTRUSTED=true. In normal
+  # in-place deploy mode this function is never reached for existing bad certs.
   docker run --rm \
     -v "$CERT_DIR:/etc/letsencrypt" \
     -e DOMAIN="$domain" \
@@ -86,6 +91,8 @@ for domain in "${DOMAINS[@]}"; do
   if [[ -f "$cert_path" ]]; then
     issuer=$(openssl x509 -noout -issuer -in "$cert_path" 2>/dev/null || echo "")
 
+    # CERT-001: A trusted, non-staging LE certificate is authoritative local
+    # state. Reuse it unless it is close to expiry.
     if echo "$issuer" | grep -qi "let's encrypt" && ! echo "$issuer" | grep -qi "staging\|fake"; then
       expiry=$(openssl x509 -noout -enddate -in "$cert_path" 2>/dev/null | cut -d= -f2)
       expiry_epoch=$(date -d "$expiry" +%s 2>/dev/null || date -j -f "%b %d %T %Y %Z" "$expiry" +%s 2>/dev/null || echo 0)
@@ -107,6 +114,8 @@ for domain in "${DOMAINS[@]}"; do
           continue
         fi
       else
+        # CERT-003: Never overwrite a bad production cert directory in-place.
+        # The staged upgrade path keeps production live while replacement runs.
         log_error "Non-trusted cert already exists in $CERT_DIR for $domain."
         log_info  "Use safe staged replacement: bash scripts/ops.sh certs --upgrade"
         (( ++FAILED ))
@@ -121,6 +130,8 @@ for domain in "${DOMAINS[@]}"; do
         continue
       fi
     else
+      # CERT-004: A malformed live directory is also production state. Refuse
+      # in-place mutation and force the safer staged flow.
       log_error "Refusing in-place replacement of existing cert directory: $live_path"
       log_info  "Use safe staged replacement: bash scripts/ops.sh certs --upgrade"
       (( ++FAILED ))
@@ -154,6 +165,8 @@ for domain in "${DOMAINS[@]}"; do
       --non-interactive \
       --no-eff-email \
       -d "$domain"; then
+    # CERT-006: Certbot success alone is not enough. Verify the expected file
+    # exists and that the issuer is production Let's Encrypt.
     if [[ ! -f "$cert_path" ]]; then
       log_fail "Certbot succeeded but fullchain.pem is missing for $domain"
       umbra_clean_empty_domain_renewal_config "$CERT_DIR" "$domain"

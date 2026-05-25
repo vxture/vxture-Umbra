@@ -14,6 +14,7 @@
 #   certs --renew                  Run renewal check
 #   certs --upgrade                Replace self-signed certs with trusted LE certs
 #   certs --clean-renewal-state    Remove invalid zero-byte renewal configs
+#   certs --clean-workdirs         Remove obsolete certificate work directories
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -37,6 +38,7 @@ _usage() {
   echo "    certs --renew                         Run certificate renewal check"
   echo "    certs --upgrade                       Upgrade self-signed -> real LE certs"
   echo "    certs --clean-renewal-state           Remove invalid zero-byte renewal configs"
+  echo "    certs --clean-workdirs                Remove obsolete certificate workdirs"
   echo ""
 }
 

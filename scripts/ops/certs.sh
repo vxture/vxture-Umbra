@@ -6,6 +6,7 @@
 #   bash scripts/ops.sh certs --upgrade    # replace self-signed with real LE certs
 #   bash scripts/ops.sh certs --status     # show cert expiry for all domains
 #   bash scripts/ops.sh certs --clean-renewal-state
+#   bash scripts/ops.sh certs --clean-workdirs
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -51,9 +52,26 @@ report_empty_renewal_configs() {
   done <<< "$empty"
 }
 
+report_cert_workdirs() {
+  local workdirs
+  workdirs="$(umbra_list_cert_workdirs "$DATA_DIR")"
+  if [[ -z "$workdirs" ]]; then
+    return 0
+  fi
+
+  log_warn "Certificate work directories found:"
+  while IFS= read -r dir; do
+    [[ -n "$dir" ]] && log_warn "  $dir"
+  done <<< "$workdirs"
+  log_info "Only letsencrypt.staged is reused by upgrade; backups are retained for rollback."
+}
+
 prepare_staged_certs() {
   local staged_name="$1"
 
+  # CERT-005: The staged directory is retry state. It may contain LE certs that
+  # were issued before a later domain hit rate limits, so never recreate it if
+  # it already exists.
   docker run --rm \
     -v "$DATA_DIR:/data" \
     -e STAGED_NAME="$staged_name" \
@@ -61,6 +79,8 @@ prepare_staged_certs() {
       set -eu
       staged="/data/$STAGED_NAME"
 
+      # Reuse staged work to avoid re-requesting certs already issued before a
+      # later domain hit a rate limit.
       if [ -d "$staged" ]; then
         echo "Reusing existing staged certificate directory: $staged"
       elif [ -d /data/letsencrypt ]; then
@@ -71,16 +91,65 @@ prepare_staged_certs() {
 
       for dir in "$staged/live" "$staged/archive" "$staged/renewal"; do
         if [ -d "$dir" ]; then
-          find "$dir" -type d -exec chmod a+rx {} +
+          find "$dir" -type d -exec chmod a+rx {} \;
         fi
       done
     '
+}
+
+verify_cert_dir_trusted() {
+  local cert_dir="$1"
+
+  # CERT-008: Activation has a second gate independent of Certbot's exit code.
+  # Every configured domain must have a readable, unexpired, production LE cert.
+  docker run --rm \
+    --entrypoint python \
+    -v "$cert_dir:/certs:ro" \
+    -e DOMAINS="${DOMAINS[*]}" \
+    certbot/certbot \
+    -c '
+import datetime
+import os
+import ssl
+import sys
+
+domains = os.environ["DOMAINS"].split()
+now = datetime.datetime.now(datetime.timezone.utc)
+le_name = "let" + chr(39) + "s encrypt"
+failed = 0
+
+def flatten_name(name):
+    return ", ".join("=".join(part) for rdn in name for part in rdn)
+
+for domain in domains:
+    path = f"/certs/live/{domain}/fullchain.pem"
+    try:
+        cert = ssl._ssl._test_decode_cert(path)
+        issuer = flatten_name(cert.get("issuer", ())).lower()
+        expiry_text = cert["notAfter"]
+        expiry = datetime.datetime.strptime(
+            expiry_text, "%b %d %H:%M:%S %Y %Z"
+        ).replace(tzinfo=datetime.timezone.utc)
+        trusted_le = le_name in issuer and "fake" not in issuer and "staging" not in issuer
+        sans = [value.lower() for key, value in cert.get("subjectAltName", ()) if key == "DNS"]
+        name_matches = domain.lower() in sans
+        if not trusted_le or expiry <= now or not name_matches:
+            print(f"[FAIL]  {domain}: cert is not trusted LE, is expired, or does not match domain")
+            failed += 1
+    except Exception as exc:
+        print(f"[FAIL]  {domain}: no readable trusted cert: {exc}")
+        failed += 1
+
+sys.exit(1 if failed else 0)
+'
 }
 
 activate_staged_certs() {
   local staged_name="$1"
   local backup_name="$2"
 
+  # CERT-009: Activation is a rename transaction. If moving staged into current
+  # fails, restore the previous current directory before returning failure.
   docker run --rm \
     -v "$DATA_DIR:/data" \
     -e STAGED_NAME="$staged_name" \
@@ -115,6 +184,8 @@ restore_backup_certs() {
   local backup_name="$1"
   local failed_name="$2"
 
+  # CERT-010: Post-activation service failures roll back certificate state and
+  # keep the failed new directory for forensics.
   docker run --rm \
     -v "$DATA_DIR:/data" \
     -e BACKUP_NAME="$backup_name" \
@@ -147,11 +218,25 @@ if [[ "$MODE" == "--clean-renewal-state" ]]; then
   exit 0
 fi
 
+if [[ "$MODE" == "--clean-workdirs" ]]; then
+  log_banner "Umbra - Clean Certificate Workdirs"
+  validate_domains || exit 1
+  log_info "Migrates the newest legacy letsencrypt.new.* to letsencrypt.staged if needed."
+  log_info "Removes obsolete letsencrypt.new.* and letsencrypt.failed.* only."
+  log_info "Production certs and letsencrypt.backup.* directories are preserved."
+  umbra_migrate_legacy_staged_certs "$DATA_DIR"
+  umbra_clean_obsolete_cert_workdirs "$DATA_DIR"
+  report_cert_workdirs
+  log_ok "Certificate workdir cleanup complete."
+  exit 0
+fi
+
 if [[ "$MODE" == "--status" ]]; then
   log_banner "Umbra - Certificate Status"
   validate_domains || exit 1
   log_info "Reading certs inside Docker so root-owned certbot files are visible."
   report_empty_renewal_configs
+  report_cert_workdirs
 
   if [[ ! -d "$CERT_DIR" ]]; then
     log_warn "Certificate directory does not exist: $CERT_DIR"
@@ -248,6 +333,10 @@ if [[ "$MODE" == "--upgrade" ]]; then
   log_info "Existing production certs remain untouched until all domains issue successfully."
   log_info "Existing trusted LE certs are reused; only missing or non-trusted certs are issued in the staged copy."
   log_info "Partially issued staged certs are preserved for the next retry."
+  # CERT-007: Old timestamped workdirs are normalized before issuance so future
+  # retries have exactly one reusable staged directory.
+  umbra_migrate_legacy_staged_certs "$DATA_DIR"
+  umbra_clean_obsolete_cert_workdirs "$DATA_DIR"
   prepare_staged_certs "$STAGED_NAME"
   umbra_clean_empty_renewal_configs "$DATA_DIR/$STAGED_NAME"
 
@@ -257,6 +346,14 @@ if [[ "$MODE" == "--upgrade" ]]; then
     log_info "If Let's Encrypt rate-limited this host, wait until the retry-after time and run again."
     exit 1
   fi
+
+  log_step "Verifying staged certificates..."
+  if ! verify_cert_dir_trusted "$DATA_DIR/$STAGED_NAME"; then
+    log_error "Staged certificate verification failed; production certificates were not touched."
+    log_info "Partial staged certs remain at: $DATA_DIR/$STAGED_NAME"
+    exit 1
+  fi
+  log_ok "All staged certificates are trusted LE certs"
 
   log_step "Activating newly issued certificates..."
   if ! activate_staged_certs "$STAGED_NAME" "$BACKUP_NAME"; then
@@ -304,7 +401,7 @@ fi
 
 if [[ -n "$MODE" ]] && [[ "$MODE" != "--renew" ]]; then
   log_error "Unknown certs mode: $MODE"
-  log_info "Usage: bash scripts/ops.sh certs [--renew|--status|--upgrade|--clean-renewal-state]"
+  log_info "Usage: bash scripts/ops.sh certs [--renew|--status|--upgrade|--clean-renewal-state|--clean-workdirs]"
   exit 1
 fi
 

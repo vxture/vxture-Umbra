@@ -133,6 +133,14 @@ bash scripts/ops.sh certs --clean-renewal-state
 
 This removes only zero-byte `DATA_DIR/letsencrypt/renewal/*.conf` files left by failed or interrupted certbot runs. It does not contact Let's Encrypt, does not renew certificates, and does not delete `live/` or `archive/` certificate files.
 
+### Certificate Workdir Cleanup
+
+```bash
+bash scripts/ops.sh certs --clean-workdirs
+```
+
+This normalizes retry directories. If no `DATA_DIR/letsencrypt.staged` exists, it migrates the newest legacy `DATA_DIR/letsencrypt.new.*` directory into `DATA_DIR/letsencrypt.staged`, then removes obsolete `letsencrypt.new.*` and `letsencrypt.failed.*` workdirs. It does not delete active `DATA_DIR/letsencrypt` or `letsencrypt.backup.*` rollback directories.
+
 ### Real Certificate Upgrade
 
 ```bash
@@ -141,13 +149,15 @@ bash scripts/ops.sh certs --upgrade
 
 Upgrade is staged:
 
-1. Current certificates are copied into `DATA_DIR/letsencrypt.staged`, or an existing staged directory is reused from a prior retry.
-2. Valid existing LE certs are reused; non-trusted domain state is removed only from the staged copy.
-3. Missing, expiring, or non-trusted certs are issued inside the staged directory.
-4. Existing production certificates stay in `DATA_DIR/letsencrypt` while issuance runs.
-5. If any domain fails or Let's Encrypt rate-limits the request, the staged directory is kept and the running system keeps the old certificates. This preserves any newly issued staged certs for the next retry.
-6. Only after every domain succeeds does the script move the old directory to `DATA_DIR/letsencrypt.backup.<timestamp>` and activate the staged directory.
-7. If TLS sync or service restart fails after activation, the script attempts to restore the backup and saves the failed new directory as `DATA_DIR/letsencrypt.failed.<timestamp>`.
+1. Legacy staged workdirs are normalized before issuance.
+2. Current certificates are copied into `DATA_DIR/letsencrypt.staged`, or an existing staged directory is reused from a prior retry.
+3. Valid existing LE certs are reused; non-trusted domain state is removed only from the staged copy.
+4. Missing, expiring, or non-trusted certs are issued inside the staged directory.
+5. Existing production certificates stay in `DATA_DIR/letsencrypt` while issuance runs.
+6. If any domain fails or Let's Encrypt rate-limits the request, the staged directory is kept and the running system keeps the old certificates. This preserves any newly issued staged certs for the next retry.
+7. Before activation, every staged domain is independently verified as a trusted, unexpired, name-matched LE certificate.
+8. Only after every domain succeeds does the script move the old directory to `DATA_DIR/letsencrypt.backup.<timestamp>` and activate the staged directory.
+9. If TLS sync or service restart fails after activation, the script attempts to restore the backup and saves the failed new directory as `DATA_DIR/letsencrypt.failed.<timestamp>`.
 
 ### Wildcard Cert (Future Option)
 

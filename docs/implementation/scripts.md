@@ -59,6 +59,7 @@ Scripts are organized by lifecycle boundary.
 | `bash scripts/ops.sh certs --renew` | Run certificate renewal check; reload services only when certbot renews something |
 | `bash scripts/ops.sh certs --upgrade` | Stage new trusted certs, then activate only after all domains issue successfully |
 | `bash scripts/ops.sh certs --clean-renewal-state` | Remove invalid zero-byte Certbot renewal configs |
+| `bash scripts/ops.sh certs --clean-workdirs` | Migrate legacy staged state and remove obsolete certificate work directories |
 
 Compatibility wrappers remain in the `scripts/` root for old server habits. Do not use them in new docs.
 
@@ -70,16 +71,18 @@ Compatibility wrappers remain in the `scripts/` root for old server habits. Do n
 
 The required upgrade flow is:
 
-1. Copy the current `DATA_DIR/letsencrypt` into `DATA_DIR/letsencrypt.staged` so valid existing LE certs can be reused. If this staged directory already exists from a prior failed attempt, keep it and resume from it.
-2. Remove invalid zero-byte renewal configs from the staged directory.
-3. Remove non-trusted domain state from the staged directory only.
-4. Reuse existing trusted LE certificates that are not near expiry.
-5. Issue only missing, expiring, or non-trusted certificates inside the staged directory.
-6. If any domain fails, keep the staged directory and leave production certs untouched. Keeping staged state preserves any domain certificates that were successfully issued before a later domain failed.
-7. If all domains succeed, move the existing `DATA_DIR/letsencrypt` to `DATA_DIR/letsencrypt.backup.<timestamp>`.
-8. Move `DATA_DIR/letsencrypt.staged` into `DATA_DIR/letsencrypt`.
-9. Sync the edge certificate into `DATA_DIR/marzban/tls`.
-10. Restart nginx and Marzban.
+1. Normalize certificate workdirs: migrate the newest legacy `letsencrypt.new.*` to `DATA_DIR/letsencrypt.staged` if no staged dir exists, then remove obsolete `letsencrypt.new.*` and `letsencrypt.failed.*` dirs.
+2. Copy the current `DATA_DIR/letsencrypt` into `DATA_DIR/letsencrypt.staged` so valid existing LE certs can be reused. If this staged directory already exists from a prior failed attempt, keep it and resume from it.
+3. Remove invalid zero-byte renewal configs from the staged directory.
+4. Remove non-trusted domain state from the staged directory only.
+5. Reuse existing trusted LE certificates that are not near expiry.
+6. Issue only missing, expiring, or non-trusted certificates inside the staged directory.
+7. If any domain fails, keep the staged directory and leave production certs untouched. Keeping staged state preserves any domain certificates that were successfully issued before a later domain failed.
+8. If all domains succeed, independently verify that every staged domain has a trusted, unexpired, name-matched LE certificate.
+9. Move the existing `DATA_DIR/letsencrypt` to `DATA_DIR/letsencrypt.backup.<timestamp>`.
+10. Move `DATA_DIR/letsencrypt.staged` into `DATA_DIR/letsencrypt`.
+11. Sync the edge certificate into `DATA_DIR/marzban/tls`.
+12. Restart nginx and Marzban.
 
 If Marzban TLS sync or the service restart fails after activation, the script attempts to restore `DATA_DIR/letsencrypt.backup.<timestamp>` and moves the failed new directory to `DATA_DIR/letsencrypt.failed.<timestamp>`.
 
