@@ -359,7 +359,7 @@ umbra-vaultwarden:
 
 ### Responsibility
 
-- Issue Let's Encrypt certs for all 7 domains
+- Issue Let's Encrypt certs for active + standby cert domains
 - Auto-renew via cron
 
 ### Issue Command

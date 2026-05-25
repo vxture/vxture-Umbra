@@ -16,7 +16,7 @@ Reserved public hostnames:
 
 | Hostname | Status | Responsibility |
 |---|---|---|
-| `subscribe.ruyin.ai` | Reserved | Future user-facing subscription portal. It must not be configured as `SUB_DOMAIN` unless the native subscription endpoint is intentionally moved again. |
+| `subscribe.ruyin.ai` | Standby cert | Future user-facing subscription portal. It is maintained through `STANDBY_CERT_DOMAINS`, but no nginx vhost is rendered for it yet. It must not be configured as `SUB_DOMAIN` unless the native subscription endpoint is intentionally moved again. |
 
 Subscription URL format is always:
 

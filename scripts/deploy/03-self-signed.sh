@@ -18,15 +18,7 @@ echo ""
 
 CERT_DIR="$DATA_DIR/letsencrypt"
 
-DOMAINS=(
-  "$APEX_DOMAIN"
-  "$WWW_DOMAIN"
-  "$EDGE_DOMAIN"
-  "$SUB_DOMAIN"
-  "$CONSOLE_DOMAIN"
-  "$PASS_DOMAIN"
-  "$VAULT_DOMAIN"
-)
+mapfile -t DOMAINS < <(umbra_collect_cert_domains)
 
 FAILED=0
 

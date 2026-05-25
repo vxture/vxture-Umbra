@@ -159,6 +159,33 @@ CHECKS: list[tuple[str, Path, list[str]]] = [
         [
             "SUB_DOMAIN=sub.ruyin.ai",
             "SUBSCRIPTION_URL_PREFIX=https://sub.ruyin.ai",
+            "STANDBY_CERT_DOMAINS=subscribe.ruyin.ai",
+        ],
+    ),
+    (
+        "certificate scripts include standby domains",
+        Path("scripts/deploy/03-issue-certs.sh"),
+        [
+            "umbra_collect_cert_domains",
+        ],
+    ),
+    (
+        "cert helper collects active and standby domains",
+        Path("scripts/lib/certs.sh"),
+        [
+            "umbra_collect_active_cert_domains",
+            "umbra_collect_standby_cert_domains",
+            "STANDBY_CERT_DOMAINS",
+            "umbra_collect_cert_domains",
+        ],
+    ),
+    (
+        "ops certs include standby domains",
+        Path("scripts/ops/certs.sh"),
+        [
+            "umbra_collect_cert_domains",
+            "STANDBY_DOMAINS",
+            "Standby cert domains are maintained but not exposed by nginx",
         ],
     ),
     (

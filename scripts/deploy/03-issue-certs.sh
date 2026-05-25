@@ -18,15 +18,7 @@ mkdir -p "$WEBROOT/.well-known/acme-challenge" "$CERT_DIR" "$DATA_DIR/certbot/co
 # are safe to remove and unsafe to renew.
 umbra_clean_empty_renewal_configs "$CERT_DIR"
 
-DOMAINS=(
-  "$APEX_DOMAIN"
-  "$WWW_DOMAIN"
-  "$EDGE_DOMAIN"
-  "$SUB_DOMAIN"
-  "$CONSOLE_DOMAIN"
-  "$PASS_DOMAIN"
-  "$VAULT_DOMAIN"
-)
+mapfile -t DOMAINS < <(umbra_collect_cert_domains)
 
 remove_domain_state() {
   local domain="$1"

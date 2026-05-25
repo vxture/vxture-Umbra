@@ -31,10 +31,10 @@ domain set until the user portal is implemented.
 |-------------|-------|
 | Ubuntu 26.04 LTS | Vultr or similar; 1C1G / 25GB SSD |
 | SSH key access | Key-based login as root (Vultr adds this at provision time) |
-| DNS A records | All 7 domains → server IP, propagated **before** running deploy |
+| DNS A records | Active domains plus standby cert domains → server IP, propagated **before** running deploy |
 | Open ports | 80 (ACME) and 443 (HTTPS + REALITY) |
 
-> **DNS first.** Let's Encrypt cert issuance is the first blocking step. Point all 7 records before starting.
+> **DNS first.** Let's Encrypt cert issuance is the first blocking step. Point active and standby certificate records before starting.
 
 ---
 
@@ -87,6 +87,7 @@ SUB_DOMAIN=sub.ruyin.ai              # subscription endpoint
 CONSOLE_DOMAIN=console.ruyin.ai
 PASS_DOMAIN=pass.ruyin.ai
 VAULT_DOMAIN=vault.ruyin.ai
+STANDBY_CERT_DOMAINS=subscribe.ruyin.ai  # cert only, no active nginx vhost
 
 # ── Marzban admin credentials ──────────────────────────
 MARZBAN_ADMIN_USER=admin

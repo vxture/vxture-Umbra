@@ -10,6 +10,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/../lib/env.sh"
 source "$SCRIPT_DIR/../lib/log.sh"
+source "$SCRIPT_DIR/../lib/certs.sh"
 
 SKIP_VERIFY=false
 SKIP_BACKUP=false
@@ -28,7 +29,8 @@ fi
 
 log_banner "Umbra — Full Deployment"
 log_info "Node:    $NODE_NAME"
-log_info "Domains: $EDGE_DOMAIN, $SUB_DOMAIN, +5 more (7 total)"
+mapfile -t CERT_DOMAINS < <(umbra_collect_cert_domains)
+log_info "Domains: $EDGE_DOMAIN, $SUB_DOMAIN, +$(( ${#CERT_DOMAINS[@]} - 2 )) more (${#CERT_DOMAINS[@]} cert domains)"
 log_info "Data:    $DATA_DIR"
 log_info "Backup:  $BACKUP_DIR"
 echo ""
@@ -58,10 +60,9 @@ run_step_warn() {
 needs_staged_cert_upgrade() {
   local cert_dir="$DATA_DIR/letsencrypt"
   local domain cert_path live_path issuer
-  local domains=(
-    "$APEX_DOMAIN" "$WWW_DOMAIN" "$EDGE_DOMAIN" "$SUB_DOMAIN"
-    "$CONSOLE_DOMAIN" "$PASS_DOMAIN" "$VAULT_DOMAIN"
-  )
+  local domains=()
+
+  mapfile -t domains < <(umbra_collect_cert_domains)
 
   for domain in "${domains[@]}"; do
     live_path="$cert_dir/live/$domain"

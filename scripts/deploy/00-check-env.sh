@@ -5,6 +5,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/../lib/env.sh"
 source "$SCRIPT_DIR/../lib/log.sh"
+source "$SCRIPT_DIR/../lib/certs.sh"
 
 log_banner "Umbra — Environment Check"
 
@@ -61,10 +62,7 @@ if [[ -z "$PUBLIC_IP" ]]; then
   log_warn "Could not determine public IP — skipping DNS validation"
 else
   log_info "Server public IP: $PUBLIC_IP"
-  DOMAINS=(
-    "$APEX_DOMAIN" "$WWW_DOMAIN" "$EDGE_DOMAIN" "$SUB_DOMAIN"
-    "$CONSOLE_DOMAIN" "$PASS_DOMAIN" "$VAULT_DOMAIN"
-  )
+  mapfile -t DOMAINS < <(umbra_collect_cert_domains)
   for domain in "${DOMAINS[@]}"; do
     resolved=$(dig +short "$domain" 2>/dev/null | grep -E '^[0-9]+\.' | tail -1 || echo "")
     if [[ "$resolved" == "$PUBLIC_IP" ]]; then

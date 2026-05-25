@@ -20,6 +20,43 @@ umbra_validate_cert_domain() {
   fi
 }
 
+umbra_collect_active_cert_domains() {
+  printf '%s\n' \
+    "$APEX_DOMAIN" \
+    "$WWW_DOMAIN" \
+    "$EDGE_DOMAIN" \
+    "$SUB_DOMAIN" \
+    "$CONSOLE_DOMAIN" \
+    "$PASS_DOMAIN" \
+    "$VAULT_DOMAIN"
+}
+
+umbra_collect_standby_cert_domains() {
+  local domain
+
+  # Optional whitespace-separated hostnames. Standby domains are issued and
+  # renewed, but no nginx virtual host is rendered for them.
+  for domain in ${STANDBY_CERT_DOMAINS:-}; do
+    [[ -n "$domain" ]] && printf '%s\n' "$domain"
+  done
+}
+
+umbra_collect_cert_domains() {
+  local -A seen=()
+  local domain
+
+  while IFS= read -r domain; do
+    [[ -z "$domain" ]] && continue
+    if [[ -z "${seen[$domain]+x}" ]]; then
+      printf '%s\n' "$domain"
+      seen[$domain]=1
+    fi
+  done < <(
+    umbra_collect_active_cert_domains
+    umbra_collect_standby_cert_domains
+  )
+}
+
 # Work directories are safe to inspect from the host but may contain root-owned
 # files from Certbot containers, so Docker is the consistent read path.
 umbra_list_cert_workdirs() {

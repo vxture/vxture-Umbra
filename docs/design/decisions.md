@@ -128,7 +128,8 @@ The public subscription domain is intentionally narrow:
 list every user's token. If implemented, use either Marzban's native
 subscription page/template on per-user token links, or a thin authenticated
 portal backed by Marzban API that displays only the logged-in user's own
-subscription URL.
+subscription URL. Until then it stays in `STANDBY_CERT_DOMAINS`, which means
+certificates are issued and renewed but no nginx virtual host is rendered.
 
 ### Node Naming
 

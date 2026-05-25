@@ -19,10 +19,8 @@ MODE="${1:-}"
 CERT_DIR="$DATA_DIR/letsencrypt"
 WEBROOT="$DATA_DIR/certbot/www"
 
-DOMAINS=(
-  "$APEX_DOMAIN" "$WWW_DOMAIN" "$EDGE_DOMAIN" "$SUB_DOMAIN"
-  "$CONSOLE_DOMAIN" "$PASS_DOMAIN" "$VAULT_DOMAIN"
-)
+mapfile -t DOMAINS < <(umbra_collect_cert_domains)
+mapfile -t STANDBY_DOMAINS < <(umbra_collect_standby_cert_domains)
 
 validate_domains() {
   local failed=0
@@ -333,6 +331,9 @@ if [[ "$MODE" == "--upgrade" ]]; then
   log_info "Existing production certs remain untouched until all domains issue successfully."
   log_info "Existing trusted LE certs are reused; only missing or non-trusted certs are issued in the staged copy."
   log_info "Partially issued staged certs are preserved for the next retry."
+  if (( ${#STANDBY_DOMAINS[@]} > 0 )); then
+    log_info "Standby cert domains are maintained but not exposed by nginx: ${STANDBY_DOMAINS[*]}"
+  fi
   # CERT-007: Old timestamped workdirs are normalized before issuance so future
   # retries have exactly one reusable staged directory.
   umbra_migrate_legacy_staged_certs "$DATA_DIR"

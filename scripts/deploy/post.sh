@@ -9,6 +9,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/../lib/env.sh"
 source "$SCRIPT_DIR/../lib/log.sh"
+source "$SCRIPT_DIR/../lib/certs.sh"
 
 if [[ "$EUID" -eq 0 ]]; then
   log_error "Do not run as root. Switch to the admin user: su - stone"
@@ -304,10 +305,7 @@ echo ""
 echo "  A records that should point to $SERVER_IP:"
 echo ""
 
-ALL_DOMAINS=(
-  "$APEX_DOMAIN" "$WWW_DOMAIN" "$EDGE_DOMAIN" "$SUB_DOMAIN"
-  "$CONSOLE_DOMAIN" "$PASS_DOMAIN" "$VAULT_DOMAIN"
-)
+mapfile -t ALL_DOMAINS < <(umbra_collect_cert_domains)
 
 DNS_OK=true
 for domain in "${ALL_DOMAINS[@]}"; do

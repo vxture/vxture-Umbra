@@ -20,6 +20,8 @@ the repair path is `certs --upgrade`.
 During recovery, the active native subscription endpoint was restored to
 `sub.ruyin.ai`. Any separately issued certificate for `subscribe.ruyin.ai` is
 staged/retry state until that hostname is assigned to a real user-facing portal.
+It should be listed in `STANDBY_CERT_DOMAINS` so future upgrades keep the
+certificate without exposing the hostname through nginx.
 
 ## Failure Modes
 

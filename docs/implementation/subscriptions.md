@@ -16,6 +16,8 @@ Do not rewrite public URLs to `/clash-meta`, `/v2ray`, username-based tokens, or
 
 `subscribe.ruyin.ai` is reserved for a future user-facing subscription portal.
 Do not use it as the native subscription endpoint while `SUB_DOMAIN=sub.ruyin.ai`.
+Keep it in `STANDBY_CERT_DOMAINS` so DNS and certificate state are maintained
+without exposing a public nginx vhost.
 
 Preferred portal options:
 
