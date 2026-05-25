@@ -149,8 +149,8 @@ Priority  Rule Type                        Action
 ────────────────────────────────────────────────
 0         Node infra (APEX / EDGE domain)  DIRECT
 1         Loopback / LAN / fake-ip         DIRECT
-2         VPS hosting ASN                  DIRECT
-3         Microsoft / Cloudflare           DIRECT
+2         VPS hosting ASN/domain           DIRECT
+3         Microsoft / Cloudflare / Vultr   DIRECT
 4         DeepSeek (domestic AI)           DIRECT
 5         AI providers (per-vendor)        PROXY (forced)
 6         Model platforms / aggregators    PROXY (forced)
@@ -192,12 +192,14 @@ Cloudflare:  cloudflare.com, cloudflare-dns.com, cloudflareclient.com
              cloudflareinsights.com, cloudflareworkers.com, workers.dev
              pages.dev, trycloudflare.com, argotunnel.com, warp.dev
 
-DeepSeek:    deepseek.com, deepseek.ai, api.deepseek.com  (国内可直连)
+Vultr:       vultr.com, vultrobjects.com, AS20473
+
+DeepSeek:    deepseek.com, deepseek.ai, api.deepseek.com
 ```
 
-**Reason:** Microsoft services are accessible from most networks without proxy; forcing them causes latency and auth degradation. DeepSeek is a Chinese domestic service — direct connection is faster and more stable.
+**Reason:** Microsoft services are accessible from most networks without proxy; forcing them causes latency and auth degradation. DeepSeek is a Chinese domestic service; direct connection is faster and more stable.
 
-Cloudflare hosts DNS, tunnel, WARP, Workers, and Pages dependencies that should not loop through this proxy node.
+Cloudflare hosts DNS, tunnel, WARP, Workers, and Pages dependencies that should not loop through this proxy node. Vultr hosts the VPS control plane and provider storage domains; proxying them through the same node can create management loops.
 
 ### Full Rules Block
 
@@ -210,7 +212,7 @@ The deployment renderer validates that all must-direct rules appear before the f
 
 ```yaml
 rules:
-  # 0. 节点基础设施直连
+  # 0. Node infrastructure and must-direct service domains
   - DOMAIN-SUFFIX,<APEX_DOMAIN>,DIRECT
   - DOMAIN-SUFFIX,<WWW_DOMAIN>,DIRECT
   - DOMAIN-SUFFIX,<EDGE_DOMAIN>,DIRECT
@@ -225,8 +227,10 @@ rules:
   - DOMAIN-SUFFIX,workers.dev,DIRECT
   - DOMAIN-SUFFIX,pages.dev,DIRECT
   - DOMAIN-SUFFIX,argotunnel.com,DIRECT
+  - DOMAIN-SUFFIX,vultr.com,DIRECT
+  - DOMAIN-SUFFIX,vultrobjects.com,DIRECT
 
-  # 1. 本地 / 局域网 / 保留地址直连
+  # 1. Local, LAN, link-local, and fake-ip direct
   - IP-CIDR,127.0.0.0/8,DIRECT,no-resolve
   - IP-CIDR,10.0.0.0/8,DIRECT,no-resolve
   - IP-CIDR,172.16.0.0/12,DIRECT,no-resolve
@@ -234,10 +238,10 @@ rules:
   - IP-CIDR,169.254.0.0/16,DIRECT,no-resolve
   - IP-CIDR,198.18.0.0/15,DIRECT,no-resolve
 
-  # 2. 宿主服务商直连（防止流量绕回自身服务器）
+  # 2. VPS provider ASN direct, avoid routing back to this node
   - IP-ASN,20473,DIRECT,no-resolve
 
-  # 3. Microsoft 生态直连
+  # 3. Microsoft ecosystem direct
   - DOMAIN-SUFFIX,microsoft.com,DIRECT
   - DOMAIN-SUFFIX,microsoftonline.com,DIRECT
   - DOMAIN-SUFFIX,windows.com,DIRECT
@@ -260,12 +264,12 @@ rules:
   - DOMAIN-SUFFIX,xbox.com,DIRECT
   - DOMAIN-SUFFIX,xboxlive.com,DIRECT
 
-  # 4. DeepSeek 直连（国内 AI 服务）
+  # 4. DeepSeek direct
   - DOMAIN-SUFFIX,deepseek.com,DIRECT
   - DOMAIN-SUFFIX,deepseek.ai,DIRECT
   - DOMAIN-SUFFIX,api.deepseek.com,DIRECT
 
-  # 5. AI 大模型服务 → 代理
+  # 5. AI model providers proxy
   # OpenAI / ChatGPT
   - DOMAIN-SUFFIX,openai.com,PROXY
   - DOMAIN-SUFFIX,chatgpt.com,PROXY
@@ -295,7 +299,7 @@ rules:
   - DOMAIN-SUFFIX,cohere.com,PROXY
   - DOMAIN-SUFFIX,cohere.ai,PROXY
 
-  # 6. 模型平台 / 聚合路由 → 代理
+  # 6. Model aggregators and free model platforms proxy
   - DOMAIN-SUFFIX,openrouter.ai,PROXY
   - DOMAIN-SUFFIX,huggingface.co,PROXY
   - DOMAIN-SUFFIX,hf.co,PROXY
@@ -304,7 +308,7 @@ rules:
   - DOMAIN-SUFFIX,fireworks.ai,PROXY
   - DOMAIN-SUFFIX,poe.com,PROXY
 
-  # 7. 设计工具 → 代理
+  # 7. Design tools and workspace apps proxy
   - DOMAIN-SUFFIX,figma.com,PROXY
   - DOMAIN-SUFFIX,figma.site,PROXY
   - DOMAIN-SUFFIX,figma.app,PROXY
@@ -313,7 +317,7 @@ rules:
   - DOMAIN-SUFFIX,notion.so,PROXY
   - DOMAIN-SUFFIX,notion.com,PROXY
 
-  # 8. 开发工具链 → 代理
+  # 8. Developer toolchain proxy
   - DOMAIN-SUFFIX,github.com,PROXY
   - DOMAIN-SUFFIX,githubusercontent.com,PROXY
   - DOMAIN-SUFFIX,githubassets.com,PROXY
@@ -330,7 +334,7 @@ rules:
   - DOMAIN-SUFFIX,jsdelivr.net,PROXY
   - DOMAIN-SUFFIX,unpkg.com,PROXY
 
-  # 9. 流媒体 → 代理
+  # 9. Streaming services proxy
   - DOMAIN-SUFFIX,netflix.com,PROXY
   - DOMAIN-SUFFIX,netflix.net,PROXY
   - DOMAIN-SUFFIX,nflxext.com,PROXY
@@ -347,7 +351,7 @@ rules:
   - DOMAIN-SUFFIX,max.com,PROXY
   - DOMAIN-SUFFIX,twitch.tv,PROXY
 
-  # 10. 社交 / 通讯 → 代理
+  # 10. Social and messaging services proxy
   - DOMAIN-SUFFIX,x.com,PROXY
   - DOMAIN-SUFFIX,twitter.com,PROXY
   - DOMAIN-SUFFIX,twimg.com,PROXY
@@ -366,17 +370,17 @@ rules:
   - DOMAIN-SUFFIX,medium.com,PROXY
   - DOMAIN-SUFFIX,linkedin.com,PROXY
 
-  # 11. Google 生态 → 代理
+  # 11. Google ecosystem proxy
   - DOMAIN-SUFFIX,google.com,PROXY
   - DOMAIN-SUFFIX,googleapis.com,PROXY
   - DOMAIN-SUFFIX,googleusercontent.com,PROXY
   - DOMAIN-SUFFIX,gstatic.com,PROXY
   - DOMAIN-SUFFIX,g.co,PROXY
 
-  # 12. 国内 IP 直连
+  # 12. China IP direct
   - GEOIP,CN,DIRECT
 
-  # 13. 兜底代理
+  # 13. Fallback proxy
   - MATCH,PROXY
 ```
 

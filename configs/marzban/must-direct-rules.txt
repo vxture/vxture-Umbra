@@ -70,3 +70,8 @@ DOMAIN-SUFFIX,trycloudflare.com
 DOMAIN-SUFFIX,argotunnel.com
 DOMAIN-SUFFIX,warp.dev
 DOMAIN,one.one.one.one
+
+# Vultr provider control plane and object storage. VPS address ranges are also
+# protected later by IP-ASN,20473,DIRECT,no-resolve.
+DOMAIN-SUFFIX,vultr.com
+DOMAIN-SUFFIX,vultrobjects.com

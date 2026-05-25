@@ -294,7 +294,7 @@ Expected: `200`
 Create a test user in Marzban, then:
 
 ```bash
-curl -sk https://sub.ruyin.ai/sub/<marzban-token> | grep -E "name: vx-tokyo|MATCH,PROXY|openai|microsoft.com,DIRECT|cloudflare.com,DIRECT"
+curl -sk https://sub.ruyin.ai/sub/<marzban-token> | grep -E "name: vx-tokyo|MATCH,PROXY|openai|microsoft.com,DIRECT|cloudflare.com,DIRECT|vultr.com,DIRECT"
 ```
 
 Expected output contains:
@@ -302,6 +302,7 @@ Expected output contains:
 name: vx-tokyo
 DOMAIN-SUFFIX,microsoft.com,DIRECT
 DOMAIN-SUFFIX,cloudflare.com,DIRECT
+DOMAIN-SUFFIX,vultr.com,DIRECT
 DOMAIN-SUFFIX,openai.com,PROXY
 MATCH,PROXY
 ```
@@ -312,6 +313,7 @@ Must NOT contain:
 ```
 DOMAIN-SUFFIX,microsoft.com,PROXY
 DOMAIN-SUFFIX,cloudflare.com,PROXY
+DOMAIN-SUFFIX,vultr.com,PROXY
 ```
 
 Use GET for subscription tests. `curl -I` sends HEAD and Marzban returns `405 Method Not Allowed` with `allow: GET`; that is not a subscription failure.

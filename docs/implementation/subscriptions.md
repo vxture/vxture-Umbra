@@ -84,8 +84,13 @@ SUB_PROFILE_TITLE: "${SUB_PROFILE_TITLE:-Ruyin}"
 
 Proxy node names remain controlled by Marzban and `NODE_NAME`.
 
-Microsoft, Cloudflare, Umbra public service domains, and other must-direct
+Microsoft, Cloudflare, Vultr, Umbra public service domains, and other must-direct
 targets are rendered from `must-direct-rules.txt` before any `PROXY` rule. The
 validator `scripts/deploy/07-validate-clash-rules.py` fails config rendering if
 a must-direct domain is missing, appears after the first proxy boundary, or
 overlaps any `PROXY` rule.
+
+For immediate local testing, mirror rule changes into the current Clash Verge
+profile YAML and keep an updated-profile backup next to it. Clash Verge can
+overwrite the active YAML on subscription refresh, so the repository template is
+the source of truth and the local backup is only a restore/reference copy.
