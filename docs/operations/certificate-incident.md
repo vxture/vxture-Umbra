@@ -8,7 +8,7 @@ is referenced from certificate scripts as an implementation guardrail.
 Observed production state:
 
 - `pass.ruyin.ai` has a trusted Let's Encrypt certificate.
-- `ruyin.ai`, `www.ruyin.ai`, `proxy.ruyin.ai`, `sub.ruyin.ai`,
+- `ruyin.ai`, `www.ruyin.ai`, `proxy.ruyin.ai`, `subscribe.ruyin.ai`,
   `console.ruyin.ai`, and `vault.ruyin.ai` have self-signed certificates.
 - The six self-signed domains have zero-byte `renewal/*.conf` files.
 - Only `pass.ruyin.ai` has normal Certbot `archive/` material.

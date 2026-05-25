@@ -7,7 +7,7 @@ Subscriptions must remain Marzban-native.
 The public URL format is:
 
 ```text
-https://sub.ruyin.ai/sub/<marzban-token>
+https://subscribe.ruyin.ai/sub/<marzban-token>
 ```
 
 Do not rewrite public URLs to `/clash-meta`, `/v2ray`, username-based tokens, or custom converter paths.
@@ -36,7 +36,7 @@ Marzban may display a fresh-looking subscription token after a console refresh. 
 Use GET for verification:
 
 ```bash
-curl -sk -o /tmp/sub.yaml -w "%{http_code}\n" 'https://sub.ruyin.ai/sub/<token>'
+curl -sk -o /tmp/sub.yaml -w "%{http_code}\n" 'https://subscribe.ruyin.ai/sub/<token>'
 ```
 
 Do not use HEAD as the success test; Marzban can return `405 Method Not Allowed`.
