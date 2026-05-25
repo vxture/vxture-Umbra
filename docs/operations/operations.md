@@ -107,6 +107,8 @@ certbot renew --quiet --webroot --webroot-path DATA_DIR/certbot
 
 If certbot does not renew any certificate, services are left untouched. If a renewal happens, the script syncs the edge cert into `DATA_DIR/marzban/tls`, reloads nginx after a config test, and restarts Marzban so it reopens the TLS files.
 
+Before running `certbot renew`, the script removes only invalid zero-byte files under `DATA_DIR/letsencrypt/renewal/`. This cleanup does not issue certificates and does not remove certificate material.
+
 ### Cron
 
 ```cron
@@ -121,6 +123,16 @@ bash scripts/ops.sh certs --status
 
 The status command reads certificates inside Docker because certbot-owned files may not be readable by the deploy user on the host.
 
+It reports non-trusted/self-signed issuers as warnings and also warns if zero-byte renewal configs exist.
+
+### Renewal State Cleanup
+
+```bash
+bash scripts/ops.sh certs --clean-renewal-state
+```
+
+This removes only zero-byte `DATA_DIR/letsencrypt/renewal/*.conf` files left by failed or interrupted certbot runs. It does not contact Let's Encrypt, does not renew certificates, and does not delete `live/` or `archive/` certificate files.
+
 ### Real Certificate Upgrade
 
 ```bash
@@ -131,7 +143,7 @@ Upgrade is staged:
 
 1. Current certificates are copied into `DATA_DIR/letsencrypt.new.<timestamp>`.
 2. Valid existing LE certs are reused; non-trusted domain state is removed only from the staged copy.
-3. Missing or non-trusted certs are issued inside the staged directory.
+3. Missing, expiring, or non-trusted certs are issued inside the staged directory.
 4. Existing production certificates stay in `DATA_DIR/letsencrypt` while issuance runs.
 5. If any domain fails or Let's Encrypt rate-limits the request, the staged directory is removed and the running system keeps the old certificates.
 6. Only after every domain succeeds does the script move the old directory to `DATA_DIR/letsencrypt.backup.<timestamp>` and activate the staged directory.

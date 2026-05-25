@@ -8,6 +8,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/../lib/env.sh"
 source "$SCRIPT_DIR/../lib/log.sh"
+source "$SCRIPT_DIR/../lib/certs.sh"
 
 log_banner "Umbra — Self-Signed Certificates (debug mode)"
 log_warn "These certs are NOT trusted by browsers."
@@ -27,7 +28,14 @@ DOMAINS=(
   "$VAULT_DOMAIN"
 )
 
+FAILED=0
+
 for domain in "${DOMAINS[@]}"; do
+  if ! umbra_validate_cert_domain "$domain"; then
+    (( ++FAILED ))
+    continue
+  fi
+
   cert_path="$CERT_DIR/live/$domain/fullchain.pem"
 
   if [[ -f "$cert_path" ]]; then
@@ -48,6 +56,11 @@ for domain in "${DOMAINS[@]}"; do
 done
 
 echo ""
+if (( FAILED > 0 )); then
+  log_error "$FAILED domain(s) were invalid. Self-signed certificate generation failed."
+  exit 1
+fi
+
 log_ok "All self-signed certificates ready."
 log_info "To upgrade to real certs once DNS is ready:"
 log_info "  bash scripts/ops.sh certs --upgrade"

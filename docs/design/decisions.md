@@ -429,12 +429,13 @@ This means the admin panel is invisible to anyone not connected to the VPN — n
 | `00-check-env.sh` | Read-only validation, always safe |
 | `01-init-dirs.sh` | `mkdir -p` everywhere, safe |
 | `02-generate-reality.sh` | Skip if `reality.json` exists |
-| `03-issue-certs.sh` | Certbot skips if cert is valid |
+| `03-issue-certs.sh` | Reuses trusted LE certs that are not near expiry; removes only invalid zero-byte renewal configs |
 | `04-render-configs.py` | Overwrites rendered configs (templates are source of truth) |
 | `05-up.sh` | `docker compose up -d` is idempotent |
 | `06-verify.sh` | Read-only, always safe |
 | `scripts/ops/backup.sh` | Always creates new timestamped archive |
 | `scripts/ops/certs.sh --upgrade` | Issues into a staged directory; production certs are untouched unless all domains succeed |
+| `scripts/ops/certs.sh --renew` | Delegates to certbot renew; does not force reissue |
 
 ---
 

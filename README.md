@@ -214,9 +214,10 @@ bash scripts/deploy.sh verify                    # run full verification suite
 bash scripts/ops.sh certs --renew              # manual renewal check (also runs daily via cron)
 bash scripts/ops.sh certs --status     # show expiry for all domains
 bash scripts/ops.sh certs --upgrade    # staged upgrade to trusted LE certs
+bash scripts/ops.sh certs --clean-renewal-state  # remove invalid zero-byte renewal configs
 ```
 
-Renewal runs daily at 03:17 via cron (added by `deploy.sh all`). Services reload only when certbot actually renews a certificate.
+Renewal runs daily at 03:17 via cron (added by `deploy.sh all`). It delegates to `certbot renew`, so it does not force reissue. Services reload only when certbot actually renews a certificate.
 
 ### Reset and redeploy
 

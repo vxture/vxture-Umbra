@@ -5,6 +5,7 @@
 #   bash scripts/ops.sh certs --renew      # run renewal check (cron default)
 #   bash scripts/ops.sh certs --upgrade    # replace self-signed with real LE certs
 #   bash scripts/ops.sh certs --status     # show cert expiry for all domains
+#   bash scripts/ops.sh certs --clean-renewal-state
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -22,8 +23,32 @@ DOMAINS=(
   "$CONSOLE_DOMAIN" "$PASS_DOMAIN" "$VAULT_DOMAIN"
 )
 
+validate_domains() {
+  local failed=0
+  local domain
+
+  for domain in "${DOMAINS[@]}"; do
+    umbra_validate_cert_domain "$domain" || (( ++failed ))
+  done
+
+  (( failed == 0 ))
+}
+
 sync_marzban_tls() {
   umbra_sync_marzban_tls "$CERT_DIR" "$EDGE_DOMAIN" "$DATA_DIR/marzban/tls"
+}
+
+report_empty_renewal_configs() {
+  local empty
+  empty="$(umbra_list_empty_renewal_configs "$CERT_DIR")"
+  if [[ -z "$empty" ]]; then
+    return 0
+  fi
+
+  log_warn "Empty Certbot renewal configs found. They are invalid and should not be renewed:"
+  while IFS= read -r path; do
+    [[ -n "$path" ]] && log_warn "  ${path#/certs/}"
+  done <<< "$empty"
 }
 
 remove_staged_certs() {
@@ -119,9 +144,20 @@ restore_backup_certs() {
     '
 }
 
+if [[ "$MODE" == "--clean-renewal-state" ]]; then
+  log_banner "Umbra - Clean Certbot Renewal State"
+  validate_domains || exit 1
+  log_info "Only zero-byte renewal configs are removed. Certificates are not issued or deleted."
+  umbra_clean_empty_renewal_configs "$CERT_DIR"
+  log_ok "Renewal state cleanup complete."
+  exit 0
+fi
+
 if [[ "$MODE" == "--status" ]]; then
   log_banner "Umbra - Certificate Status"
+  validate_domains || exit 1
   log_info "Reading certs inside Docker so root-owned certbot files are visible."
+  report_empty_renewal_configs
 
   if [[ ! -d "$CERT_DIR" ]]; then
     log_warn "Certificate directory does not exist: $CERT_DIR"
@@ -141,20 +177,33 @@ import ssl
 domains = os.environ["DOMAINS"].split()
 now = datetime.datetime.now(datetime.timezone.utc)
 
+def flatten_name(name):
+    return ", ".join("=".join(part) for rdn in name for part in rdn)
+
 for domain in domains:
     path = f"/certs/live/{domain}/fullchain.pem"
     try:
         cert = ssl._ssl._test_decode_cert(path)
         expiry_text = cert["notAfter"]
+        issuer = flatten_name(cert.get("issuer", ()))
         expiry = datetime.datetime.strptime(
             expiry_text, "%b %d %H:%M:%S %Y %Z"
         ).replace(tzinfo=datetime.timezone.utc)
         days_left = (expiry - now).days
+        issuer_lower = issuer.lower()
+        le_name = "let" + chr(39) + "s encrypt"
+        trusted_le = (
+            le_name in issuer_lower
+            and "fake" not in issuer_lower
+            and "staging" not in issuer_lower
+        )
 
-        if days_left > 30:
-            print(f"[ OK ]  {domain} - {days_left} days remaining ({expiry_text})")
+        if not trusted_le:
+            print(f"[WARN]  {domain} - not trusted LE; issuer={issuer}; expires={expiry_text}")
+        elif days_left > 30:
+            print(f"[ OK ]  {domain} - trusted LE; {days_left} days remaining ({expiry_text})")
         elif days_left >= 0:
-            print(f"[WARN]  {domain} - {days_left} days remaining; renew soon ({expiry_text})")
+            print(f"[WARN]  {domain} - trusted LE; {days_left} days remaining; renew soon ({expiry_text})")
         else:
             print(f"[FAIL]  {domain} - expired ({expiry_text})")
     except Exception as exc:
@@ -168,6 +217,7 @@ fi
 
 if [[ "$MODE" == "--upgrade" ]]; then
   log_banner "Umbra - Upgrade to Real TLS Certificates"
+  validate_domains || exit 1
 
   log_step "Verifying DNS points to this server..."
   SERVER_IP=$(curl -sf --max-time 5 https://api.ipify.org 2>/dev/null \
@@ -202,7 +252,9 @@ if [[ "$MODE" == "--upgrade" ]]; then
 
   log_step "Issuing real Let's Encrypt certificates into staging directory..."
   log_info "Existing production certs remain untouched until all domains issue successfully."
+  log_info "Existing trusted LE certs are reused; only missing or non-trusted certs are issued in the staged copy."
   prepare_staged_certs "$STAGED_NAME"
+  umbra_clean_empty_renewal_configs "$DATA_DIR/$STAGED_NAME"
 
   if ! CERTBOT_STAGING=false CERTBOT_REPLACE_UNTRUSTED=true CERTBOT_CERT_DIR="$DATA_DIR/$STAGED_NAME" bash "$SCRIPT_DIR/../deploy/03-issue-certs.sh"; then
     log_error "Certificate issuance failed; existing production certificates were not touched."
@@ -257,16 +309,20 @@ fi
 
 if [[ -n "$MODE" ]] && [[ "$MODE" != "--renew" ]]; then
   log_error "Unknown certs mode: $MODE"
-  log_info "Usage: bash scripts/ops.sh certs [--renew|--status|--upgrade]"
+  log_info "Usage: bash scripts/ops.sh certs [--renew|--status|--upgrade|--clean-renewal-state]"
   exit 1
 fi
 
 log_banner "Umbra - Certificate Renewal"
+validate_domains || exit 1
 
 RENEW_MARKER_DIR="$DATA_DIR/certbot/hooks"
 RENEW_MARKER="$RENEW_MARKER_DIR/renewed"
 mkdir -p "$CERT_DIR" "$WEBROOT" "$DATA_DIR/certbot/config" "$RENEW_MARKER_DIR"
 rm -f "$RENEW_MARKER"
+
+log_step "Cleaning invalid renewal state..."
+umbra_clean_empty_renewal_configs "$CERT_DIR"
 
 log_step "Running certbot renew..."
 docker run --rm \

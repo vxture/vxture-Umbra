@@ -194,7 +194,9 @@ chmod 700 BACKUP_DIR
 - Certs are stored in `DATA_DIR/letsencrypt/` by default
 - `CERTBOT_CERT_DIR` can override the destination for staged issuance
 - Refuses in-place replacement when a non-trusted cert directory already exists
-- Verifies each cert was issued before proceeding
+- Reuses existing trusted LE certs that are not near expiry
+- Verifies each cert was issued and trusted before proceeding
+- Removes invalid zero-byte renewal configs left by failed certbot attempts
 
 ### `04-render-configs.py`
 

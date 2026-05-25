@@ -33,6 +33,8 @@ Marzban also requires TLS files under `DATA_DIR/marzban/tls` so its HTTP service
 
 Certificate replacement is a safety boundary. `ops.sh certs --upgrade` copies the current cert directory into a staged directory, removes non-trusted domain state only from the staged copy, and must leave the current `DATA_DIR/letsencrypt` untouched if any Let's Encrypt request fails.
 
+Existing trusted Let's Encrypt certificates must be reused unless they are due for renewal. Failed certbot runs may leave zero-byte `renewal/*.conf` files; scripts may remove only those invalid renewal configs and must not treat them as issued certificates.
+
 Certbot writes files as root from inside Docker. Do not copy `privkey.pem` directly from shell scripts as the deploy user; use the Docker helper in `scripts/lib/certs.sh`.
 
 Self-signed recovery mode requires:
