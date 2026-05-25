@@ -56,6 +56,7 @@ services:
       SUDO_USERNAME: "${MARZBAN_ADMIN_USER}"
       SUDO_PASSWORD: "${MARZBAN_ADMIN_PASSWORD}"
       XRAY_SUBSCRIPTION_URL_PREFIX: "${SUBSCRIPTION_URL_PREFIX}"
+      SUB_PROFILE_TITLE: "${SUB_PROFILE_TITLE:-Ruyin}"
       CUSTOM_TEMPLATES_DIRECTORY: "/var/lib/marzban/templates"
       CLASH_SUBSCRIPTION_TEMPLATE: "clash/default.yml"
     volumes:
@@ -88,4 +89,3 @@ services:
       - ${DATA_DIR}/portal/html:/usr/share/nginx/html:ro
     networks:
       - umbra-net
-

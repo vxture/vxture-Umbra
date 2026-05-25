@@ -221,7 +221,7 @@ Do not run it with `bash scripts/deploy/04-render-configs.py`; it is a Python sc
 | `landing/html/**` | `DATA_DIR/nginx/html/ruyin-landing/` and `DATA_DIR/nginx/html/www-ruyin/` |
 | `portal/html/**` | `DATA_DIR/portal/html/` |
 
-Also injects REALITY keys into Xray/Marzban config and renders the Clash subscription profile header.
+Also injects REALITY keys into Xray/Marzban config and renders the Clash subscription template.
 
 ### `05-up.sh`
 

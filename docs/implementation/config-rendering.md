@@ -25,8 +25,10 @@ Lowercase or mixed-case Jinja variables are intentionally left for Marzban's sec
 
 ```jinja2
 {{ conf | only("proxies") | yaml }}
-{{ user.username | upper }}
+{% for tag in proxy_remarks %}
 ```
+
+Do not use `user.username` in the Clash subscription template; Marzban does not expose that object to the Clash renderer.
 
 ## Outputs
 

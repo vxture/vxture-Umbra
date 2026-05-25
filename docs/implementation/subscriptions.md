@@ -55,16 +55,25 @@ Rendered output:
 DATA_DIR/marzban/templates/clash/default.yml
 ```
 
-The Clash profile title is set in the subscription file header:
+The Clash template must only use variables exposed by Marzban's Clash renderer, such as:
 
-```yaml
-#profile-title: Ruyin-{{ user.username | upper }}
+```jinja2
+{{ conf | only("proxies") | yaml }}
+{% for tag in proxy_remarks %}
 ```
 
-For `USER01`, clients should display:
+Do not use `user.username` in the Clash template. Marzban does not expose that object to this renderer, and using it can make Clash user agents receive `500 Internal Server Error`.
 
-```text
-Ruyin-USER01
+The subscription title is static and is set by Marzban's `SUB_PROFILE_TITLE` response header:
+
+```yaml
+#profile-title: Ruyin
+```
+
+In `docker-compose.yml`:
+
+```yaml
+SUB_PROFILE_TITLE: "${SUB_PROFILE_TITLE:-Ruyin}"
 ```
 
 Proxy node names remain controlled by Marzban and `NODE_NAME`.
