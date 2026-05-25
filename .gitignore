@@ -1,4 +1,4 @@
-# Environment — never commit real secrets
+# Environment - never commit real secrets
 .env
 *.env
 .env.*

@@ -12,6 +12,49 @@ from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 
+# The repository can contain local runtime files on a server checkout
+# (.env.bak.*, generated data, certificate state, caches). Contract checks must
+# scan source inputs only; otherwise a harmless server backup can fail release
+# checks or leak old deployment details into diagnostics.
+SOURCE_SCAN_PATHS: tuple[Path, ...] = (
+    Path(".env.example"),
+    Path("README.md"),
+    Path("docker-compose.yml"),
+    Path("configs"),
+    Path("docs"),
+    Path("scripts"),
+)
+SKIP_DIR_NAMES = {
+    ".git",
+    "__pycache__",
+    ".pytest_cache",
+    ".venv",
+    "venv",
+    "node_modules",
+    "data",
+    "backup",
+    "private",
+    "runtime",
+    "generated",
+}
+SKIP_SUFFIXES = {
+    ".pyc",
+    ".pyo",
+    ".png",
+    ".jpg",
+    ".jpeg",
+    ".gif",
+    ".ico",
+    ".pem",
+    ".key",
+    ".crt",
+    ".csr",
+    ".p12",
+    ".pfx",
+    ".log",
+}
+SKIP_NAME_SUFFIXES = (".bak", ".backup", ".old", ".tmp", ".swp", ".swo")
+
 
 CHECKS: list[tuple[str, Path, list[str]]] = [
     (
@@ -131,15 +174,39 @@ def read(path: Path) -> str:
     return path.read_text(encoding="utf-8")
 
 
+def should_skip(path: Path) -> bool:
+    rel_parts = path.relative_to(PROJECT_ROOT).parts
+    if any(part in SKIP_DIR_NAMES for part in rel_parts):
+        return True
+
+    name = path.name
+    if name.startswith(".env") and name != ".env.example":
+        return True
+    if ".bak." in name or name.endswith(SKIP_NAME_SUFFIXES):
+        return True
+    if path.suffix.lower() in SKIP_SUFFIXES:
+        return True
+    return False
+
+
 def iter_text_files(root: Path):
     for path in root.rglob("*"):
         if not path.is_file():
             continue
-        if ".git" in path.parts or "__pycache__" in path.parts:
-            continue
-        if path.suffix.lower() in {".pyc", ".png", ".jpg", ".jpeg", ".gif", ".ico"}:
+        if should_skip(path):
             continue
         yield path
+
+
+def iter_source_files():
+    for rel_path in SOURCE_SCAN_PATHS:
+        path = PROJECT_ROOT / rel_path
+        if path.is_file():
+            if not should_skip(path):
+                yield path
+            continue
+        if path.is_dir():
+            yield from iter_text_files(path)
 
 
 def main() -> int:
@@ -161,7 +228,7 @@ def main() -> int:
             print(f"[ OK ] {label}")
 
     for label, rel_path, needle in FORBIDDEN:
-        paths = [PROJECT_ROOT / rel_path] if rel_path != Path(".") else list(iter_text_files(PROJECT_ROOT))
+        paths = [PROJECT_ROOT / rel_path] if rel_path != Path(".") else list(iter_source_files())
         matches = []
         for path in paths:
             if path.exists() and needle in read(path):

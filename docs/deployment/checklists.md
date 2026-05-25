@@ -455,9 +455,14 @@ Validation commands:
 python3 scripts/deploy/08-check-script-contracts.py
 bash -n scripts/deploy.sh scripts/ops.sh scripts/server.sh
 bash -n scripts/deploy/*.sh scripts/ops/*.sh scripts/server/*.sh scripts/lib/*.sh
-python3 -m py_compile scripts/deploy/04-render-configs.py scripts/deploy/07-validate-clash-rules.py
+python3 -m py_compile scripts/deploy/04-render-configs.py scripts/deploy/07-validate-clash-rules.py scripts/deploy/08-check-script-contracts.py
 git diff --check
 ```
+
+`08-check-script-contracts.py` scans source inputs only: `.env.example`,
+`README.md`, `docker-compose.yml`, `configs/`, `docs/`, and `scripts/`. It
+intentionally ignores local `.env*` files, backups, runtime output, caches, and
+binary assets.
 
 Repository checks:
 
