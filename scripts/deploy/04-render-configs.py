@@ -9,6 +9,7 @@ import json
 import os
 import re
 import shutil
+import subprocess
 import sys
 from pathlib import Path
 
@@ -67,6 +68,25 @@ def render(template_text: str, variables: dict) -> str:
             return match.group(0)
         return variables[key]
     return re.sub(r"\{\{\s*(\w+)\s*\}\}", replacer, template_text)
+
+
+def render_clash_rule_lines(src: Path, variables: dict, policy: str) -> str:
+    lines = []
+    for raw in src.read_text(encoding="utf-8").splitlines():
+        line = raw.strip()
+        if not line or line.startswith("#"):
+            continue
+        rendered = render(line, variables)
+        parts = [part.strip() for part in rendered.split(",")]
+        if len(parts) != 2:
+            print(f"[ERROR] Invalid Clash rule source line: {raw}", file=sys.stderr)
+            sys.exit(1)
+        rule_type, value = parts
+        if rule_type not in {"DOMAIN", "DOMAIN-SUFFIX"} or not value:
+            print(f"[ERROR] Invalid Clash direct rule: {raw}", file=sys.stderr)
+            sys.exit(1)
+        lines.append(f"  - {rule_type},{value},{policy}")
+    return "\n".join(lines)
 
 
 def render_file(src: Path, dst: Path, variables: dict, mode: int = 0o644):
@@ -128,6 +148,11 @@ variables = {
 }
 
 configs_dir = REPO_DIR / "configs"
+variables["CLASH_MUST_DIRECT_RULES"] = render_clash_rule_lines(
+    configs_dir / "marzban" / "must-direct-rules.txt",
+    variables,
+    "DIRECT",
+)
 
 print("\n── Rendering Nginx stream config ────────────────────────────────────────")
 render_file(
@@ -168,6 +193,17 @@ render_file(
     configs_dir / "marzban" / "clash-subscription.j2",
     DATA_DIR / "marzban" / "templates" / "clash" / "default.yml",
     variables,
+)
+subprocess.run(
+    [
+        sys.executable,
+        str(SCRIPT_DIR / "07-validate-clash-rules.py"),
+        "--config",
+        str(DATA_DIR / "marzban" / "templates" / "clash" / "default.yml"),
+        "--env",
+        str(env_file),
+    ],
+    check=True,
 )
 
 print("\n── Rendering VPN portal ─────────────────────────────────────────────────")

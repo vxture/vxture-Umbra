@@ -294,19 +294,24 @@ Expected: `200`
 Create a test user in Marzban, then:
 
 ```bash
-curl -sk https://sub.ruyin.ai/sub/<marzban-token> | grep -E "name: vx-tokyo|MATCH,PROXY|openai"
+curl -sk https://sub.ruyin.ai/sub/<marzban-token> | grep -E "name: vx-tokyo|MATCH,PROXY|openai|microsoft.com,DIRECT|cloudflare.com,DIRECT"
 ```
 
 Expected output contains:
 ```
 name: vx-tokyo
+DOMAIN-SUFFIX,microsoft.com,DIRECT
+DOMAIN-SUFFIX,cloudflare.com,DIRECT
 DOMAIN-SUFFIX,openai.com,PROXY
 MATCH,PROXY
 ```
 
+The config renderer runs `scripts/deploy/07-validate-clash-rules.py` and fails if any must-direct domain from `configs/marzban/must-direct-rules.txt` is missing, appears after the proxy boundary, or overlaps a `PROXY` rule.
+
 Must NOT contain:
 ```
 DOMAIN-SUFFIX,microsoft.com,PROXY
+DOMAIN-SUFFIX,cloudflare.com,PROXY
 ```
 
 Use GET for subscription tests. `curl -I` sends HEAD and Marzban returns `405 Method Not Allowed` with `allow: GET`; that is not a subscription failure.

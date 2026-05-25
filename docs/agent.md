@@ -132,7 +132,7 @@ Phase 4 — Hardening
 [ ] Marzban subscription URL functional at sub.ruyin.ai
 [ ] Subscription imports correctly into Clash Verge
 [ ] Node name shows vx-tokyo
-[ ] B++ rules present and correct (openai.com PROXY, microsoft.com not forced)
+[ ] B++ rules present and correct (openai.com PROXY; microsoft.com and cloudflare.com DIRECT)
 [ ] Vaultwarden login functional at pass.ruyin.ai
 [ ] Placeholder responding at vault.ruyin.ai
 [ ] VPN Portal loading at vpn.ruyin.ai

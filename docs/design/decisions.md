@@ -150,7 +150,7 @@ Priority  Rule Type                        Action
 0         Node infra (APEX / EDGE domain)  DIRECT
 1         Loopback / LAN / fake-ip         DIRECT
 2         VPS hosting ASN                  DIRECT
-3         Microsoft ecosystem              DIRECT
+3         Microsoft / Cloudflare           DIRECT
 4         DeepSeek (domestic AI)           DIRECT
 5         AI providers (per-vendor)        PROXY (forced)
 6         Model platforms / aggregators    PROXY (forced)
@@ -188,20 +188,43 @@ Microsoft:   microsoft.com, microsoftonline.com, windows.com, windowsupdate.com
              azure.com, azurewebsites.net, azureedge.net, trafficmanager.net
              visualstudio.com, vscode.dev, xbox.com, xboxlive.com
 
+Cloudflare:  cloudflare.com, cloudflare-dns.com, cloudflareclient.com
+             cloudflareinsights.com, cloudflareworkers.com, workers.dev
+             pages.dev, trycloudflare.com, argotunnel.com, warp.dev
+
 DeepSeek:    deepseek.com, deepseek.ai, api.deepseek.com  (国内可直连)
 ```
 
 **Reason:** Microsoft services are accessible from most networks without proxy; forcing them causes latency and auth degradation. DeepSeek is a Chinese domestic service — direct connection is faster and more stable.
 
+Cloudflare hosts DNS, tunnel, WARP, Workers, and Pages dependencies that should not loop through this proxy node.
+
 ### Full Rules Block
 
-Source of truth: `configs/marzban/clash-subscription.j2`. Reproduced here for reference.
+Source of truth:
+
+- `configs/marzban/must-direct-rules.txt` for mandatory direct domain rules
+- `configs/marzban/clash-subscription.j2` for the rendered Clash template
+
+The deployment renderer validates that all must-direct rules appear before the first `PROXY` rule and do not overlap any `PROXY` rule.
 
 ```yaml
 rules:
   # 0. 节点基础设施直连
   - DOMAIN-SUFFIX,<APEX_DOMAIN>,DIRECT
+  - DOMAIN-SUFFIX,<WWW_DOMAIN>,DIRECT
   - DOMAIN-SUFFIX,<EDGE_DOMAIN>,DIRECT
+  - DOMAIN-SUFFIX,<SUB_DOMAIN>,DIRECT
+  - DOMAIN-SUFFIX,<CONSOLE_DOMAIN>,DIRECT
+  - DOMAIN-SUFFIX,<PASS_DOMAIN>,DIRECT
+  - DOMAIN-SUFFIX,<VAULT_DOMAIN>,DIRECT
+  - DOMAIN-SUFFIX,microsoft.com,DIRECT
+  - DOMAIN-SUFFIX,cloudflare.com,DIRECT
+  - DOMAIN-SUFFIX,cloudflare-dns.com,DIRECT
+  - DOMAIN-SUFFIX,cloudflareclient.com,DIRECT
+  - DOMAIN-SUFFIX,workers.dev,DIRECT
+  - DOMAIN-SUFFIX,pages.dev,DIRECT
+  - DOMAIN-SUFFIX,argotunnel.com,DIRECT
 
   # 1. 本地 / 局域网 / 保留地址直连
   - IP-CIDR,127.0.0.0/8,DIRECT,no-resolve
