@@ -133,7 +133,7 @@ certificates are issued and renewed but no nginx virtual host is rendered.
 
 ### Node Naming
 
-All users see node name `vx-tokyo` (from `NODE_NAME` env var). The subscription profile title is static and comes from Marzban's `SUB_PROFILE_TITLE` response header; Umbra sets it to `Ruyin`. Do not use `user.username` in the Clash template because Marzban does not expose per-user objects to that renderer. Real server hostname and UUID are never visible in subscription output.
+All users see node name `vx-tokyo` (from `NODE_NAME` env var). Marzban's native response uses the raw username as the download filename, so Umbra routes `/sub/<token>` through `umbra-subproxy` to normalize client-visible metadata to `Ruyin-USERNAME`. Do not use `user.username` in the Clash template because Marzban does not expose per-user objects to that renderer. Real server hostname and UUID are never visible in subscription output.
 
 ---
 

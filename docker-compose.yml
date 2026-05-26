@@ -11,6 +11,7 @@ services:
     restart: always
     depends_on:
       - umbra-marzban
+      - umbra-subproxy
       - umbra-vaultwarden
       - umbra-portal
     ports:
@@ -61,6 +62,24 @@ services:
       CLASH_SUBSCRIPTION_TEMPLATE: "clash/default.yml"
     volumes:
       - ${DATA_DIR}/marzban:/var/lib/marzban
+    networks:
+      - umbra-net
+
+  # -- Subscription metadata normalizer ----------------------------------------
+  # Public URL remains /sub/<token>. This service only normalizes response
+  # metadata so clients display Ruyin-USERNAME instead of raw Marzban filename.
+  umbra-subproxy:
+    image: python:3.12-alpine
+    container_name: umbra-subproxy
+    restart: always
+    depends_on:
+      - umbra-marzban
+    environment:
+      MARZBAN_BASE_URL: "https://umbra-marzban:8000"
+      SUB_PROFILE_PREFIX: "${SUB_PROFILE_PREFIX:-Ruyin}"
+    volumes:
+      - ./services/subproxy/subproxy.py:/app/subproxy.py:ro
+    command: ["python", "/app/subproxy.py"]
     networks:
       - umbra-net
 

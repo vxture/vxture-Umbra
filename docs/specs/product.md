@@ -7,6 +7,7 @@ It provides:
 - Public HTTPS entry for Ruyin landing and VPN portal pages.
 - Marzban-managed VLESS + REALITY VPN access.
 - Native Marzban subscription delivery at `/sub/<token>`.
+- Subscription metadata normalization so clients display `Ruyin-USERNAME`.
 - Marzban console protected by Marzban login.
 - Vaultwarden password management at the password domain.
 - File-based deployment state under `DATA_DIR`, with SQLite for Marzban and Vaultwarden.
@@ -14,7 +15,7 @@ It provides:
 It intentionally does not provide:
 
 - A separate Xray container. Xray runs inside `umbra-marzban`.
-- A custom subscription converter service.
+- A custom subscription converter service; `umbra-subproxy` only normalizes response metadata.
 - Public access to Marzban admin APIs.
 - PostgreSQL or other external database services on the 1C1G node.
 

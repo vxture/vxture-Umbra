@@ -58,6 +58,7 @@ log_step "Container health..."
 
 CONTAINERS=(
   umbra-nginx umbra-marzban
+  umbra-subproxy
   umbra-vaultwarden umbra-portal
 )
 
@@ -91,9 +92,36 @@ check_http_exact "$SUB_DOMAIN clash-meta variant blocked" "https://$SUB_DOMAIN/s
 
 latest_sub_file=$(ls -t "$BACKUP_DIR"/subscription-urls-*.txt 2>/dev/null | head -1 || true)
 if [[ -n "$latest_sub_file" ]]; then
-  latest_sub_url=$(awk 'NF >= 2 && $1 !~ /^#/ && $2 ~ /^https:\/\// {print $2; exit}' "$latest_sub_file")
+  latest_sub_user=""
+  latest_sub_url=""
+  read -r latest_sub_user latest_sub_url < <(awk 'NF >= 2 && $1 !~ /^#/ && $2 ~ /^https:\/\// {print $1, $2; exit}' "$latest_sub_file")
   if [[ -n "$latest_sub_url" ]]; then
-    check_http_exact "Saved Marzban subscription URL works (GET)" "$latest_sub_url" 200
+    sub_headers=$(mktemp)
+    sub_body=$(mktemp)
+    sub_code=$(curl -sk --max-time 10 -D "$sub_headers" -o "$sub_body" -w "%{http_code}" -H "User-Agent: Clash Verge" "$latest_sub_url" || echo "000")
+    expected_title="${SUB_PROFILE_PREFIX:-Ruyin}-${latest_sub_user}"
+
+    if [[ "$sub_code" == "200" ]]; then
+      log_ok "Saved Marzban subscription URL works (GET) (200)"
+      (( ++PASS ))
+    else
+      log_fail "Saved Marzban subscription URL failed (got $sub_code)"
+      (( ++FAIL ))
+    fi
+
+    if grep -Eiq "^content-disposition:[[:space:]]*attachment;[[:space:]]*filename=${expected_title}(\r)?$" "$sub_headers" \
+       && head -1 "$sub_body" | grep -Fxq "#profile-title: $expected_title"; then
+      log_ok "Subscription name normalized: $expected_title"
+      (( ++PASS ))
+    else
+      log_fail "Subscription name not normalized to $expected_title"
+      log_info "Headers:"
+      sed -n '1,20p' "$sub_headers"
+      log_info "Body first line:"
+      head -1 "$sub_body" || true
+      (( ++FAIL ))
+    fi
+    rm -f "$sub_headers" "$sub_body"
   else
     log_warn "No subscription URL found in $latest_sub_file"
   fi

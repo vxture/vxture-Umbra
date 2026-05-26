@@ -27,6 +27,24 @@ Preferred portal options:
 
 Do not generate a static public index of all user subscription URLs.
 
+## Metadata Normalization
+
+`umbra-subproxy` is a thin metadata normalizer between nginx and Marzban. It
+does not convert subscription formats and does not change the public URL.
+
+It forwards `GET /sub/<token>` to Marzban, reads `/sub/<token>/info` to get the
+username, and normalizes client-visible metadata:
+
+```text
+content-disposition: attachment; filename=Ruyin-USER01
+profile-title: base64:<Ruyin-USER01>
+#profile-title: Ruyin-USER01
+```
+
+The unquoted `filename=Ruyin-USER01` is intentional. Some clients display
+Marzban's quoted filename literally or with escape slashes, such as
+`\"USER01\`.
+
 ## nginx Boundary
 
 `configs/nginx/vhosts/04-sub.conf.template` exposes only:
@@ -85,15 +103,11 @@ The Clash template must only use variables exposed by Marzban's Clash renderer, 
 
 Do not use `user.username` in the Clash template. Marzban does not expose that object to this renderer, and using it can make Clash user agents receive `500 Internal Server Error`.
 
-The subscription title is static and is set by Marzban's `SUB_PROFILE_TITLE` response header:
+The subscription title prefix comes from `SUB_PROFILE_PREFIX`. Marzban still
+receives `SUB_PROFILE_TITLE` as an upstream fallback:
 
 ```yaml
-#profile-title: Ruyin
-```
-
-In `docker-compose.yml`:
-
-```yaml
+SUB_PROFILE_PREFIX: "${SUB_PROFILE_PREFIX:-Ruyin}"
 SUB_PROFILE_TITLE: "${SUB_PROFILE_TITLE:-Ruyin}"
 ```
 

@@ -33,6 +33,7 @@ Purpose:    Production overseas edge entry node
 |---------|-----------|--------|---------|
 | Nginx | `umbra-nginx` | gateway | SNI stream + HTTP virtual hosts |
 | Marzban + Xray | `umbra-marzban` | sub.ruyin.ai, console.ruyin.ai, REALITY ingress | VPN user management, subscription, bundled Xray subprocess |
+| Subscription Proxy | `umbra-subproxy` | internal | Normalizes subscription response metadata only |
 | VPN Portal | `umbra-portal` | vpn.ruyin.ai | User onboarding, client downloads, docs |
 | Vaultwarden | `umbra-vaultwarden` | pass.ruyin.ai | Password manager |
 | Certbot | one-shot Docker container | ACME webroot | Let's Encrypt issue/renew automation |
@@ -46,7 +47,7 @@ Purpose:    Production overseas edge entry node
 | `ruyin.ai` | Nginx -> static landing | Brand home, navigation to services |
 | `www.ruyin.ai` | Nginx -> static content | Independent content from apex |
 | `vpn.ruyin.ai` | Nginx -> umbra-portal | VPN user entry, onboarding, client DL |
-| `sub.ruyin.ai` | Nginx -> umbra-marzban | Marzban subscription endpoint |
+| `sub.ruyin.ai` | Nginx -> umbra-subproxy -> umbra-marzban | Marzban-native subscription endpoint with normalized metadata |
 | `subscribe.ruyin.ai` | standby cert | Future user-facing subscription portal; keep in `STANDBY_CERT_DOMAINS`, do not use as `SUB_DOMAIN` |
 | `console.ruyin.ai` | Nginx -> umbra-marzban (Marzban login) | Marzban console |
 | `pass.ruyin.ai` | Nginx -> umbra-vaultwarden | Password manager |
@@ -128,7 +129,7 @@ Phase 4 - Hardening
 ## v1.0 Success Criteria
 
 ```
-[ ] All containers running: nginx, marzban, vaultwarden, portal, docs
+[ ] All containers running: nginx, marzban, subproxy, vaultwarden, portal
 [ ] HTTPS working on active public domains; standby cert domains have valid cert state
 [ ] Xray REALITY connection functional (test with Clash Verge)
 [ ] Marzban console accessible at console.ruyin.ai and protected by Marzban login

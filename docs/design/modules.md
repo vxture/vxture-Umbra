@@ -33,7 +33,7 @@ Nginx runs two listeners:
 | `01-ruyin.conf.template` | `ruyin.ai` | static files in `nginx/html/ruyin-landing/` |
 | `02-www.conf.template` | `www.ruyin.ai` | static files in `nginx/html/www-ruyin/` |
 | `03-vpn-portal.conf.template` | `EDGE_DOMAIN` | `umbra-portal:80` |
-| `04-sub.conf.template` | `sub.ruyin.ai` | native Marzban `/sub/<token>` only |
+| `04-sub.conf.template` | `sub.ruyin.ai` | `umbra-subproxy:8080` for native Marzban `/sub/<token>` metadata normalization |
 | `05-console.conf.template` | `console.ruyin.ai` | `umbra-marzban:8000` + Marzban login |
 | `06-pass.conf.template` | `pass.ruyin.ai` | `umbra-vaultwarden:80` |
 | `07-vault.conf.template` | `vault.ruyin.ai` | placeholder static response |
@@ -222,6 +222,13 @@ DATA_DIR/marzban/templates/clash/default.yml
 ```
 
 This file is rendered from `configs/marzban/clash-subscription.j2` - it contains the B++ proxy rules. See `decisions.md` and `../implementation/subscriptions.md` for full subscription context.
+
+### Subscription Metadata Normalizer
+
+`umbra-subproxy` is internal-only and sits between nginx and Marzban for
+`/sub/<token>`. It does not convert subscription formats. It normalizes the
+response filename, `profile-title` header, and YAML `#profile-title` to
+`Ruyin-USERNAME`.
 
 ### Docker Config
 

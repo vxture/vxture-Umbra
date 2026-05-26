@@ -24,6 +24,7 @@ SOURCE_SCAN_PATHS: tuple[Path, ...] = (
     Path("docker-compose.yml"),
     Path("configs"),
     Path("docs"),
+    Path("services"),
     Path("scripts"),
 )
 SKIP_DIR_NAMES = {
@@ -208,6 +209,34 @@ CHECKS: list[tuple[str, Path, list[str]]] = [
         ],
     ),
     (
+        "subscription vhost uses metadata normalizer",
+        Path("configs/nginx/vhosts/04-sub.conf.template"),
+        [
+            "proxy_pass http://umbra-subproxy:8080",
+            'location ~ "^/sub/([^/\\s]+)$"',
+        ],
+    ),
+    (
+        "subproxy normalizes client-visible subscription name",
+        Path("services/subproxy/subproxy.py"),
+        [
+            "SUB_PROFILE_PREFIX",
+            "fetch_username",
+            "attachment; filename={safe_filename(title)}",
+            "profile-title",
+            "profile-web-page-url",
+        ],
+    ),
+    (
+        "compose includes subscription metadata normalizer",
+        Path("docker-compose.yml"),
+        [
+            "umbra-subproxy:",
+            "SUB_PROFILE_PREFIX",
+            "./services/subproxy/subproxy.py:/app/subproxy.py:ro",
+        ],
+    ),
+    (
         "console vhost delegates auth to Marzban",
         Path("configs/nginx/vhosts/05-console.conf.template"),
         [
@@ -223,6 +252,15 @@ CHECKS: list[tuple[str, Path, list[str]]] = [
             "$CONSOLE_DOMAIN/dashboard/",
             "$CONSOLE_DOMAIN login reachable",
             "$CONSOLE_DOMAIN login not reachable",
+        ],
+    ),
+    (
+        "deploy verify checks subscription display name",
+        Path("scripts/deploy/06-verify.sh"),
+        [
+            "expected_title=\"${SUB_PROFILE_PREFIX:-Ruyin}-${latest_sub_user}\"",
+            "content-disposition",
+            "Subscription name normalized",
         ],
     ),
 ]
@@ -263,6 +301,11 @@ FORBIDDEN: list[tuple[str, Path, str]] = [
         "deploy verify must not call console access controlled",
         Path("scripts/deploy/06-verify.sh"),
         "$CONSOLE_DOMAIN access control",
+    ),
+    (
+        "subproxy must not quote content-disposition filename",
+        Path("services/subproxy/subproxy.py"),
+        'filename="{safe_filename(title)}"',
     ),
 ]
 

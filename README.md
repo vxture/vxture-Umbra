@@ -14,7 +14,7 @@ Production VPN edge node - SNI routing, VLESS+REALITY proxy, subscription delive
 |--------|---------|
 | `ruyin.ai` / `www.ruyin.ai` | Brand landing page |
 | `vpn.ruyin.ai` | VPN user portal |
-| `sub.ruyin.ai` | Marzban subscription endpoint |
+| `sub.ruyin.ai` | Marzban subscription endpoint with `Ruyin-USERNAME` display names |
 | `subscribe.ruyin.ai` | Reserved user subscription portal |
 | `console.ruyin.ai` | Marzban console *(Marzban login)* |
 | `pass.ruyin.ai` | Vaultwarden password manager |
@@ -170,7 +170,7 @@ curl -sk -o /tmp/sub.yaml -w "%{http_code}\n" 'https://sub.ruyin.ai/sub/<token>'
 
 Expected: `200`. `curl -I` sends HEAD and Marzban responds `405 Method Not Allowed`.
 
-Clash subscription files include a profile header named `Ruyin-USERNAME`, for example `Ruyin-USER01`, while the proxy node name remains `NODE_NAME`.
+Clash subscription files and response headers are normalized to `Ruyin-USERNAME`, for example `Ruyin-USER01`, while the proxy node name remains `NODE_NAME`.
 
 ---
 

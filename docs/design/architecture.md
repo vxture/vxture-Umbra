@@ -17,7 +17,7 @@ Internet
                                       |-- ruyin.ai         -> static landing
                                       |-- www.ruyin.ai     -> static landing copy
                                       |-- EDGE_DOMAIN      -> umbra-portal:80
-                                      |-- sub.ruyin.ai           -> umbra-marzban:8000 /sub/<token>
+                                      |-- sub.ruyin.ai           -> umbra-subproxy:8080 -> umbra-marzban:8000 /sub/<token>
                                       |-- console.ruyin.ai -> umbra-marzban:8000
                                       |-- pass.ruyin.ai    -> umbra-vaultwarden:80
                                       `-- vault.ruyin.ai   -> placeholder
@@ -39,8 +39,9 @@ Client
 Clash client
 `-- HTTPS GET sub.ruyin.ai/sub/<token>
     `-- umbra-nginx HTTP vhost
-        `-- umbra-marzban:8000
-            `-- Marzban renders DATA_DIR/marzban/templates/clash/default.yml
+        `-- umbra-subproxy:8080
+            `-- umbra-marzban:8000
+                `-- Marzban renders DATA_DIR/marzban/templates/clash/default.yml
 ```
 
 ---
@@ -81,11 +82,15 @@ Services:
     - public HTTP/HTTPS/SNI gateway
     - internal HTTPS virtual hosts on :8443
     - proxies REALITY traffic to umbra-marzban:10443
-    - proxies Marzban web/API/subscription traffic to umbra-marzban:8000
+    - proxies Marzban web/API traffic to umbra-marzban:8000
+    - proxies subscription traffic to umbra-subproxy:8080
 
   umbra-marzban
     - Marzban API/admin/subscription on :8000
     - bundled Xray subprocess on :10443
+
+  umbra-subproxy
+    - internal-only metadata normalizer for /sub/<token>
     - SQLite database in DATA_DIR/marzban/db.sqlite3
 
   umbra-portal
@@ -193,6 +198,7 @@ Services:
 | 8443 | Internal | umbra-nginx | HTTP virtual hosts (after SNI handoff) |
 | 10443 | Internal | umbra-marzban | Bundled Xray subprocess: VLESS + REALITY |
 | 8000 | Internal | umbra-marzban | Marzban API + admin + subscription |
+| 8080 | Internal | umbra-subproxy | Subscription metadata normalization |
 | 80 | Internal | umbra-vaultwarden | Vaultwarden HTTP |
 | 80 | Internal | umbra-portal | VPN portal static site |
 

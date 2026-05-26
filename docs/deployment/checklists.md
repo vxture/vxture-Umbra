@@ -124,7 +124,7 @@ Preflight checklist:
 Success criteria:
 
 ```text
-[ ] `docker compose ps` shows nginx, marzban, vaultwarden, portal running
+[ ] `docker compose ps` shows nginx, marzban, subproxy, vaultwarden, portal running
 [ ] `docker exec umbra-nginx nginx -t` succeeds
 [ ] `bash scripts/ops.sh certs --status` shows trusted LE certs, unless in self-signed mode
 [ ] `bash scripts/deploy.sh verify` completes or reports only documented auth-protected endpoints
