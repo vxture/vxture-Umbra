@@ -7,7 +7,7 @@ It provides:
 - Public HTTPS entry for Ruyin landing and VPN portal pages.
 - Marzban-managed VLESS + REALITY VPN access.
 - Native Marzban subscription delivery at `/sub/<token>`.
-- Marzban admin console behind network access control and Marzban login.
+- Marzban console protected by Marzban login.
 - Vaultwarden password management at the password domain.
 - File-based deployment state under `DATA_DIR`, with SQLite for Marzban and Vaultwarden.
 

@@ -16,7 +16,7 @@ if [[ "$EUID" -eq 0 ]]; then
   exit 1
 fi
 
-# ── Helpers ───────────────────────────────────────────────────────────────────
+# -- Helpers -------------------------------------------------------------------
 prompt() {
   local question="$1"
   local default="$2"
@@ -43,11 +43,11 @@ confirm() {
 # with SSL verification disabled (cert is for internal Docker use only).
 MARZBAN_API="https://localhost:8000"
 
-log_banner "Umbra — Post-Deploy Wizard"
+log_banner "Umbra - Post-Deploy Wizard"
 log_info "Node: $NODE_NAME  ($EDGE_DOMAIN)"
 echo ""
 
-# ── [1/4] Marzban Users ───────────────────────────────────────────────────────
+# -- [1/4] Marzban Users -------------------------------------------------------
 log_step "[1/4] Create Marzban Users"
 echo ""
 
@@ -69,7 +69,7 @@ import os, sys, sqlite3
 try:
     from passlib.context import CryptContext
 except ImportError:
-    print("passlib not available — skipping admin pre-create", file=sys.stderr)
+    print("passlib not available - skipping admin pre-create", file=sys.stderr)
     sys.exit(0)
 
 db = sqlite3.connect('/var/lib/marzban/db.sqlite3')
@@ -77,7 +77,7 @@ username = os.environ.get('SUDO_USERNAME', '')
 password = os.environ.get('SUDO_PASSWORD', '')
 
 if not username or not password:
-    print("SUDO_USERNAME/SUDO_PASSWORD not set — skipping", file=sys.stderr)
+    print("SUDO_USERNAME/SUDO_PASSWORD not set - skipping", file=sys.stderr)
     sys.exit(0)
 
 count = db.execute("SELECT COUNT(*) FROM admins WHERE username=?", (username,)).fetchone()[0]
@@ -128,7 +128,7 @@ fi
 
 log_ok "Marzban API authenticated"
 
-# Configure inbound host — required for subscription URLs to include proxy nodes.
+# Configure inbound host - required for subscription URLs to include proxy nodes.
 # Sets the public address, port, SNI and TLS fingerprint for VLESS_TCP_REALITY.
 log_info "Configuring Marzban inbound host..."
 
@@ -182,7 +182,7 @@ PYEOF
 if [[ "$MARZBAN_HOST_STATUS" == "OK" ]]; then
   log_ok "Marzban host configured: ${EDGE_DOMAIN}:443 (SNI: ${REALITY_SNI})"
 else
-  log_warn "Marzban host configuration may have failed — check manually"
+  log_warn "Marzban host configuration may have failed - check manually"
 fi
 
 CREATED=0
@@ -217,7 +217,7 @@ PYEOF
 )
 
   if [[ "$exists" != "NOT_FOUND" ]]; then
-    log_info "User $username already exists — skipping"
+    log_info "User $username already exists - skipping"
     SUB_URLS[$username]="${exists}"
     (( ++SKIPPED ))
     continue
@@ -266,7 +266,7 @@ done
 echo ""
 log_info "Users: created=$CREATED  skipped=$SKIPPED"
 
-# ── [2/4] Subscription URLs ───────────────────────────────────────────────────
+# -- [2/4] Subscription URLs ---------------------------------------------------
 echo ""
 log_step "[2/4] Subscription URLs"
 echo "  ---------------------------------------------------------------------"
@@ -281,7 +281,7 @@ echo "  ---------------------------------------------------------------------"
 # Save to file
 SUB_FILE="$BACKUP_DIR/subscription-urls-$(date +%Y%m%d).txt"
 {
-  echo "# Subscription URLs — generated $(date)"
+  echo "# Subscription URLs - generated $(date)"
   echo "# Server: $NODE_NAME ($EDGE_DOMAIN)"
   echo "# Format: Marzban native /sub/<token>"
   echo "# Marzban console may show a different token after refresh; old saved URLs remain usable while GET returns 200."
@@ -294,7 +294,7 @@ SUB_FILE="$BACKUP_DIR/subscription-urls-$(date +%Y%m%d).txt"
 chmod 600 "$SUB_FILE"
 log_ok "Saved to: $SUB_FILE"
 
-# ── [3/4] DNS Checklist ───────────────────────────────────────────────────────
+# -- [3/4] DNS Checklist -------------------------------------------------------
 echo ""
 log_step "[3/4] DNS Status"
 
@@ -311,9 +311,9 @@ DNS_OK=true
 for domain in "${ALL_DOMAINS[@]}"; do
   resolved=$(dig +short "$domain" 2>/dev/null | grep -E '^[0-9]+\.' | tail -1 || echo "?")
   if [[ "$resolved" == "$SERVER_IP" ]]; then
-    echo "  ✓  $domain  →  $resolved"
+    echo "  OK  $domain  ->  $resolved"
   else
-    echo "  ✗  $domain  →  $resolved  (needs update)"
+    echo "  FAIL  $domain  ->  $resolved  (needs update)"
     DNS_OK=false
   fi
 done
@@ -328,7 +328,7 @@ else
   echo "  $ bash scripts/ops.sh certs --upgrade"
 fi
 
-# ── [4/4] Vaultwarden Account Setup ──────────────────────────────────────────
+# -- [4/4] Vaultwarden Account Setup ------------------------------------------
 echo ""
 log_step "[4/4] Vaultwarden Account Setup"
 echo ""
@@ -338,7 +338,7 @@ echo "  Steps to complete:"
 echo "    1. Open the admin panel: https://$PASS_DOMAIN/admin"
 echo "       Enter your VAULTWARDEN_ADMIN_TOKEN from .env"
 echo "    2. Go to 'Users' -> 'Invite User' and invite yourself by email"
-echo "       (Web registration is disabled — accounts must be created via admin panel)"
+echo "       (Web registration is disabled - accounts must be created via admin panel)"
 echo "    3. Open the invitation email link and set your master password"
 echo ""
 
@@ -348,7 +348,7 @@ else
   log_warn "Action required: set up Vaultwarden before this server goes public"
 fi
 
-# ── Done ──────────────────────────────────────────────────────────────────────
+# -- Done ----------------------------------------------------------------------
 echo ""
 log_step "Manual tasks remaining"
 echo ""

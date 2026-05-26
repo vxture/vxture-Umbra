@@ -7,11 +7,11 @@ source "$SCRIPT_DIR/../lib/env.sh"
 source "$SCRIPT_DIR/../lib/log.sh"
 source "$SCRIPT_DIR/../lib/certs.sh"
 
-log_banner "Umbra — Start Services"
+log_banner "Umbra - Start Services"
 
 cd "$REPO_DIR"
 
-# ── Marzban TLS cert ──────────────────────────────────────────────────────────
+# -- Marzban TLS cert ----------------------------------------------------------
 # Marzban (newer versions) binds to 127.0.0.1 when no SSL cert is provided,
 # making it unreachable from other Docker containers (nginx gets 502).
 # Copy the edge cert issued in step 03 so Marzban binds to 0.0.0.0.

@@ -102,7 +102,7 @@ case "$CMD" in
     ;;
 
   config)
-    log_banner "Umbra — Render Configs"
+    log_banner "Umbra - Render Configs"
     python3 "$SCRIPT_DIR/deploy/04-render-configs.py"
     echo ""
     check_rendered_nginx_cert_paths
@@ -125,7 +125,7 @@ case "$CMD" in
         exit 1
       fi
     else
-      log_warn "Nginx not running — configs rendered but not applied."
+      log_warn "Nginx not running - configs rendered but not applied."
       log_warn "Start services with: bash scripts/deploy.sh up"
     fi
     ;;

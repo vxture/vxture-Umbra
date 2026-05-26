@@ -10,12 +10,9 @@ Root-owned files in `DATA_DIR` can break later deploys, backups, certificate syn
 
 ## Console
 
-`console.ruyin.ai` has two layers:
+`console.ruyin.ai` is publicly reachable at nginx and protected by Marzban's own login and JWT session.
 
-- nginx IP allow/deny first.
-- Marzban login second.
-
-Do not add nginx Basic Auth to the console vhost. It breaks Marzban's bearer-token API calls.
+Do not add nginx IP allow/deny or nginx Basic Auth to the console vhost. Network restrictions block normal user access to Marzban subscription pages, and Basic Auth breaks Marzban's bearer-token API calls.
 
 ## Subscriptions
 

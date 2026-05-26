@@ -1,4 +1,4 @@
-# www.ruyin.ai — 301 canonical redirect to apex domain
+# www.ruyin.ai - 301 canonical redirect to apex domain
 server {
     listen 8443 ssl proxy_protocol;
     server_name {{ WWW_DOMAIN }};

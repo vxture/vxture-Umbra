@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Check all prerequisites before deployment
+# Check all prerequisites before deployment.
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -7,12 +7,12 @@ source "$SCRIPT_DIR/../lib/env.sh"
 source "$SCRIPT_DIR/../lib/log.sh"
 source "$SCRIPT_DIR/../lib/certs.sh"
 
-log_banner "Umbra — Environment Check"
+log_banner "Umbra - Environment Check"
 
 ERRORS=0
 fail() { log_fail "$1"; (( ++ERRORS )); }
 
-# ── Required variables ──────────────────────────���─────────────────────────────
+# -- Required variables --------------------------------------------------------
 log_step "Checking required environment variables..."
 
 REQUIRED_VARS=(
@@ -36,7 +36,7 @@ for var in "${REQUIRED_VARS[@]}"; do
   fi
 done
 
-# ── Docker ────────────────────────────────────────────────────────────────────
+# -- Docker --------------------------------------------------------------------
 log_step "Checking Docker..."
 
 if ! docker info &>/dev/null; then
@@ -51,7 +51,7 @@ else
   log_ok "docker compose v2: $(docker compose version --short)"
 fi
 
-# ── DNS resolution ──────────────────────���────────────────────────��────────────
+# -- DNS resolution ------------------------------------------------------------
 log_step "Checking DNS resolution..."
 
 PUBLIC_IP=$(curl -sf --max-time 5 https://api.ipify.org 2>/dev/null \
@@ -59,42 +59,42 @@ PUBLIC_IP=$(curl -sf --max-time 5 https://api.ipify.org 2>/dev/null \
             || echo "")
 
 if [[ -z "$PUBLIC_IP" ]]; then
-  log_warn "Could not determine public IP — skipping DNS validation"
+  log_warn "Could not determine public IP - skipping DNS validation"
 else
   log_info "Server public IP: $PUBLIC_IP"
   mapfile -t DOMAINS < <(umbra_collect_cert_domains)
   for domain in "${DOMAINS[@]}"; do
     resolved=$(dig +short "$domain" 2>/dev/null | grep -E '^[0-9]+\.' | tail -1 || echo "")
     if [[ "$resolved" == "$PUBLIC_IP" ]]; then
-      log_ok "$domain → $resolved"
+      log_ok "$domain -> $resolved"
     elif [[ -z "$resolved" ]]; then
-      fail "$domain → (no A record found)"
+      fail "$domain -> (no A record found)"
     elif [[ "${CERTBOT_SKIP:-false}" == "true" ]]; then
-      log_warn "$domain → $resolved (expected $PUBLIC_IP) — OK, self-signed mode"
+      log_warn "$domain -> $resolved (expected $PUBLIC_IP) - OK, self-signed mode"
     else
-      fail "$domain → $resolved (expected $PUBLIC_IP) — fix DNS or set CERTBOT_SKIP=true"
+      fail "$domain -> $resolved (expected $PUBLIC_IP) - fix DNS or set CERTBOT_SKIP=true"
     fi
   done
 fi
 
-# ── Port availability ────────────────────────────────────────────────────��────
+# -- Port availability ---------------------------------------------------------
 log_step "Checking port availability..."
 
 NGINX_CONTAINER="${NGINX_CONTAINER:-umbra-nginx}"
 for port in 80 443; do
   if ss -tlnp 2>/dev/null | grep -q ":$port "; then
-    # Port in use — OK if it's our own nginx container
+    # Port in use is OK only when it belongs to the Umbra nginx container.
     if docker ps --format '{{.Names}}' 2>/dev/null | grep -q "^${NGINX_CONTAINER}$"; then
       log_ok "Port $port in use by $NGINX_CONTAINER (expected)"
     else
-      fail "Port $port is already in use — stop the conflicting service first"
+      fail "Port $port is already in use - stop the conflicting service first"
     fi
   else
     log_ok "Port $port is free"
   fi
 done
 
-# ── Result ─────────────────────────────────────���──────────────────────────────
+# -- Result -------------------------------------------------------------------
 echo ""
 if [[ $ERRORS -gt 0 ]]; then
   log_error "$ERRORS check(s) failed. Fix the issues above, then re-run."

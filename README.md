@@ -1,8 +1,8 @@
 # Vxture Umbra
 
-Production VPN edge node — SNI routing, VLESS+REALITY proxy, subscription delivery, password management.
+Production VPN edge node - SNI routing, VLESS+REALITY proxy, subscription delivery, password management.
 
-**Stack:** Nginx · Xray REALITY · Marzban · Vaultwarden
+**Stack:** Nginx / Xray REALITY / Marzban / Vaultwarden
 
 **AI coding entry:** start with [docs/agent.md](docs/agent.md). For deploy/reset/cert changes, use [docs/deployment/checklists.md](docs/deployment/checklists.md) before editing scripts.
 
@@ -16,7 +16,7 @@ Production VPN edge node — SNI routing, VLESS+REALITY proxy, subscription deli
 | `vpn.ruyin.ai` | VPN user portal |
 | `sub.ruyin.ai` | Marzban subscription endpoint |
 | `subscribe.ruyin.ai` | Reserved user subscription portal |
-| `console.ruyin.ai` | Marzban admin *(VPN access only)* |
+| `console.ruyin.ai` | Marzban console *(Marzban login)* |
 | `pass.ruyin.ai` | Vaultwarden password manager |
 | `vault.ruyin.ai` | Placeholder (future use) |
 
@@ -31,7 +31,7 @@ domain set until the user portal is implemented.
 |-------------|-------|
 | Ubuntu 26.04 LTS | Vultr or similar; 1C1G / 25GB SSD |
 | SSH key access | Key-based login as root (Vultr adds this at provision time) |
-| DNS A records | Active domains plus standby cert domains → server IP, propagated **before** running deploy |
+| DNS A records | Active domains plus standby cert domains -> server IP, propagated **before** running deploy |
 | Open ports | 80 (ACME) and 443 (HTTPS + REALITY) |
 
 > **DNS first.** Let's Encrypt cert issuance is the first blocking step. Point active and standby certificate records before starting.
@@ -53,7 +53,7 @@ git clone https://github.com/vxture/umbra.git /srv/vxture/repo/umbra
 bash /srv/vxture/repo/umbra/scripts/server.sh init
 ```
 
-`server.sh init` creates the `stone` admin user (sudo + docker) and copies `/root/.ssh/authorized_keys` to the new user. **Your existing SSH key works for both root and stone.** Root SSH is left enabled — disable it manually after confirming `stone` login works.
+`server.sh init` creates the `stone` admin user (sudo + docker) and copies `/root/.ssh/authorized_keys` to the new user. **Your existing SSH key works for both root and stone.** Root SSH is left enabled - disable it manually after confirming `stone` login works.
 
 ---
 
@@ -76,10 +76,10 @@ nano .env
 Required values to fill in:
 
 ```bash
-# ── Node Identity ──────────────────────────────────────
+# -- Node Identity --------------------------------------
 NODE_NAME=vx-tokyo                    # label shown in subscription config
 
-# ── Domains ────────────────────────────────────────────
+# -- Domains --------------------------------------------
 APEX_DOMAIN=ruyin.ai
 WWW_DOMAIN=www.ruyin.ai
 EDGE_DOMAIN=vpn.ruyin.ai             # VPN user portal
@@ -89,17 +89,17 @@ PASS_DOMAIN=pass.ruyin.ai
 VAULT_DOMAIN=vault.ruyin.ai
 STANDBY_CERT_DOMAINS=subscribe.ruyin.ai  # cert only, no active nginx vhost
 
-# ── Marzban admin credentials ──────────────────────────
+# -- Marzban admin credentials --------------------------
 MARZBAN_ADMIN_USER=admin
 MARZBAN_ADMIN_PASSWORD=              # openssl rand -base64 32
 
-# ── Vaultwarden ─────────────────────────────────────────
+# -- Vaultwarden -----------------------------------------
 VAULTWARDEN_ADMIN_TOKEN=             # openssl rand -base64 48
 
-# ── Let's Encrypt ───────────────────────────────────────
+# -- Let's Encrypt ---------------------------------------
 CERTBOT_EMAIL=your@email.com
 
-# ── VPN Users (created by deploy.sh post) ───────────────
+# -- VPN Users (created by deploy.sh post) ---------------
 USER_COUNT=10
 USER_PREFIX=user
 ```
@@ -178,7 +178,7 @@ Clash subscription files include a profile header named `Ruyin-USERNAME`, for ex
 
 ### Lock Down Vaultwarden
 
-Open `https://pass.ruyin.ai/admin`, enter your `VAULTWARDEN_ADMIN_TOKEN`, then go to **Users → Invite User** to create your account via email invite. Web registration is disabled by default — accounts must be created through the admin panel.
+Open `https://pass.ruyin.ai/admin`, enter your `VAULTWARDEN_ADMIN_TOKEN`, then go to **Users -> Invite User** to create your account via email invite. Web registration is disabled by default - accounts must be created through the admin panel.
 
 ### Optional: Harden SSH
 
@@ -191,8 +191,8 @@ sed -i 's/^#\?PermitRootLogin.*/PermitRootLogin no/' /etc/ssh/sshd_config && sys
 ### Optional: External Uptime Monitoring
 
 Add free monitors at [BetterStack](https://betterstack.com) or [UptimeRobot](https://uptimerobot.com):
-- TCP `vpn.ruyin.ai:443` — catches full-node outage
-- HTTPS `https://vpn.ruyin.ai` — catches nginx failures
+- TCP `vpn.ruyin.ai:443` - catches full-node outage
+- HTTPS `https://vpn.ruyin.ai` - catches nginx failures
 
 ---
 
@@ -275,7 +275,7 @@ Certbot ran but nginx still serves old cert. Restart nginx:
 docker compose restart umbra-nginx
 ```
 
-### `rm -rf letsencrypt` — Permission denied
+### `rm -rf letsencrypt` - Permission denied
 
 Certbot runs as root inside Docker; its files are root-owned. Clean them via Docker:
 
@@ -294,7 +294,12 @@ docker compose restart umbra-marzban
 
 ### console.ruyin.ai returns 403
 
-Expected — the admin console is IP-restricted to the Docker network (VPN clients only). Connect to VPN first, then access the console.
+Not expected. The console vhost is public and Marzban handles login. Re-render nginx config and verify the rendered `05-console.conf` has no `allow` / `deny all` rules:
+
+```bash
+bash scripts/deploy.sh config
+curl -sk -o /dev/null -w "%{http_code}\n" https://console.ruyin.ai/dashboard/
+```
 
 ---
 
@@ -304,8 +309,8 @@ Expected — the admin console is IP-restricted to the Docker network (VPN clien
 |--------|---------|
 | `server.sh init` | Bootstrap server: Docker, admin user, SSH key copy *(root, once)* |
 | `server.sh reset` | Stop or wipe deployment |
-| `deploy.sh` | Unified dispatcher — run any step or operation by name |
-| `deploy.sh all` | Full deployment orchestrator (steps 00–07 + cron setup) |
+| `deploy.sh` | Unified dispatcher - run any step or operation by name |
+| `deploy.sh all` | Full deployment orchestrator (steps 00-07 + cron setup) |
 | `ops.sh certs` | Certificate lifecycle: renew / upgrade / status |
 | `deploy.sh post` | Post-deploy wizard: host config, user creation, sub URLs |
 | `deploy/06-verify.sh` | Verify all services and endpoints |
@@ -317,18 +322,18 @@ Expected — the admin console is IP-restricted to the Docker network (VPN clien
 
 ```
 Internet
-   │
-   ├─ :80  → nginx HTTP → ACME challenge / 301 redirect to HTTPS
-   │
-   └─ :443 → nginx stream (SNI preread)
-                ├─ SNI = www.microsoft.com → Xray VLESS+REALITY (port 10443 internal)
-                └─ SNI = anything else     → nginx HTTP block (:8443)
-                                               ├─ ruyin.ai          → landing page
-                                               ├─ vpn.ruyin.ai      → VPN portal
-                                               ├─ sub.ruyin.ai            → Marzban /sub/<token>
-                                               ├─ console.ruyin.ai  → Marzban dashboard (IP restricted)
-                                               ├─ pass.ruyin.ai     → Vaultwarden
-                                               └─ vault.ruyin.ai    → placeholder
+   |
+   |- :80  -> nginx HTTP -> ACME challenge / 301 redirect to HTTPS
+   |
+   `- :443 -> nginx stream (SNI preread)
+                |- SNI = www.microsoft.com -> Xray VLESS+REALITY (port 10443 internal)
+                `- SNI = anything else     -> nginx HTTP block (:8443)
+                                               |- ruyin.ai          -> landing page
+                                               |- vpn.ruyin.ai      -> VPN portal
+                                               |- sub.ruyin.ai      -> Marzban /sub/<token>
+                                               |- console.ruyin.ai  -> Marzban dashboard (Marzban login)
+                                               |- pass.ruyin.ai     -> Vaultwarden
+                                               `- vault.ruyin.ai    -> placeholder
 ```
 
 See [`docs/agent.md`](docs/agent.md) for the AI-maintainer document map and [`docs/design/architecture.md`](docs/design/architecture.md) for the full architecture reference.

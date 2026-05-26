@@ -1,4 +1,4 @@
-# vpn.ruyin.ai — VPN Portal (user onboarding, client downloads)
+# vpn.ruyin.ai - VPN Portal (user onboarding, client downloads)
 server {
     listen 8443 ssl proxy_protocol;
     server_name {{ EDGE_DOMAIN }};

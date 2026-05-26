@@ -450,6 +450,7 @@ Run this before committing script changes.
 [ ] Confirm partial cert successes are preserved
 [ ] Confirm backup runs before risky or destructive flows
 [ ] Confirm docs mention new commands or changed behavior
+[ ] Confirm maintenance docs/scripts/config comments use ASCII English
 ```
 
 Validation commands:
@@ -462,10 +463,10 @@ python3 -m py_compile scripts/deploy/04-render-configs.py scripts/deploy/07-vali
 git diff --check
 ```
 
-`08-check-script-contracts.py` scans source inputs only: `.env.example`,
-`README.md`, `docker-compose.yml`, `configs/`, `docs/`, and `scripts/`. It
-intentionally ignores local `.env*` files, backups, runtime output, caches, and
-binary assets.
+`08-check-script-contracts.py` scans source inputs only: `.editorconfig`,
+`.env.example`, `.gitattributes`, `README.md`, `docker-compose.yml`,
+`configs/`, `docs/`, and `scripts/`. It intentionally ignores local `.env*`
+files, backups, runtime output, caches, and binary assets.
 
 Repository checks:
 

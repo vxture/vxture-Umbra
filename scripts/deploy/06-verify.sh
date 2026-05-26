@@ -6,7 +6,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/../lib/env.sh"
 source "$SCRIPT_DIR/../lib/log.sh"
 
-log_banner "Umbra — Verification"
+log_banner "Umbra - Verification"
 
 PASS=0
 FAIL=0
@@ -53,7 +53,7 @@ check_http_exact() {
   fi
 }
 
-# ── Container status ──────────────────────────────────────────────────────────
+# -- Container status ----------------------------------------------------------
 log_step "Container health..."
 
 CONTAINERS=(
@@ -73,7 +73,7 @@ for c in "${CONTAINERS[@]}"; do
   fi
 done
 
-# ── HTTPS endpoints ───────────────────────────────────────────────────────────
+# -- HTTPS endpoints -----------------------------------------------------------
 log_step "HTTPS endpoints..."
 
 check_http "$APEX_DOMAIN"        "https://$APEX_DOMAIN"
@@ -101,21 +101,19 @@ else
   log_warn "No saved subscription URL file found in $BACKUP_DIR; run deploy.sh post after first deploy"
 fi
 
-# ── CONSOLE_DOMAIN access control ────────────────────────────────────────────
-# Note: when tested from the server itself, the stream proxy may present as
-# 127.0.0.1, which is in the allow list. From the public internet the IP deny
-# should return 403.
-log_step "$CONSOLE_DOMAIN access control..."
-CONSOLE_CODE=$(curl -sk --max-time 10 -o /dev/null -w "%{http_code}" "https://$CONSOLE_DOMAIN" || echo "000")
-if [[ "$CONSOLE_CODE" =~ ^(200|301|302|403|000)$ ]]; then
-  log_ok "$CONSOLE_DOMAIN access controlled ($CONSOLE_CODE; 403=public blocked, 200/30x=local allowed)"
+# -- CONSOLE_DOMAIN login -----------------------------------------------------
+# The console vhost must be publicly reachable. Marzban owns authentication.
+log_step "$CONSOLE_DOMAIN login..."
+CONSOLE_CODE=$(curl -sk --max-time 10 -o /dev/null -w "%{http_code}" "https://$CONSOLE_DOMAIN/dashboard/" || echo "000")
+if [[ "$CONSOLE_CODE" =~ ^(200|301|302|307|308|401)$ ]]; then
+  log_ok "$CONSOLE_DOMAIN login reachable ($CONSOLE_CODE)"
   (( ++PASS ))
 else
-  log_fail "$CONSOLE_DOMAIN unexpectedly open (got $CONSOLE_CODE)"
+  log_fail "$CONSOLE_DOMAIN login not reachable (got $CONSOLE_CODE)"
   (( ++FAIL ))
 fi
 
-# ── Port 443 open ─────────────────────────────────────────────────────────────
+# -- Port 443 open -------------------------------------------------------------
 log_step "Port checks..."
 if timeout 5 bash -c "</dev/tcp/$EDGE_DOMAIN/443" 2>/dev/null; then
   log_ok "Port 443 open on $EDGE_DOMAIN"
@@ -125,7 +123,7 @@ else
   (( ++FAIL ))
 fi
 
-# ── SQLite databases ──────────────────────────────────────────────────────────
+# -- SQLite databases ----------------------------------------------------------
 log_step "Database check..."
 
 declare -A SQLITE_DBS=(
@@ -140,11 +138,11 @@ for label in marzban vaultwarden; do
     log_ok "SQLite $label: $db_path ($size)"
     (( ++PASS ))
   else
-    log_warn "SQLite $label: not yet initialized ($db_path) — normal on first run"
+    log_warn "SQLite $label: not yet initialized ($db_path) - normal on first run"
   fi
 done
 
-# ── Marzban API ───────────────────────────────────────────────────────────────
+# -- Marzban API ---------------------------------------------------------------
 log_step "Marzban API..."
 MARZBAN_CODE=$(docker exec -i umbra-marzban python3 - <<'PYEOF' 2>/dev/null
 import urllib.request, sys
@@ -158,13 +156,13 @@ except Exception:
 PYEOF
 )
 if [[ "$MARZBAN_CODE" =~ ^(200|401|403)$ ]]; then
-  log_ok "Marzban API reachable (internal) → $MARZBAN_CODE"
+  log_ok "Marzban API reachable (internal) -> $MARZBAN_CODE"
   (( ++PASS ))
 else
-  log_warn "Marzban API check inconclusive (got $MARZBAN_CODE) — check manually"
+  log_warn "Marzban API check inconclusive (got $MARZBAN_CODE) - check manually"
 fi
 
-# ── TLS certificates ──────────────────────────────────────────────────────────
+# -- TLS certificates ----------------------------------------------------------
 log_step "Certificate expiry check..."
 for domain in "$APEX_DOMAIN" "$EDGE_DOMAIN" "$SUB_DOMAIN" "$PASS_DOMAIN" "$VAULT_DOMAIN"; do
   expiry=$(echo | openssl s_client -connect "$domain:443" -servername "$domain" 2>/dev/null \
@@ -173,11 +171,11 @@ for domain in "$APEX_DOMAIN" "$EDGE_DOMAIN" "$SUB_DOMAIN" "$PASS_DOMAIN" "$VAULT
     log_ok "$domain cert valid until: $expiry"
     (( ++PASS ))
   else
-    log_warn "$domain — could not read cert expiry"
+    log_warn "$domain - could not read cert expiry"
   fi
 done
 
-# ── Result ────────────────────────────────────────────────────────────────────
+# -- Result --------------------------------------------------------------------
 echo ""
 log_info "Results: ${PASS} passed, ${FAIL} failed"
 

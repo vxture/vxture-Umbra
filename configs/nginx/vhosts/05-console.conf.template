@@ -1,6 +1,6 @@
-# console.ruyin.ai — Marzban admin panel
+# CONSOLE_DOMAIN - Marzban console
 # Authentication: Marzban JWT session only (handled by the app).
-# No nginx auth_basic — it intercepts API calls (Authorization: Bearer) and
+# No nginx auth_basic - it intercepts API calls (Authorization: Bearer) and
 # causes a 401 loop: React app authenticates, sends Bearer token, nginx rejects
 # it expecting Basic credentials, Marzban JS redirects back to login.
 # proxy_redirect rewrites Marzban's Location headers from internal host to public host.
@@ -13,12 +13,6 @@ server {
     ssl_certificate_key /etc/letsencrypt/live/{{ CONSOLE_DOMAIN }}/privkey.pem;
     include /etc/nginx/snippets/ssl-params.conf;
     include /etc/nginx/snippets/security-headers.conf;
-
-    # Public internet is blocked. Requests that arrive through the local stream
-    # proxy or from Docker/Xray are allowed to reach Marzban's own login.
-    allow 127.0.0.1;
-    allow 172.16.0.0/12;
-    deny all;
 
     location / {
         proxy_pass https://umbra-marzban:8000;

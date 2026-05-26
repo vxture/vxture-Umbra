@@ -6,14 +6,14 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/../lib/env.sh"
 source "$SCRIPT_DIR/../lib/log.sh"
 
-log_banner "Umbra — Init Directories"
+log_banner "Umbra - Init Directories"
 
 mk() {
   mkdir -p "$1"
   log_ok "mkdir -p $1"
 }
 
-# ── Data directories ──────────────────────────────────────────────────────────
+# -- Data directories ----------------------------------------------------------
 log_step "Creating DATA_DIR structure at $DATA_DIR ..."
 
 mk "$DATA_DIR/nginx/conf.d"
@@ -34,11 +34,11 @@ mk "$DATA_DIR/certbot/config"
 mk "$DATA_DIR/certbot/hooks"
 mk "$DATA_DIR/private"
 
-# ── Backup directory ──────────────────────────────────────────────────────────
+# -- Backup directory ----------------------------------------------------------
 log_step "Creating BACKUP_DIR at $BACKUP_DIR ..."
 mk "$BACKUP_DIR"
 
-# ── Permissions: sensitive directories ───────────────────────────────────────
+# -- Permissions: sensitive directories ---------------------------------------
 log_step "Setting permissions on sensitive directories..."
 
 chmod 700 "$DATA_DIR/private"
@@ -50,7 +50,7 @@ log_ok "chmod 711 $DATA_DIR/nginx/private"
 chmod 700 "$BACKUP_DIR"
 log_ok "chmod 700 $BACKUP_DIR"
 
-# ── Copy nginx.conf (static, no templating needed) ────────────────────────────
+# -- Copy nginx.conf (static, no templating needed) ----------------------------
 # Always overwrite so repo changes (e.g. map blocks) propagate to the running config.
 REPO_NGINX_CONF="$REPO_DIR/configs/nginx/nginx.conf"
 DATA_NGINX_CONF="$DATA_DIR/nginx/nginx.conf"
@@ -60,7 +60,7 @@ if [[ -f "$REPO_NGINX_CONF" ]]; then
   log_ok "Copied nginx.conf to $DATA_NGINX_CONF"
 fi
 
-# ── Copy snippet configs ──────────────────────────────────────────────────────
+# -- Copy snippet configs ------------------------------------------------------
 SNIPPETS_SRC="$REPO_DIR/configs/nginx/snippets"
 SNIPPETS_DST="$DATA_DIR/nginx/snippets"
 mk "$SNIPPETS_DST"

@@ -10,7 +10,7 @@ source "$SCRIPT_DIR/../lib/env.sh"
 source "$SCRIPT_DIR/../lib/log.sh"
 source "$SCRIPT_DIR/../lib/certs.sh"
 
-log_banner "Umbra — Self-Signed Certificates (debug mode)"
+log_banner "Umbra - Self-Signed Certificates (debug mode)"
 log_warn "These certs are NOT trusted by browsers."
 log_warn "Run ops.sh certs --upgrade once DNS is pointed to this server."
 log_warn "Set MARZBAN_SSL_CA_TYPE=private in .env while using self-signed certs."
@@ -31,7 +31,7 @@ for domain in "${DOMAINS[@]}"; do
   cert_path="$CERT_DIR/live/$domain/fullchain.pem"
 
   if [[ -f "$cert_path" ]]; then
-    log_info "$domain — cert already exists, skipping"
+    log_info "$domain - cert already exists, skipping"
     continue
   fi
 

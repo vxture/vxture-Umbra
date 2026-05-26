@@ -31,7 +31,7 @@ TEXT_ASSET_SUFFIXES = {
     ".yml",
 }
 
-# ── Paths ─────────────────────────────────────────────────────────────────────
+# -- Paths ---------------------------------------------------------------------
 SCRIPT_DIR = Path(__file__).resolve().parent
 PROJECT_ROOT = SCRIPT_DIR.parent.parent
 
@@ -62,7 +62,7 @@ def render(template_text: str, variables: dict) -> str:
     def replacer(match):
         key = match.group(1).strip()
         if key not in variables:
-            # Only warn for SCREAMING_SNAKE_CASE — those are our env vars.
+            # Only warn for SCREAMING_SNAKE_CASE - those are our env vars.
             # Lowercase/mixed tokens are Jinja2 variables for second-stage renderers.
             if key == key.upper():
                 print(f"[WARN] Template variable not found: {{{{{key}}}}}", file=sys.stderr)
@@ -106,17 +106,17 @@ def render_file(src: Path, dst: Path, variables: dict, mode: int = 0o644):
     rendered = render(text, variables)
     dst.write_text(rendered, encoding="utf-8")
     os.chmod(dst, mode)
-    print(f"[OK]   {src.name}  →  {dst}")
+    print(f"[OK]   {src.name}  ->  {dst}")
 
 
 def copy_file(src: Path, dst: Path, mode: int = 0o644):
     dst.parent.mkdir(parents=True, exist_ok=True)
     shutil.copy2(src, dst)
     os.chmod(dst, mode)
-    print(f"[COPY] {src.name}  →  {dst}")
+    print(f"[COPY] {src.name}  ->  {dst}")
 
 
-# ── Static file rendering ─────────────────────────────────────────────────────
+# -- Static file rendering -----------------------------------------------------
 def render_static_tree(src_dir: Path, dst_dir: Path, variables: dict):
     for src in sorted(src_dir.rglob("*")):
         if src.is_dir():
@@ -129,7 +129,7 @@ def render_static_tree(src_dir: Path, dst_dir: Path, variables: dict):
             copy_file(src, dst)
 
 
-# ── Load variables ─────────────────────────────────────────────────────────────
+# -- Load variables -------------------------------------------------------------
 env_file = PROJECT_ROOT / ".env"
 if not env_file.exists():
     print(f"[ERROR] .env not found at {env_file}", file=sys.stderr)
@@ -165,33 +165,33 @@ variables["CLASH_MUST_DIRECT_RULES"] = render_clash_rule_lines(
     "DIRECT",
 )
 
-print("\n── Rendering Nginx stream config ────────────────────────────────────────")
+print("\n-- Rendering Nginx stream config ----------------------------------------")
 render_file(
     configs_dir / "nginx" / "stream.conf.template",
     DATA_DIR / "nginx" / "stream.d" / "stream.conf",
     variables,
 )
 
-print("\n── Rendering Nginx virtual host configs ─────────────────────────────────")
+print("\n-- Rendering Nginx virtual host configs ---------------------------------")
 vhosts_src = configs_dir / "nginx" / "vhosts"
 vhosts_dst = DATA_DIR / "nginx" / "conf.d"
 for tmpl in sorted(vhosts_src.glob("*.conf.template")):
     out_name = tmpl.name.replace(".template", "")
     render_file(tmpl, vhosts_dst / out_name, variables)
 
-print("\n── Copying Nginx snippets ────────────────────────────────────────────────")
+print("\n-- Copying Nginx snippets ------------------------------------------------")
 snippets_src = configs_dir / "nginx" / "snippets"
 snippets_dst = DATA_DIR / "nginx" / "snippets"
 for snippet in snippets_src.glob("*.conf"):
     copy_file(snippet, snippets_dst / snippet.name)
 
-print("\n── Copying Nginx nginx.conf ──────────────────────────────────────────────")
+print("\n-- Copying Nginx nginx.conf ----------------------------------------------")
 nginx_conf_src = configs_dir / "nginx" / "nginx.conf"
 nginx_conf_dst = DATA_DIR / "nginx" / "nginx.conf"
 if nginx_conf_src.exists():
     copy_file(nginx_conf_src, nginx_conf_dst)
 
-print("\n── Rendering Xray config (for Marzban) ──────────────────────────────────")
+print("\n-- Rendering Xray config (for Marzban) ----------------------------------")
 render_file(
     configs_dir / "xray" / "config.json.template",
     DATA_DIR / "marzban" / "xray_config.json",
@@ -199,7 +199,7 @@ render_file(
     mode=0o600,
 )
 
-print("\n── Rendering Marzban Clash subscription template ────────────────────────")
+print("\n-- Rendering Marzban Clash subscription template ------------------------")
 render_file(
     configs_dir / "marzban" / "clash-subscription.j2",
     DATA_DIR / "marzban" / "templates" / "clash" / "default.yml",
@@ -217,24 +217,24 @@ subprocess.run(
     check=True,
 )
 
-print("\n── Rendering VPN portal ─────────────────────────────────────────────────")
+print("\n-- Rendering VPN portal -------------------------------------------------")
 portal_src = REPO_DIR / "portal" / "html"
 portal_dst = DATA_DIR / "portal" / "html"
 if portal_src.exists():
     render_static_tree(portal_src, portal_dst, variables)
 else:
-    print(f"[WARN] portal/html/ not found in repo — skipping")
+    print(f"[WARN] portal/html/ not found in repo - skipping")
 
-print("\n── Rendering landing page ───────────────────────────────────────────────")
+print("\n-- Rendering landing page -----------------------------------------------")
 landing_src = REPO_DIR / "landing" / "html"
 if landing_src.exists():
     for dst_dir in [DATA_DIR / "nginx" / "html" / "ruyin-landing",
                     DATA_DIR / "nginx" / "html" / "www-ruyin"]:
         render_static_tree(landing_src, dst_dir, variables)
 else:
-    print(f"[WARN] landing/html/ not found in repo — skipping")
+    print(f"[WARN] landing/html/ not found in repo - skipping")
 
-print("\n── Copying docs placeholder ─────────────────────────────────────────────")
+print("\n-- Copying docs placeholder ---------------------------------------------")
 docs_src = REPO_DIR / "docs-site" / "html"
 docs_dst = DATA_DIR / "docs" / "site"
 if docs_src.exists():
@@ -248,4 +248,4 @@ else:
         placeholder.write_text("<html><body><h1>Umbra Docs</h1><p>Coming soon.</p></body></html>")
         print(f"[INIT] Created docs placeholder at {placeholder}")
 
-print("\n── All configs rendered ─────────────────────────────────────────────────\n")
+print("\n-- All configs rendered -------------------------------------------------\n")

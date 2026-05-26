@@ -1,4 +1,4 @@
-# Force LF for all text files — scripts must not have CRLF on Linux servers
+# Force LF for all text files; scripts must not have CRLF on Linux servers
 * text=auto eol=lf
 
 # Explicitly mark shell scripts and configs as LF
@@ -15,7 +15,7 @@
 .gitignore  text eol=lf
 Makefile    text eol=lf
 
-# Binary files — no conversion
+# Binary files; no conversion
 *.png  binary
 *.jpg  binary
 *.ico  binary

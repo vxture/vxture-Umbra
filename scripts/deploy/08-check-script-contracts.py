@@ -17,7 +17,9 @@ PROJECT_ROOT = Path(__file__).resolve().parents[2]
 # scan source inputs only; otherwise a harmless server backup can fail release
 # checks or leak old deployment details into diagnostics.
 SOURCE_SCAN_PATHS: tuple[Path, ...] = (
+    Path(".editorconfig"),
     Path(".env.example"),
+    Path(".gitattributes"),
     Path("README.md"),
     Path("docker-compose.yml"),
     Path("configs"),
@@ -57,6 +59,14 @@ SKIP_NAME_SUFFIXES = (".bak", ".backup", ".old", ".tmp", ".swp", ".swo")
 
 
 CHECKS: list[tuple[str, Path, list[str]]] = [
+    (
+        "editorconfig enforces utf-8 and lf",
+        Path(".editorconfig"),
+        [
+            "charset = utf-8",
+            "end_of_line = lf",
+        ],
+    ),
     (
         "deploy config checks rendered certificate paths before nginx reload",
         Path("scripts/deploy.sh"),
@@ -197,6 +207,24 @@ CHECKS: list[tuple[str, Path, list[str]]] = [
             "/etc/letsencrypt/live/{{ SUB_DOMAIN }}/privkey.pem",
         ],
     ),
+    (
+        "console vhost delegates auth to Marzban",
+        Path("configs/nginx/vhosts/05-console.conf.template"),
+        [
+            "Authentication: Marzban JWT session only",
+            "No nginx auth_basic",
+            "proxy_pass https://umbra-marzban:8000",
+        ],
+    ),
+    (
+        "deploy verify treats console as public Marzban login",
+        Path("scripts/deploy/06-verify.sh"),
+        [
+            "$CONSOLE_DOMAIN/dashboard/",
+            "$CONSOLE_DOMAIN login reachable",
+            "$CONSOLE_DOMAIN login not reachable",
+        ],
+    ),
 ]
 
 
@@ -215,6 +243,26 @@ FORBIDDEN: list[tuple[str, Path, str]] = [
         "subscribe portal domain must not be configured as SUB_DOMAIN",
         Path(".env.example"),
         "SUB_DOMAIN=subscribe" + ".ruyin.ai",
+    ),
+    (
+        "console vhost must not block public login",
+        Path("configs/nginx/vhosts/05-console.conf.template"),
+        "deny all;",
+    ),
+    (
+        "console vhost must not require docker-source IP",
+        Path("configs/nginx/vhosts/05-console.conf.template"),
+        "allow 172.16.0.0/12;",
+    ),
+    (
+        "deploy verify must not treat console 403 as expected",
+        Path("scripts/deploy/06-verify.sh"),
+        "403=public blocked",
+    ),
+    (
+        "deploy verify must not call console access controlled",
+        Path("scripts/deploy/06-verify.sh"),
+        "$CONSOLE_DOMAIN access control",
     ),
 ]
 
@@ -258,6 +306,14 @@ def iter_source_files():
             yield from iter_text_files(path)
 
 
+def non_ascii_locations(text: str) -> list[tuple[int, str]]:
+    locations: list[tuple[int, str]] = []
+    for line_no, line in enumerate(text.splitlines(), start=1):
+        if any(ord(ch) > 127 for ch in line):
+            locations.append((line_no, line.strip()))
+    return locations
+
+
 def main() -> int:
     failed = 0
 
@@ -275,6 +331,22 @@ def main() -> int:
             failed += 1
         else:
             print(f"[ OK ] {label}")
+
+    ascii_failures: list[str] = []
+    for path in iter_source_files():
+        text = read(path)
+        for line_no, line in non_ascii_locations(text):
+            rel = path.relative_to(PROJECT_ROOT).as_posix()
+            ascii_failures.append(f"{rel}:{line_no}: {line}")
+    if ascii_failures:
+        print("[FAIL] source maintenance files must use ASCII text")
+        for item in ascii_failures[:50]:
+            print(f"[FAIL]   {item}")
+        if len(ascii_failures) > 50:
+            print(f"[FAIL]   ... {len(ascii_failures) - 50} more")
+        failed += 1
+    else:
+        print("[ OK ] source maintenance files use ASCII text")
 
     for label, rel_path, needle in FORBIDDEN:
         paths = [PROJECT_ROOT / rel_path] if rel_path != Path(".") else list(iter_source_files())

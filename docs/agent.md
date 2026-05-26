@@ -1,4 +1,4 @@
-# Umbra — Agent Entry Point
+# Umbra - Agent Entry Point
 
 > Master entry point for AI assistants (Claude Code, Codex, DeepSeek).
 > Read this first. Follow document links for detail.
@@ -17,10 +17,10 @@ Purpose:    Production overseas edge entry node
 ```
 
 **One-liner:**
-> Umbra is a production-grade overseas edge node providing multi-user VPN access, subscription delivery, SNI-based domain routing, password management, status monitoring, and docs hosting — all behind a unified 443 entry.
+> Umbra is a production-grade overseas edge node providing multi-user VPN access, subscription delivery, SNI-based domain routing, password management, status monitoring, and docs hosting - all behind a unified 443 entry.
 
 **Principles:**
-- No compromises on architecture — build it right from the start
+- No compromises on architecture - build it right from the start
 - Replaceable node: rebuild rather than rescue
 - Backend business machines are never the first public entry point
 - Secrets never enter Git
@@ -43,14 +43,14 @@ Purpose:    Production overseas edge entry node
 
 | Domain | Target | Notes |
 |--------|--------|-------|
-| `ruyin.ai` | Nginx → static landing | Brand home, navigation to services |
-| `www.ruyin.ai` | Nginx → static content | Independent content from apex |
-| `vpn.ruyin.ai` | Nginx → umbra-portal | VPN user entry, onboarding, client DL |
+| `ruyin.ai` | Nginx -> static landing | Brand home, navigation to services |
+| `www.ruyin.ai` | Nginx -> static content | Independent content from apex |
+| `vpn.ruyin.ai` | Nginx -> umbra-portal | VPN user entry, onboarding, client DL |
 | `sub.ruyin.ai` | Nginx -> umbra-marzban | Marzban subscription endpoint |
 | `subscribe.ruyin.ai` | standby cert | Future user-facing subscription portal; keep in `STANDBY_CERT_DOMAINS`, do not use as `SUB_DOMAIN` |
-| `console.ruyin.ai` | Nginx → umbra-marzban (IP-restricted + Marzban login) | Marzban admin panel |
-| `pass.ruyin.ai` | Nginx → umbra-vaultwarden | Password manager |
-| `vault.ruyin.ai` | Nginx → static placeholder | Reserved for future use |
+| `console.ruyin.ai` | Nginx -> umbra-marzban (Marzban login) | Marzban console |
+| `pass.ruyin.ai` | Nginx -> umbra-vaultwarden | Password manager |
+| `vault.ruyin.ai` | Nginx -> static placeholder | Reserved for future use |
 
 ---
 
@@ -61,22 +61,22 @@ Purpose:    Production overseas edge entry node
 Deploy order (dependencies drive sequence):
 
 ```
-Phase 1 — Infrastructure
+Phase 1 - Infrastructure
   [ ] Nginx (base config, HTTP only)
   [ ] Certbot (issue all certs)
   [ ] Nginx (HTTPS + SNI stream)
 
-Phase 2 — Core Services
+Phase 2 - Core Services
   [ ] Xray-core (VLESS + REALITY)
   [ ] Marzban
   [ ] VPN Portal (static site)
 
-Phase 3 — Supporting Services
+Phase 3 - Supporting Services
   [ ] Vaultwarden
   [ ] Docs site
 
-Phase 4 — Hardening
-  [ ] vpn-admin IP restriction
+Phase 4 - Hardening
+  [ ] Marzban console login boundary
   [ ] Backup automation
   [ ] Logrotate
   [ ] Cert renewal cron
@@ -109,18 +109,19 @@ Phase 4 — Hardening
 
 ## Global Build Constraints
 
-1. **Edge Mode only** — no Simple Mode. Xray runs on internal port, never public.
-2. **All traffic enters on 443** — Nginx SNI stream routes to correct internal service.
-3. **SQLite** — all services (Marzban, Vaultwarden) use SQLite for data storage. No PostgreSQL.
-4. **Secrets never in Git** — `.env`, keys, certs, DB passwords all stay in `DATA_DIR/private/`.
-5. **console.ruyin.ai is IP-restricted before Marzban login** — see `specs/security.md`.
-6. **All containers in one Docker network** — `umbra-net`, internal service discovery by container name.
-7. **Subscription B++ rules built into Marzban template** — no external URL dependencies.
+1. **Edge Mode only** - no Simple Mode. Xray runs on internal port, never public.
+2. **All traffic enters on 443** - Nginx SNI stream routes to correct internal service.
+3. **SQLite** - all services (Marzban, Vaultwarden) use SQLite for data storage. No PostgreSQL.
+4. **Secrets never in Git** - `.env`, keys, certs, DB passwords all stay in `DATA_DIR/private/`.
+5. **console.ruyin.ai is public at nginx and protected by Marzban login** - see `specs/security.md`.
+6. **All containers in one Docker network** - `umbra-net`, internal service discovery by container name.
+7. **Subscription B++ rules built into Marzban template** - no external URL dependencies.
 8. **Microsoft / Cloudflare / Vultr must NOT be forced to PROXY** in B++ rules.
 9. **Node name in subscriptions: `vx-tokyo`** (from `NODE_NAME` env var).
 10. **Backup runs automatically** after every successful deployment and on daily cron.
 11. **`DATA_DIR/private/` permissions: `700` dir, `600` files.**
-12. **Scripts must be idempotent** — safe to re-run without destroying existing state.
+12. **Scripts must be idempotent** - safe to re-run without destroying existing state.
+13. **Maintenance text is ASCII English** - docs, scripts, configs, and comments avoid non-ASCII; user-facing localized static pages may use UTF-8.
 
 ---
 
@@ -130,7 +131,7 @@ Phase 4 — Hardening
 [ ] All containers running: nginx, marzban, vaultwarden, portal, docs
 [ ] HTTPS working on active public domains; standby cert domains have valid cert state
 [ ] Xray REALITY connection functional (test with Clash Verge)
-[ ] Marzban admin accessible at console.ruyin.ai only when VPN-connected
+[ ] Marzban console accessible at console.ruyin.ai and protected by Marzban login
 [ ] Marzban subscription URL functional at sub.ruyin.ai
 [ ] Subscription imports correctly into Clash Verge
 [ ] Node name shows vx-tokyo

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Full deployment: runs all steps in order.
-# Safe to re-run — each step is idempotent where possible.
+# Safe to re-run - each step is idempotent where possible.
 #
 # Options:
 #   --skip-verify    Skip the verification step (useful on re-deploys)
@@ -27,7 +27,7 @@ if [[ "$EUID" -eq 0 ]]; then
   exit 1
 fi
 
-log_banner "Umbra — Full Deployment"
+log_banner "Umbra - Full Deployment"
 log_info "Node:    $NODE_NAME"
 mapfile -t CERT_DOMAINS < <(umbra_collect_cert_domains)
 log_info "Domains: $EDGE_DOMAIN, $SUB_DOMAIN, +$(( ${#CERT_DOMAINS[@]} - 2 )) more (${#CERT_DOMAINS[@]} cert domains)"
@@ -51,7 +51,7 @@ run_step_warn() {
   local label="$2"
   log_step "[$step] $label"
   bash "$SCRIPT_DIR/$step" || {
-    log_warn "Step $step reported failures — services may still be running."
+    log_warn "Step $step reported failures - services may still be running."
     log_warn "Check manually: bash scripts/deploy.sh verify"
   }
   echo ""
@@ -98,7 +98,7 @@ run_step "00-check-env.sh"        "Environment check"
 run_step "01-init-dirs.sh"        "Initialize directories"
 run_step "02-generate-reality.sh" "Generate REALITY keys"
 
-# ── Certificate step: real or self-signed ─────────────────────────────────────
+# -- Certificate step: real or self-signed -------------------------------------
 # Set CERTBOT_SKIP=true in .env to use self-signed certs (no DNS required).
 # Upgrade later: bash scripts/ops.sh certs --upgrade
 if [[ "${CERTBOT_SKIP:-false}" == "true" ]]; then
@@ -128,13 +128,13 @@ if [[ "$SKIP_BACKUP" == "true" ]]; then
   log_info "Skipping backup (--skip-backup)"
 else
   bash "$SCRIPT_DIR/../ops/backup.sh" || {
-    log_warn "Backup reported failures — services may still be running."
+    log_warn "Backup reported failures - services may still be running."
     log_warn "Check manually: bash scripts/ops.sh backup"
   }
   echo ""
 fi
 
-# ── Configure cert renewal and backup cron ────────────────────────────────────
+# -- Configure cert renewal and backup cron ------------------------------------
 log_step "Configuring cron jobs..."
 
 CRON_LINE="17 3 * * * $REPO_DIR/scripts/ops.sh certs --renew >> /var/log/umbra-cert-renew.log 2>&1"
@@ -163,7 +163,7 @@ remove_legacy_cron "$REPO_DIR/scripts/steps/07-backup.sh"
 add_cron "$CRON_LINE"
 add_cron "$BACKUP_CRON_LINE"
 
-# ── Done ──────────────────────────────────────────────────────────────────────
+# -- Done ----------------------------------------------------------------------
 echo ""
 log_banner "Deployment Complete"
 log_ok "All services are running."
@@ -176,6 +176,6 @@ echo "  Vault:         https://$VAULT_DOMAIN  (placeholder)"
 echo ""
 echo "  Next steps:"
 echo "  1. Run post-deploy wizard: bash scripts/deploy.sh post"
-echo "  2. Connect to VPN, then open https://$CONSOLE_DOMAIN"
-echo "  3. (Optional) set up external uptime monitoring — BetterStack or UptimeRobot"
+echo "  2. Open https://$CONSOLE_DOMAIN and sign in with Marzban credentials"
+echo "  3. (Optional) set up external uptime monitoring - BetterStack or UptimeRobot"
 echo ""

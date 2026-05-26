@@ -1,4 +1,4 @@
-# ruyin.ai — Brand landing page
+# ruyin.ai - Brand landing page
 server {
     listen 8443 ssl proxy_protocol;
     server_name {{ APEX_DOMAIN }};

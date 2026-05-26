@@ -1,6 +1,6 @@
 # SNI-based stream routing
-# REALITY camouflage SNI → Xray (no TLS termination)
-# All other SNIs → internal HTTPS listener (TLS terminated by http block)
+# REALITY camouflage SNI -> Xray (no TLS termination)
+# All other SNIs -> internal HTTPS listener (TLS terminated by http block)
 
 map $ssl_preread_server_name $upstream_backend {
     {{ REALITY_SNI }}  xray_upstream;

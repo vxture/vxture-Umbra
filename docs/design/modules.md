@@ -1,4 +1,4 @@
-# Umbra — Modules
+# Umbra - Modules
 
 Per-service specification: responsibility, configuration, volumes, environment variables.
 
@@ -18,7 +18,7 @@ Per-service specification: responsibility, configuration, volumes, environment v
 Nginx runs two listeners:
 
 **Stream listener (port 443, in `nginx.conf` stream block):**
-- `ssl_preread on` — reads SNI without terminating TLS
+- `ssl_preread on` - reads SNI without terminating TLS
 - Routes to `xray_upstream` (`umbra-marzban:10443`, bundled Xray subprocess) or `https_upstream` (`127.0.0.1:8443`)
 
 **HTTP listener (internal port 8443):**
@@ -34,7 +34,7 @@ Nginx runs two listeners:
 | `02-www.conf.template` | `www.ruyin.ai` | static files in `nginx/html/www-ruyin/` |
 | `03-vpn-portal.conf.template` | `EDGE_DOMAIN` | `umbra-portal:80` |
 | `04-sub.conf.template` | `sub.ruyin.ai` | native Marzban `/sub/<token>` only |
-| `05-console.conf.template` | `console.ruyin.ai` | `umbra-marzban:8000` + IP restriction + Marzban login |
+| `05-console.conf.template` | `console.ruyin.ai` | `umbra-marzban:8000` + Marzban login |
 | `06-pass.conf.template` | `pass.ruyin.ai` | `umbra-vaultwarden:80` |
 | `07-vault.conf.template` | `vault.ruyin.ai` | placeholder static response |
 
@@ -64,20 +64,9 @@ stream {
 }
 ```
 
-### console.ruyin.ai — Access Control
+### console.ruyin.ai - Login Boundary
 
-Access to `console.ruyin.ai` requires passing both layers in sequence:
-
-```
-Layer 1: VPN network restriction (Nginx allow/deny)
-Layer 2: Marzban web login
-```
-
-#### Layer 1: VPN Network Restriction
-
-When a client connects via VLESS VPN and accesses `console.ruyin.ai`, the request is proxied through the Xray subprocess inside `umbra-marzban`. Nginx sees the source IP as a Docker internal address (`172.x.x.x` or `127.0.0.1`).
-
-Direct access from any public IP is rejected at this layer.
+`console.ruyin.ai` is public at nginx and protected by Marzban's own web login and API JWT session. This allows operators and users to reach Marzban pages without requiring a separate VPN path first.
 
 ```nginx
 server {
@@ -87,39 +76,24 @@ server {
     ssl_certificate /etc/letsencrypt/live/console.ruyin.ai/fullchain.pem;
     ssl_certificate_key /etc/letsencrypt/live/console.ruyin.ai/privkey.pem;
 
-    # Layer 1: Only allow Docker internal network (VPN-tunneled traffic)
-    allow 172.16.0.0/12;
-    allow 127.0.0.1;
-    deny all;
-
     location / {
-        # Layer 2: Marzban handles its own login
-        proxy_pass http://umbra-marzban:8000;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_pass https://umbra-marzban:8000;
+        proxy_ssl_verify off;
+        include /etc/nginx/snippets/proxy-headers.conf;
     }
 }
 ```
 
 #### Console Authentication
 
-Nginx only performs the IP allow/deny check. Marzban handles the web login and API JWT session itself; do not add `auth_basic` to this vhost because it intercepts Bearer-token API calls.
+Nginx must not add IP allow/deny or `auth_basic` to this vhost. Marzban handles the web login and API JWT session itself; Basic Auth intercepts Bearer-token API calls.
 
 #### Access Flow Summary
 
 ```
-Operator connects VPN → opens browser → console.ruyin.ai
-  Layer 1: source IP = 172.x.x.x → PASS
-  Layer 2: Marzban login form → PASS
-  → Admin dashboard accessible
-```
-
-```
-Anyone without VPN → console.ruyin.ai
-  Layer 1: source IP = public IP → 403 DENIED
-  → Never reaches Marzban
+Browser -> console.ruyin.ai
+  Nginx -> Marzban
+  Marzban login -> dashboard / user pages
 ```
 
 ### Docker Volumes
@@ -144,7 +118,7 @@ volumes:
 - Multi-user, UUID-isolated clients
 - Managed entirely by Marzban (Marzban writes `xray_config.json` and restarts Xray)
 
-### Xray ↔ Marzban Relationship
+### Xray <-> Marzban Relationship
 
 Marzban manages Xray. The deployment flow is:
 
@@ -153,7 +127,7 @@ Marzban manages Xray. The deployment flow is:
 3. Marzban configured with REALITY keys at startup
 4. Marzban renders its own `xray_config.json` and manages Xray process internally
 
-**Marzban runs Xray as a subprocess** — do NOT run a separate `umbra-xray` container alongside Marzban. Marzban's container includes Xray.
+**Marzban runs Xray as a subprocess** - do NOT run a separate `umbra-xray` container alongside Marzban. Marzban's container includes Xray.
 
 ### Xray Config (managed by Marzban)
 
@@ -247,7 +221,7 @@ CLASH_SUBSCRIPTION_TEMPLATE=clash/default.yml
 DATA_DIR/marzban/templates/clash/default.yml
 ```
 
-This file is rendered from `configs/marzban/clash-subscription.j2` — it contains the B++ proxy rules. See `decisions.md` and `../implementation/subscriptions.md` for full subscription context.
+This file is rendered from `configs/marzban/clash-subscription.j2` - it contains the B++ proxy rules. See `decisions.md` and `../implementation/subscriptions.md` for full subscription context.
 
 ### Docker Config
 
@@ -297,10 +271,10 @@ Static HTML/CSS site, served by Nginx (or a minimal container like `nginx:alpine
 
 ```
 vpn.ruyin.ai/
-├── /                  → landing (what is this, how to use)
-├── /start             → quick start guide
-├── /clients           → client download links (Clash Verge, V2RayN, etc.)
-└── /subscribe         → subscription instructions (link to sub.ruyin.ai)
+|-- /                  -> landing (what is this, how to use)
+|-- /start             -> quick start guide
+|-- /clients           -> client download links (Clash Verge, V2RayN, etc.)
+`-- /subscribe         -> subscription instructions (link to sub.ruyin.ai)
 ```
 
 ### Docker Config
@@ -364,7 +338,7 @@ umbra-vaultwarden:
 
 ### Issue Command
 
-All domains in a single cert (or separate certs per domain — separate recommended for easier rotation):
+All domains in a single cert (or separate certs per domain - separate recommended for easier rotation):
 
 ```bash
 # Issue per domain (recommended)

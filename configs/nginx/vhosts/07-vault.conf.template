@@ -1,4 +1,4 @@
-# vault.ruyin.ai — placeholder (future use)
+# vault.ruyin.ai - placeholder (future use)
 server {
     listen 8443 ssl proxy_protocol;
     server_name {{ VAULT_DOMAIN }};

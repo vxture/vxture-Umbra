@@ -19,7 +19,7 @@ log_fail()  { echo -e "${_RED}[FAIL]${_NC}  $*" >&2; }
 log_banner() {
   local msg="$*"
   local line
-  line=$(printf '─%.0s' $(seq 1 ${#msg}))
+  line=$(printf '%*s' "${#msg}" '' | tr ' ' '-')
   echo -e "\n${_BOLD}${_BLUE}  $msg${_NC}"
   echo -e "${_BLUE}  $line${_NC}\n"
 }

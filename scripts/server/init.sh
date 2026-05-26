@@ -1,14 +1,14 @@
 #!/usr/bin/env bash
-# Server bootstrap — run as root on a fresh (or existing) server.
+# Server bootstrap - run as root on a fresh (or existing) server.
 # Installs Docker, creates admin user, copies SSH keys.
 # Safe to re-run: each step checks state before acting.
-# NOTE: root SSH is intentionally left enabled — disable manually after verifying stone login works.
+# NOTE: root SSH is intentionally left enabled - disable manually after verifying stone login works.
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/../lib/log.sh"
 
-log_banner "Umbra — Server Init"
+log_banner "Umbra - Server Init"
 
 if [[ "$EUID" -ne 0 ]]; then
   log_error "Must run as root"
@@ -17,7 +17,7 @@ fi
 
 ADMIN_USER="${ADMIN_USER:-stone}"
 
-# ── System packages ───────────────────────────────────────────────────────────
+# -- System packages -----------------------------------------------------------
 log_step "Checking required packages..."
 
 apt-get update -qq
@@ -35,7 +35,7 @@ else
   log_ok "All required packages already present"
 fi
 
-# ── Docker ────────────────────────────────────────────────────────────────────
+# -- Docker --------------------------------------------------------------------
 log_step "Checking Docker..."
 
 if ! command -v docker &>/dev/null; then
@@ -54,7 +54,7 @@ else
   log_ok "docker compose v2: $(docker compose version --short)"
 fi
 
-# ── Admin user ────────────────────────────────────────────────────────────────
+# -- Admin user ----------------------------------------------------------------
 log_step "Setting up admin user: $ADMIN_USER ..."
 
 if id "$ADMIN_USER" &>/dev/null; then
@@ -79,7 +79,7 @@ else
   log_ok "$ADMIN_USER added to group: docker"
 fi
 
-# ── SSH authorized_keys ───────────────────────────────────────────────────────
+# -- SSH authorized_keys -------------------------------------------------------
 SSH_DIR="/home/$ADMIN_USER/.ssh"
 AUTH_KEYS="$SSH_DIR/authorized_keys"
 
@@ -91,25 +91,25 @@ elif [[ -f /root/.ssh/authorized_keys ]]; then
   chown -R "$ADMIN_USER:$ADMIN_USER" "$SSH_DIR"
   chmod 700 "$SSH_DIR"
   chmod 600 "$AUTH_KEYS"
-  log_ok "SSH authorized_keys copied from root → $ADMIN_USER"
+  log_ok "SSH authorized_keys copied from root -> $ADMIN_USER"
 else
   log_warn "No /root/.ssh/authorized_keys found"
   log_warn "Add your public key manually: /home/$ADMIN_USER/.ssh/authorized_keys"
 fi
 
-# ── Directory ownership ───────────────────────────────────────────────────────
+# -- Directory ownership -------------------------------------------------------
 log_step "Setting up /srv/vxture ..."
 
 # Pre-create both repo and data dirs so the chown below covers them
 # even before deploy.sh runs and creates the full DATA_DIR structure.
 mkdir -p /srv/vxture/repo /srv/vxture/data
 
-# Always chown recursively — safe to repeat; fixes root-owned files from
+# Always chown recursively - safe to repeat; fixes root-owned files from
 # any previous accidental root invocation of deploy scripts.
 chown -R "$ADMIN_USER:$ADMIN_USER" /srv/vxture
 log_ok "/srv/vxture owned by $ADMIN_USER (repo + data)"
 
-# ── Firewall ──────────────────────────────────────────────────────────────────
+# -- Firewall ------------------------------------------------------------------
 log_step "Configuring firewall..."
 
 if command -v ufw &>/dev/null; then
@@ -118,10 +118,10 @@ if command -v ufw &>/dev/null; then
   ufw allow 443/tcp &>/dev/null || true
   log_ok "UFW rules added: 22, 80, 443"
 else
-  log_info "UFW not installed — skipping firewall config"
+  log_info "UFW not installed - skipping firewall config"
 fi
 
-# ── Git safe directory ────────────────────────────────────────────────────────
+# -- Git safe directory --------------------------------------------------------
 log_step "Configuring git..."
 
 REPO_PATH="/srv/vxture/repo/umbra"
@@ -132,7 +132,7 @@ else
   log_ok "git safe.directory already configured for $REPO_PATH"
 fi
 
-# ── Done ──────────────────────────────────────────────────────────────────────
+# -- Done ----------------------------------------------------------------------
 echo ""
 log_banner "Server Init Complete"
 log_ok "Admin user : $ADMIN_USER  (sudo + docker)"

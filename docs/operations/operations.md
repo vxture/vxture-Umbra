@@ -1,4 +1,4 @@
-# Umbra — Operations
+# Umbra - Operations
 
 Ongoing maintenance for a live Umbra edge node.
 
@@ -23,17 +23,17 @@ Runs automatically:
 DATA_DIR/nginx/conf.d/
 DATA_DIR/nginx/stream.d/
 DATA_DIR/marzban/templates/
-DATA_DIR/private/               ← REALITY keys
+DATA_DIR/private/               <- REALITY keys
 
 # SQLite database copies
-DATA_DIR/marzban/db.sqlite3        → backup/marzban-db-<ts>.sqlite3
-DATA_DIR/vaultwarden/data/         → backup/vaultwarden-data-<ts>.tar.gz  (full dir: DB + attachments + sends)
+DATA_DIR/marzban/db.sqlite3        -> backup/marzban-db-<ts>.sqlite3
+DATA_DIR/vaultwarden/data/         -> backup/vaultwarden-data-<ts>.tar.gz  (full dir: DB + attachments + sends)
 
 # Certs
 DATA_DIR/letsencrypt/
 
 # System state
-crontab -l → backup/root-crontab-<ts>.txt
+crontab -l -> backup/root-crontab-<ts>.txt
 ```
 
 ### Backup Output
@@ -76,7 +76,7 @@ tar -xzf BACKUP_DIR/umbra-config-<timestamp>.tar.gz -C DATA_DIR/
 # 3. Restore SQLite databases
 cp BACKUP_DIR/marzban-db-<timestamp>.sqlite3 DATA_DIR/marzban/db.sqlite3
 
-# Vaultwarden — full data dir (DB + attachments + sends)
+# Vaultwarden - full data dir (DB + attachments + sends)
 tar -xzf BACKUP_DIR/vaultwarden-data-<timestamp>.tar.gz -C DATA_DIR/vaultwarden/
 
 # 4. Restore crontab
@@ -185,18 +185,18 @@ Requires Cloudflare API token. Consider in v1.1.
 
 ### Access
 
-Marzban admin panel: `https://console.ruyin.ai`
-Access is IP-restricted by nginx. Public internet requests return `403`; requests that arrive through the local stream proxy or Docker/Xray are passed to Marzban's own login.
+Marzban console: `https://console.ruyin.ai`
+The console is public at nginx and protected by Marzban's own login. A `403` from nginx means stale rendered config still contains an old network restriction.
 
 ### Common Operations (via Marzban UI or API)
 
 | Operation | UI Path | API |
 |-----------|---------|-----|
-| Add user | Users → Add User | `POST /api/user` |
-| View subscription URL | Users → click user | `GET /api/user/{username}/subscription` |
-| Reset traffic | Users → Reset Traffic | `POST /api/user/{username}/reset` |
-| Disable user | Users → Edit → disable | `PUT /api/user/{username}` |
-| Delete user | Users → Delete | `DELETE /api/user/{username}` |
+| Add user | Users -> Add User | `POST /api/user` |
+| View subscription URL | Users -> click user | `GET /api/user/{username}/subscription` |
+| Reset traffic | Users -> Reset Traffic | `POST /api/user/{username}/reset` |
+| Disable user | Users -> Edit -> disable | `PUT /api/user/{username}` |
+| Delete user | Users -> Delete | `DELETE /api/user/{username}` |
 | View traffic stats | Dashboard | `GET /api/users` |
 
 ### Subscription URL Format
@@ -230,7 +230,7 @@ Expected status for all four: `404`. Only native Marzban `GET /sub/<marzban-toke
 ### Adding a New Node (Multi-node, v1.1+)
 
 Marzban supports connecting multiple Xray nodes. Future edge nodes (edge-02, etc.) can be added via:
-- Marzban admin → Nodes → Add Node
+- Marzban admin -> Nodes -> Add Node
 - Install `marzban-node` on the new server
 - Connect via API cert
 
@@ -306,13 +306,13 @@ Place at `/etc/logrotate.d/umbra`.
 ## Monitoring
 
 External uptime monitoring (free tier sufficient):
-- **BetterStack** or **UptimeRobot** — monitors from outside the node
+- **BetterStack** or **UptimeRobot** - monitors from outside the node
 - Covers full-node outages that self-hosted solutions cannot detect
 
 Recommended monitors:
-- TCP `vpn.ruyin.ai:443` — VPN port (primary health signal)
-- HTTPS `https://ruyin.ai` — portal
-- HTTPS `https://sub.ruyin.ai` — subscription endpoint
+- TCP `vpn.ruyin.ai:443` - VPN port (primary health signal)
+- HTTPS `https://ruyin.ai` - portal
+- HTTPS `https://sub.ruyin.ai` - subscription endpoint
 
 ---
 
@@ -321,7 +321,7 @@ Recommended monitors:
 ```
 1. Deploy new node, verify fully
 2. Switch DNS to new node
-3. Wait 24–72h for clients to refresh
+3. Wait 24-72h for clients to refresh
 4. Run final backup on old node
 5. Download backup to safe storage
 6. Verify backup integrity: tar -tzf <archive>

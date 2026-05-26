@@ -1,4 +1,4 @@
-# Umbra — Deployment
+# Umbra - Deployment
 
 Complete guide for deploying a fresh Umbra node.
 
@@ -25,7 +25,7 @@ sudo usermod -aG docker stone
 sudo apt install -y python3 python3-pip
 ```
 
-### DNS — All records must resolve before deployment
+### DNS - All records must resolve before deployment
 
 | Hostname | Type | Target |
 |----------|------|--------|
@@ -41,7 +41,7 @@ Verify all resolve before running `deploy.sh all`:
 
 ```bash
 for d in ruyin.ai www.ruyin.ai vpn.ruyin.ai sub.ruyin.ai console.ruyin.ai pass.ruyin.ai vault.ruyin.ai; do
-  echo "$d → $(dig +short $d)"
+  echo "$d -> $(dig +short $d)"
 done
 ```
 
@@ -61,11 +61,11 @@ cp .env.example .env
 ### Step 2: Edit `.env`
 
 ```env
-# ── Node Identity ──────────────────────────────────────
+# -- Node Identity --------------------------------------
 PROJECT_NAME=umbra
 NODE_NAME=vx-tokyo
 
-# ── Domains ────────────────────────────────────────────
+# -- Domains --------------------------------------------
 APEX_DOMAIN=ruyin.ai
 WWW_DOMAIN=www.ruyin.ai
 EDGE_DOMAIN=vpn.ruyin.ai
@@ -75,37 +75,37 @@ PASS_DOMAIN=pass.ruyin.ai
 VAULT_DOMAIN=vault.ruyin.ai
 STANDBY_CERT_DOMAINS=subscribe.ruyin.ai
 
-# ── Paths ───────────────────────────────────────────────
+# -- Paths -----------------------------------------------
 ROOT_DIR=/srv/vxture
 REPO_DIR=/srv/vxture/repo/umbra
 DATA_DIR=/srv/vxture/data/umbra
 BACKUP_DIR=/srv/vxture/backup/umbra
 
-# ── Nginx ───────────────────────────────────────────────
+# -- Nginx -----------------------------------------------
 NGINX_CONTAINER=umbra-nginx
 
-# ── Xray / REALITY ─────────────────────────────────────
+# -- Xray / REALITY -------------------------------------
 REALITY_DEST=www.microsoft.com:443
 REALITY_SNI=www.microsoft.com
 REALITY_SHORT_ID_LENGTH=16
 XRAY_INTERNAL_PORT=10443
 
-# ── Marzban ─────────────────────────────────────────────
+# -- Marzban ---------------------------------------------
 MARZBAN_ADMIN_USER=<admin-username>
 MARZBAN_ADMIN_PASSWORD=<strong-password>
 SUBSCRIPTION_URL_PREFIX=https://sub.ruyin.ai
 
-# ── Vaultwarden ─────────────────────────────────────────
+# -- Vaultwarden -----------------------------------------
 VAULTWARDEN_ADMIN_TOKEN=<generate-with: openssl rand -base64 48>
 
-# ── Certbot ─────────────────────────────────────────────
+# -- Certbot ---------------------------------------------
 CERTBOT_EMAIL=<your-email>
 
 ```
 
 ### Step 3: Secrets
 
-No database passwords needed — SQLite requires no credentials. The only secret file is `DATA_DIR/private/reality.json`, which is generated automatically by `02-generate-reality.sh`.
+No database passwords needed - SQLite requires no credentials. The only secret file is `DATA_DIR/private/reality.json`, which is generated automatically by `02-generate-reality.sh`.
 
 ---
 
@@ -122,9 +122,9 @@ bash scripts/deploy.sh all
 ```
 00-check-env.sh        Validate environment, DNS, Docker
 01-init-dirs.sh        Create DATA_DIR structure with correct permissions
-02-generate-reality.sh Generate REALITY keypair → private/reality.json
+02-generate-reality.sh Generate REALITY keypair -> private/reality.json
 03-issue-certs.sh      Issue Let's Encrypt certs for active + standby cert domains
-04-render-configs.py   Render all templates → DATA_DIR
+04-render-configs.py   Render all templates -> DATA_DIR
 05-up.sh               docker compose up -d
 06-verify.sh           Full verification suite
 ```
@@ -257,20 +257,19 @@ Expected: all containers in `running` state.
 ```bash
 for d in ruyin.ai www.ruyin.ai vpn.ruyin.ai sub.ruyin.ai pass.ruyin.ai vault.ruyin.ai; do
   code=$(curl -sk -o /dev/null -w "%{http_code}" https://$d)
-  echo "$d → $code"
+  echo "$d -> $code"
 done
 ```
 
 Expected: all return 200 or 301/302 (no 502, no cert errors).
 
-### vpn-admin Blocked from Public
+### Marzban Console Login
 
 ```bash
-# From a random IP (not connected to VPN)
-curl -sk -o /dev/null -w "%{http_code}" https://console.ruyin.ai
+curl -sk -o /dev/null -w "%{http_code}" https://console.ruyin.ai/dashboard/
 ```
 
-Expected: `403`
+Expected: `200`, `301`, `302`, `307`, `308`, or `401`; not `403`.
 
 ### Xray Port
 
@@ -284,11 +283,10 @@ Expected: `443 open`
 
 ```bash
 curl -sk -o /dev/null -w "%{http_code}" \
-  -H "X-Forwarded-For: 172.20.0.1"  # simulate Docker internal IP \
   https://console.ruyin.ai/dashboard
 ```
 
-Expected: `200`
+Expected: the Marzban login/dashboard route responds; nginx must not block it with `403`.
 
 ### Subscription Format
 
@@ -361,17 +359,17 @@ Expected: both files exist and are non-zero size.
 4.  Clone vxture/umbra to /srv/vxture/repo/umbra
 5.  Copy .env from old node
 6.  Copy DATA_DIR/private/ from old node
-    (preserves REALITY keys — clients keep same public key)
+    (preserves REALITY keys - clients keep same public key)
 7.  Run `bash scripts/deploy.sh all` on new VPS
 8.  Verify using /etc/hosts override (point domains to new IP locally)
 9.  Switch DNS to new VPS IP
 10. Notify users to refresh subscription in Clash
-11. Monitor 24–72 hours
+11. Monitor 24-72 hours
 12. Run final backup on old node
 13. Destroy old VPS
 ```
 
-Copying `private/reality.json` ensures existing Marzban users keep the same REALITY public key — no client reconfiguration needed, only a subscription refresh.
+Copying `private/reality.json` ensures existing Marzban users keep the same REALITY public key - no client reconfiguration needed, only a subscription refresh.
 
 ---
 
@@ -380,8 +378,8 @@ Copying `private/reality.json` ensures existing Marzban users keep the same REAL
 During migration, run both nodes simultaneously:
 
 ```
-Old node: worker-03 → vpn.ruyin.ai (current DNS)
-New node: edge-01   → vpn-test.ruyin.ai (test DNS only)
+Old node: worker-03 -> vpn.ruyin.ai (current DNS)
+New node: edge-01   -> vpn-test.ruyin.ai (test DNS only)
 ```
 
 Test new node via `vpn-test.ruyin.ai` before touching production DNS.

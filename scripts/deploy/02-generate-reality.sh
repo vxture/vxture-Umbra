@@ -7,12 +7,12 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/../lib/env.sh"
 source "$SCRIPT_DIR/../lib/log.sh"
 
-log_banner "Umbra — Generate REALITY Keys"
+log_banner "Umbra - Generate REALITY Keys"
 
 REALITY_FILE="$DATA_DIR/private/reality.json"
 
 if [[ -f "$REALITY_FILE" ]]; then
-  log_info "reality.json already exists — skipping key generation"
+  log_info "reality.json already exists - skipping key generation"
   log_info "To regenerate: rm $REALITY_FILE && re-run this script"
   exit 0
 fi
