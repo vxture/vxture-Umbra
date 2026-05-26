@@ -97,6 +97,7 @@ if [[ -n "$latest_sub_file" ]]; then
   read -r latest_sub_user latest_sub_url < <(awk 'NF >= 2 && $1 !~ /^#/ && $2 ~ /^https:\/\// {print $1, $2; exit}' "$latest_sub_file")
   if [[ -n "$latest_sub_url" ]]; then
     sub_headers=$(mktemp)
+    sub_headers_clean=$(mktemp)
     sub_body=$(mktemp)
     sub_code=$(curl -sk --max-time 10 -D "$sub_headers" -o "$sub_body" -w "%{http_code}" -H "User-Agent: Clash Verge" "$latest_sub_url" || echo "000")
     expected_title="${SUB_PROFILE_PREFIX:-Ruyin}-${latest_sub_user}"
@@ -109,8 +110,10 @@ if [[ -n "$latest_sub_file" ]]; then
       (( ++FAIL ))
     fi
 
-    if grep -Eiq "^content-disposition:[[:space:]]*attachment;[[:space:]]*filename=${expected_title}(\r)?$" "$sub_headers" \
-       && head -1 "$sub_body" | grep -Fxq "#profile-title: $expected_title"; then
+    tr -d '\r' < "$sub_headers" > "$sub_headers_clean"
+
+    if grep -Fxiq "content-disposition: attachment; filename=${expected_title}" "$sub_headers_clean" \
+       && head -1 "$sub_body" | tr -d '\r' | grep -Fxq "#profile-title: $expected_title"; then
       log_ok "Subscription name normalized: $expected_title"
       (( ++PASS ))
     else
@@ -121,7 +124,7 @@ if [[ -n "$latest_sub_file" ]]; then
       head -1 "$sub_body" || true
       (( ++FAIL ))
     fi
-    rm -f "$sub_headers" "$sub_body"
+    rm -f "$sub_headers" "$sub_headers_clean" "$sub_body"
   else
     log_warn "No subscription URL found in $latest_sub_file"
   fi
