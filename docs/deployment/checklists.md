@@ -401,9 +401,6 @@ Backup checklist:
 [ ] Vaultwarden full data archive exists
 [ ] Config/private archive exists
 [ ] Crontab snapshot exists
-[ ] Minimal recovery archive exists: minimal-state-<timestamp>.tar.gz
-[ ] Minimal recovery archive contains .env, letsencrypt, Marzban DB, reality.json, and subscription URL records
-[ ] Minimal recovery archive checksum exists: minimal-state-<timestamp>.tar.gz.sha256
 [ ] Files are mode 600 where sensitive
 [ ] Backups older than retention window are pruned intentionally
 ```
@@ -413,8 +410,6 @@ Restore is currently manual. Before relying on a backup, inspect archive content
 ```bash
 ls -lt "$BACKUP_DIR" | head -20
 tar -tzf "$BACKUP_DIR/umbra-config-<timestamp>.tar.gz" | sort
-tar -tzf "$BACKUP_DIR/minimal-state-<timestamp>.tar.gz" | grep -E 'repo/umbra/.env|data/umbra/letsencrypt|data/umbra/marzban/db.sqlite3|data/umbra/private/reality.json|backup/umbra/subscription-urls-'
-sha256sum -c "$BACKUP_DIR/minimal-state-<timestamp>.tar.gz.sha256"
 ```
 
 ### S10 - Post-Deploy Users and Subscription URLs
