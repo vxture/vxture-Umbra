@@ -53,6 +53,37 @@ check_http_exact() {
   fi
 }
 
+curl_saved_subscription() {
+  local url="$1"
+  local headers_file="$2"
+  local body_file="$3"
+  local code
+  local attempt
+
+  for attempt in 1 2 3 4 5; do
+    : > "$headers_file"
+    : > "$body_file"
+    if code=$(curl -sk --max-time 10 -D "$headers_file" -o "$body_file" -w "%{http_code}" -H "User-Agent: Clash Verge" "$url" 2>/dev/null); then
+      :
+    else
+      code="000"
+    fi
+
+    if [[ "$code" == "200" ]]; then
+      printf '%s\n' "$code"
+      return 0
+    fi
+
+    if [[ "$code" =~ ^(000|502|503|504)$ && "$attempt" -lt 5 ]]; then
+      sleep 3
+      continue
+    fi
+
+    printf '%s\n' "$code"
+    return 0
+  done
+}
+
 # -- Container status ----------------------------------------------------------
 log_step "Container health..."
 
@@ -101,7 +132,7 @@ if [[ -n "$latest_sub_file" ]]; then
     sub_headers=$(mktemp)
     sub_headers_clean=$(mktemp)
     sub_body=$(mktemp)
-    sub_code=$(curl -sk --max-time 10 -D "$sub_headers" -o "$sub_body" -w "%{http_code}" -H "User-Agent: Clash Verge" "$latest_sub_url" || echo "000")
+    sub_code=$(curl_saved_subscription "$latest_sub_url" "$sub_headers" "$sub_body")
     expected_title="${SUB_PROFILE_PREFIX:-Ruyin}-${latest_sub_user}"
 
     if [[ "$sub_code" == "200" ]]; then

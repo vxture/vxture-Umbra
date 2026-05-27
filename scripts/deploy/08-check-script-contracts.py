@@ -308,7 +308,9 @@ CHECKS: list[tuple[str, Path, list[str]]] = [
         "subscription vhost uses metadata normalizer",
         Path("configs/nginx/vhosts/04-sub.conf.template"),
         [
-            "proxy_pass http://umbra-subproxy:8080",
+            "resolver 127.0.0.11 valid=30s ipv6=off",
+            'set $subproxy_upstream "umbra-subproxy:8080"',
+            "proxy_pass http://$subproxy_upstream",
             'location ~ "^/sub/([^/\\s]+)$"',
         ],
     ),
@@ -440,6 +442,8 @@ CHECKS: list[tuple[str, Path, list[str]]] = [
         "deploy verify checks subscription display name",
         Path("scripts/deploy/06-verify.sh"),
         [
+            "curl_saved_subscription",
+            "for attempt in 1 2 3 4 5",
             "expected_title=\"${SUB_PROFILE_PREFIX:-Ruyin}-${latest_sub_user}\"",
             "content-disposition",
             "Subscription name normalized",

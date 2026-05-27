@@ -8,11 +8,14 @@ server {
     include /etc/nginx/snippets/ssl-params.conf;
     include /etc/nginx/snippets/security-headers.conf;
 
+    resolver 127.0.0.11 valid=30s ipv6=off;
+    set $subproxy_upstream "umbra-subproxy:8080";
+
     # Only Marzban's native subscription URL is public: /sub/{token}.
     # /sub/{token}/clash-meta and all other variants return 404.
     location ~ "^/sub/([^/\s]+)$" {
         limit_req zone=sub_limit burst=10 nodelay;
-        proxy_pass http://umbra-subproxy:8080;
+        proxy_pass http://$subproxy_upstream;
         include /etc/nginx/snippets/proxy-headers.conf;
     }
 
