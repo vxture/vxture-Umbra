@@ -188,6 +188,8 @@ def init_db() -> None:
             CREATE TABLE IF NOT EXISTS accounts (
               id INTEGER PRIMARY KEY AUTOINCREMENT,
               username TEXT NOT NULL UNIQUE,
+              display_name TEXT,
+              display_name_key TEXT,
               password_salt TEXT NOT NULL,
               password_hash TEXT NOT NULL,
               subscription_url TEXT NOT NULL,
@@ -221,8 +223,38 @@ def init_db() -> None:
             CREATE UNIQUE INDEX IF NOT EXISTS idx_active_invite_username
               ON invites(username)
               WHERE used_at IS NULL AND disabled = 0;
+
             """
         )
+        columns = {row["name"] for row in conn.execute("PRAGMA table_info(accounts)").fetchall()}
+        if "display_name" not in columns:
+            conn.execute("ALTER TABLE accounts ADD COLUMN display_name TEXT")
+        if "display_name_key" not in columns:
+            conn.execute("ALTER TABLE accounts ADD COLUMN display_name_key TEXT")
+        conn.execute(
+            """
+            UPDATE accounts
+               SET display_name = username,
+                   display_name_key = lower(username)
+             WHERE display_name IS NULL OR display_name_key IS NULL
+            """
+        )
+        conn.execute(
+            """
+            CREATE UNIQUE INDEX IF NOT EXISTS idx_account_display_name_key
+              ON accounts(display_name_key)
+              WHERE disabled = 0
+            """
+        )
+
+
+def normalize_display_name(value: str) -> tuple[str, str]:
+    name = " ".join(value.strip().split())
+    if len(name) < 2 or len(name) > 32:
+        raise ValueError("Name must be 2-32 characters.")
+    if any(ord(ch) < 32 for ch in name) or any(ch in "<>\"'`" for ch in name):
+        raise ValueError("Name contains unsupported characters.")
+    return name, name.casefold()
 
 
 def request_json(url: str, token: str | None = None, data: dict[str, Any] | None = None, timeout: int = 10) -> dict[str, Any]:
@@ -391,7 +423,9 @@ class AccountHandler(BaseHTTPRequestHandler):
         path = urllib.parse.urlsplit(self.path).path
         if path == "/health":
             self.text(200, "ok\n")
-        elif path in {"/", "/login"}:
+        elif path == "/":
+            self.register_page()
+        elif path == "/login":
             self.login_page()
         elif path == "/register":
             self.register_page()
@@ -502,10 +536,10 @@ class AccountHandler(BaseHTTPRequestHandler):
         body = f"""
 <section class="panel">
   <h1>Ruyin Account</h1>
-  <p class="muted">Sign in with your bound user code to view subscription status and usage.</p>
+  <p class="muted">Sign in with the name you chose when activating your invite.</p>
   {alert}
   <form method="post" action="/login">
-    <label>User code<input name="username" autocomplete="username" placeholder="USER08" required></label>
+    <label>Name<input name="name" autocomplete="username" placeholder="Your name" required></label>
     <label>Password<input name="password" type="password" autocomplete="current-password" required></label>
     <button type="submit">Sign in</button>
   </form>
@@ -514,14 +548,18 @@ class AccountHandler(BaseHTTPRequestHandler):
         self.html(200, page("Account Login", body, narrow=True))
 
     def register_page(self, error: str = "", ok: str = "") -> None:
+        if self.user_session():
+            self.redirect("/dashboard")
+            return
         alert = f'<div class="alert">{html.escape(error)}</div>' if error else ""
         done = f'<div class="alert ok">{html.escape(ok)}</div>' if ok else ""
         body = f"""
 <section class="panel">
   <h1>Activate Invite</h1>
-  <p class="muted">Your invite is already bound to a prepared Ruyin user. You only set the login password.</p>
+  <p class="muted">Choose a display name and enter the invite code from your administrator. Do not enter USER08 or any other user code here.</p>
   {alert}{done}
   <form method="post" action="/register">
+    <label>Name<input name="name" autocomplete="username" placeholder="Your name" required></label>
     <label>Invite code<input name="invite" autocomplete="one-time-code" placeholder="RY-XXXX-XXXX-XXXX-XXXX" required></label>
     <label>Password<input name="password" type="password" autocomplete="new-password" minlength="8" required></label>
     <label>Confirm password<input name="password2" type="password" autocomplete="new-password" minlength="8" required></label>
@@ -533,14 +571,20 @@ class AccountHandler(BaseHTTPRequestHandler):
 
     def login_submit(self) -> None:
         data = self.form()
-        username = data.get("username", "")
+        name_raw = data.get("name", data.get("username", ""))
         password = data.get("password", "")
+        try:
+            _, name_key = normalize_display_name(name_raw)
+        except ValueError:
+            self.login_page("Invalid name or password.")
+            return
         with db() as conn:
-            row = conn.execute("SELECT * FROM accounts WHERE username = ?", (username,)).fetchone()
+            row = conn.execute("SELECT * FROM accounts WHERE display_name_key = ?", (name_key,)).fetchone()
             if not row or row["disabled"] or not password_ok(password, row["password_salt"], row["password_hash"]):
-                self.login_page("Invalid user code or password.")
+                self.login_page("Invalid name or password.")
                 return
             conn.execute("UPDATE accounts SET last_login_at = ? WHERE id = ?", (iso_now(), row["id"]))
+            username = row["username"]
         payload = {"role": "user", "sub": username, "exp": int(time.time()) + 86400 * 14}
         self.send_response(303)
         self.send_header("Location", "/dashboard")
@@ -549,9 +593,15 @@ class AccountHandler(BaseHTTPRequestHandler):
 
     def register_submit(self) -> None:
         data = self.form()
+        name_raw = data.get("name", "")
         code = data.get("invite", "")
         password = data.get("password", "")
         password2 = data.get("password2", "")
+        try:
+            display_name, display_name_key = normalize_display_name(name_raw)
+        except ValueError as exc:
+            self.register_page(str(exc))
+            return
         if len(password) < 8:
             self.register_page("Password must be at least 8 characters.")
             return
@@ -572,6 +622,8 @@ class AccountHandler(BaseHTTPRequestHandler):
                 raise ValueError("Invitation is invalid or already used.")
             if conn.execute("SELECT id FROM accounts WHERE username = ?", (invite["username"],)).fetchone():
                 raise ValueError("This user code is already bound.")
+            if conn.execute("SELECT id FROM accounts WHERE display_name_key = ? AND disabled = 0", (display_name_key,)).fetchone():
+                raise ValueError("Name is already used.")
 
             info = subscription_info(invite["subscription_url"])
             if info.get("username") != invite["username"]:
@@ -581,10 +633,10 @@ class AccountHandler(BaseHTTPRequestHandler):
             now = iso_now()
             cur = conn.execute(
                 """
-                INSERT INTO accounts(username, password_salt, password_hash, subscription_url, created_at)
-                VALUES (?, ?, ?, ?, ?)
+                INSERT INTO accounts(username, display_name, display_name_key, password_salt, password_hash, subscription_url, created_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
                 """,
-                (invite["username"], salt, digest, invite["subscription_url"], now),
+                (invite["username"], display_name, display_name_key, salt, digest, invite["subscription_url"], now),
             )
             account_id = cur.lastrowid
             conn.execute(
@@ -638,12 +690,14 @@ class AccountHandler(BaseHTTPRequestHandler):
         remain = max(total - used, 0) if total else 0
         status = str(info.get("status") or "unknown")
         sub_url = account["subscription_url"]
+        display_name = account["display_name"] or username
         body = f"""
 <section class="split">
   <div class="panel">
-    <h1>{html.escape(PROFILE_PREFIX)}-{html.escape(username)}</h1>
+    <h1>{html.escape(display_name)}</h1>
     <p class="muted">Your Ruyin subscription status and client address.</p>
     <div class="grid">
+      <div class="metric"><div class="muted">User code</div><div class="value">{html.escape(PROFILE_PREFIX)}-{html.escape(username)}</div></div>
       <div class="metric"><div class="muted">Status</div><div class="value">{html.escape(status)}</div></div>
       <div class="metric"><div class="muted">Used traffic</div><div class="value">{format_bytes(used)}</div></div>
       <div class="metric"><div class="muted">Total traffic</div><div class="value">{format_bytes(total) if total else "Unlimited"}</div></div>
@@ -689,7 +743,7 @@ class AccountHandler(BaseHTTPRequestHandler):
             return
         with db() as conn:
             invites = conn.execute("SELECT * FROM invites ORDER BY created_at DESC LIMIT 100").fetchall()
-            accounts = conn.execute("SELECT username, created_at, last_login_at, disabled FROM accounts ORDER BY username").fetchall()
+            accounts = conn.execute("SELECT username, display_name, created_at, last_login_at, disabled FROM accounts ORDER BY username").fetchall()
 
         invite_rows = []
         for inv in invites:
@@ -714,6 +768,7 @@ class AccountHandler(BaseHTTPRequestHandler):
 
         account_rows = [
             "<tr>"
+            f"<td>{html.escape(row['display_name'] or row['username'])}</td>"
             f"<td>{html.escape(row['username'])}</td>"
             f"<td>{html.escape(row['created_at'])}</td>"
             f"<td>{html.escape(row['last_login_at'] or '-')}</td>"
@@ -743,7 +798,7 @@ class AccountHandler(BaseHTTPRequestHandler):
 </section>
 <section class="panel" style="margin-top:16px">
   <h2>Bound accounts</h2>
-  <table><thead><tr><th>User</th><th>Created</th><th>Last login</th><th>Status</th></tr></thead><tbody>{''.join(account_rows) or '<tr><td colspan="4" class="muted">No bound accounts yet.</td></tr>'}</tbody></table>
+  <table><thead><tr><th>Name</th><th>User code</th><th>Created</th><th>Last login</th><th>Status</th></tr></thead><tbody>{''.join(account_rows) or '<tr><td colspan="5" class="muted">No bound accounts yet.</td></tr>'}</tbody></table>
 </section>
 <script>
 document.addEventListener("click", function (event) {{

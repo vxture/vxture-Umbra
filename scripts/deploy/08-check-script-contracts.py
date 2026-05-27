@@ -384,6 +384,9 @@ CHECKS: list[tuple[str, Path, list[str]]] = [
             "code_plain = NULL",
             "CREATE TABLE IF NOT EXISTS admin_sessions",
             "session_hash",
+            "display_name_key",
+            "normalize_display_name",
+            "Name is already used.",
         ],
     ),
     (
