@@ -176,9 +176,12 @@ done
 # -- Marzban API ---------------------------------------------------------------
 log_step "Marzban API..."
 MARZBAN_CODE=$(docker exec -i umbra-marzban python3 - <<'PYEOF' 2>/dev/null
-import urllib.request, sys
+import ssl
+import urllib.request
+
+ctx = ssl._create_unverified_context()
 try:
-    with urllib.request.urlopen('http://localhost:8000/api/inbounds', timeout=10) as r:
+    with urllib.request.urlopen('https://localhost:8000/api/inbounds', timeout=10, context=ctx) as r:
         print(r.status)
 except urllib.error.HTTPError as e:
     print(e.code)

@@ -270,6 +270,15 @@ CHECKS: list[tuple[str, Path, list[str]]] = [
         ],
     ),
     (
+        "deploy verify checks Marzban internal API over HTTPS",
+        Path("scripts/deploy/06-verify.sh"),
+        [
+            "ssl._create_unverified_context()",
+            "https://localhost:8000/api/inbounds",
+            "Marzban API reachable (internal)",
+        ],
+    ),
+    (
         "deploy verify checks subscription display name",
         Path("scripts/deploy/06-verify.sh"),
         [
