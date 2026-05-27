@@ -19,6 +19,13 @@ Runs automatically:
 ### What Gets Backed Up
 
 ```bash
+# Minimal recovery state
+REPO_DIR/.env                         -> backup/minimal-state-<ts>.tar.gz
+DATA_DIR/letsencrypt/                 -> backup/minimal-state-<ts>.tar.gz
+DATA_DIR/marzban/db.sqlite3           -> backup/minimal-state-<ts>.tar.gz
+DATA_DIR/private/reality.json         -> backup/minimal-state-<ts>.tar.gz
+BACKUP_DIR/subscription-urls-*.txt    -> backup/minimal-state-<ts>.tar.gz
+
 # Config files
 DATA_DIR/nginx/conf.d/
 DATA_DIR/nginx/stream.d/
@@ -29,12 +36,14 @@ DATA_DIR/private/               <- REALITY keys
 DATA_DIR/marzban/db.sqlite3        -> backup/marzban-db-<ts>.sqlite3
 DATA_DIR/vaultwarden/data/         -> backup/vaultwarden-data-<ts>.tar.gz  (full dir: DB + attachments + sends)
 
-# Certs
-DATA_DIR/letsencrypt/
-
 # System state
 crontab -l -> backup/root-crontab-<ts>.txt
 ```
+
+The minimal archive is the required state for a rebuild where only certificates,
+passwords/tokens, and existing subscription URLs must survive. It is created
+with Docker so root-owned Certbot private keys are readable without running the
+whole backup script as root.
 
 ### Backup Output
 
@@ -43,6 +52,8 @@ BACKUP_DIR/umbra-config-<YYYYMMDD-HHMMSS>.tar.gz        permissions: 600
 BACKUP_DIR/marzban-db-<YYYYMMDD-HHMMSS>.sqlite3         permissions: 600
 BACKUP_DIR/vaultwarden-data-<YYYYMMDD-HHMMSS>.tar.gz    permissions: 600
 BACKUP_DIR/root-crontab-<YYYYMMDD-HHMMSS>.txt           permissions: 600
+BACKUP_DIR/minimal-state-<YYYYMMDD-HHMMSS>.tar.gz       permissions: 600
+BACKUP_DIR/minimal-state-<YYYYMMDD-HHMMSS>.tar.gz.sha256 permissions: 600
 BACKUP_DIR/                                               permissions: 700
 ```
 
@@ -51,7 +62,8 @@ BACKUP_DIR/                                               permissions: 700
 ```bash
 # Keep last 30 days, delete older
 find BACKUP_DIR/ -name "*.tar.gz" -mtime +30 -delete
-find BACKUP_DIR/ -name "*.sql.gz" -mtime +30 -delete
+find BACKUP_DIR/ -name "*.sqlite3" -mtime +30 -delete
+find BACKUP_DIR/ -name "*.sha256" -mtime +30 -delete
 ```
 
 Add to cron (runs after backup):
@@ -88,6 +100,29 @@ docker compose up -d
 # 6. Verify
 bash scripts/deploy.sh verify
 ```
+
+### Minimal Rebuild Restore
+
+Use this when Vaultwarden data and rendered configs can be reset, but existing
+certificates, passwords/tokens, and Marzban subscription users must survive.
+
+```bash
+sudo tar -xzf minimal-state-<timestamp>.tar.gz -C /srv/vxture
+
+cd /srv/vxture/repo/umbra
+source .env
+
+bash scripts/deploy.sh dirs
+bash scripts/deploy.sh check
+bash scripts/ops.sh certs --status
+bash scripts/deploy.sh config
+bash scripts/deploy.sh up
+bash scripts/deploy.sh verify
+```
+
+If `.env` is changed after restore, run `certs --status` first. Run
+`certs --upgrade` only when a configured domain is missing a trusted
+certificate.
 
 ---
 

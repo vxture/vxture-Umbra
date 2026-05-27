@@ -250,7 +250,9 @@ bash scripts/deploy.sh post
 
 ```bash
 bash scripts/ops.sh backup
-# Archives saved to BACKUP_DIR, 30-day retention
+# Archives saved to BACKUP_DIR, 30-day retention.
+# minimal-state-<timestamp>.tar.gz is the rebuild-critical archive:
+# .env, certificates, Marzban DB, REALITY key, and subscription URL records.
 ```
 
 ### Re-render config only

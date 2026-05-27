@@ -141,6 +141,26 @@ CHECKS: list[tuple[str, Path, list[str]]] = [
         ],
     ),
     (
+        "backup creates minimal recovery archive",
+        Path("scripts/ops/backup.sh"),
+        [
+            'MINIMAL_ARCHIVE="$BACKUP_DIR/minimal-state-${TIMESTAMP}.tar.gz"',
+            "repo/umbra/.env",
+            "data/umbra/letsencrypt",
+            "data/umbra/marzban/db.sqlite3",
+            "data/umbra/private/reality.json",
+            "subscription-urls-*.txt",
+            'sha256sum "$MINIMAL_ARCHIVE"',
+        ],
+    ),
+    (
+        "environment check requires root dir for backup restore paths",
+        Path("scripts/deploy/00-check-env.sh"),
+        [
+            "ROOT_DIR REPO_DIR DATA_DIR BACKUP_DIR",
+        ],
+    ),
+    (
         "deploy all rejects root",
         Path("scripts/deploy/all.sh"),
         [

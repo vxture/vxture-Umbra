@@ -56,7 +56,7 @@ Scripts are organized by lifecycle boundary.
 | `bash scripts/ops.sh logs [service]` | Tail logs |
 | `bash scripts/ops.sh restart [service]` | Restart services |
 | `bash scripts/ops.sh reload` | Reload nginx |
-| `bash scripts/ops.sh backup` | Create backup archives |
+| `bash scripts/ops.sh backup` | Create operational archives plus minimal recovery state |
 | `bash scripts/ops.sh certs --status` | Show certificate expiry |
 | `bash scripts/ops.sh certs --renew` | Run certificate renewal check; reload services only when certbot renews something |
 | `bash scripts/ops.sh certs --upgrade` | Stage new trusted certs, then activate only after all domains issue successfully |
