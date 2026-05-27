@@ -263,6 +263,15 @@ CHECKS: list[tuple[str, Path, list[str]]] = [
             "Subscription name normalized",
         ],
     ),
+    (
+        "cloudflare routes through proxy or final match",
+        Path("configs/marzban/clash-subscription.j2"),
+        [
+            "# 4. Cloudflare account, dashboard, challenge, and edge services proxy",
+            "DOMAIN-SUFFIX,cloudflare.com,PROXY",
+            "DOMAIN-SUFFIX,cloudflareinsights.com,PROXY",
+        ],
+    ),
 ]
 
 
@@ -306,6 +315,86 @@ FORBIDDEN: list[tuple[str, Path, str]] = [
         "subproxy must not quote content-disposition filename",
         Path("services/subproxy/subproxy.py"),
         'filename="{safe_filename(title)}"',
+    ),
+    (
+        "cloudflare.com must not be must-direct",
+        Path("configs/marzban/must-direct-rules.txt"),
+        "DOMAIN-SUFFIX,cloudflare.com",
+    ),
+    (
+        "cloudflare dns must not be must-direct",
+        Path("configs/marzban/must-direct-rules.txt"),
+        "DOMAIN-SUFFIX,cloudflare-dns.com",
+    ),
+    (
+        "cloudflare access must not be must-direct",
+        Path("configs/marzban/must-direct-rules.txt"),
+        "DOMAIN-SUFFIX,cloudflareaccess.com",
+    ),
+    (
+        "cloudflare apps must not be must-direct",
+        Path("configs/marzban/must-direct-rules.txt"),
+        "DOMAIN-SUFFIX,cloudflareapps.com",
+    ),
+    (
+        "cloudflare client must not be must-direct",
+        Path("configs/marzban/must-direct-rules.txt"),
+        "DOMAIN-SUFFIX,cloudflareclient.com",
+    ),
+    (
+        "cloudflare insights must not be must-direct",
+        Path("configs/marzban/must-direct-rules.txt"),
+        "DOMAIN-SUFFIX,cloudflareinsights.com",
+    ),
+    (
+        "cloudflare status must not be must-direct",
+        Path("configs/marzban/must-direct-rules.txt"),
+        "DOMAIN-SUFFIX,cloudflarestatus.com",
+    ),
+    (
+        "cloudflare stream must not be must-direct",
+        Path("configs/marzban/must-direct-rules.txt"),
+        "DOMAIN-SUFFIX,cloudflarestream.com",
+    ),
+    (
+        "cloudflare storage must not be must-direct",
+        Path("configs/marzban/must-direct-rules.txt"),
+        "DOMAIN-SUFFIX,cloudflarestorage.com",
+    ),
+    (
+        "cloudflare workers must not be must-direct",
+        Path("configs/marzban/must-direct-rules.txt"),
+        "DOMAIN-SUFFIX,cloudflareworkers.com",
+    ),
+    (
+        "workers.dev must not be must-direct",
+        Path("configs/marzban/must-direct-rules.txt"),
+        "DOMAIN-SUFFIX,workers.dev",
+    ),
+    (
+        "pages.dev must not be must-direct",
+        Path("configs/marzban/must-direct-rules.txt"),
+        "DOMAIN-SUFFIX,pages.dev",
+    ),
+    (
+        "trycloudflare must not be must-direct",
+        Path("configs/marzban/must-direct-rules.txt"),
+        "DOMAIN-SUFFIX,trycloudflare.com",
+    ),
+    (
+        "argotunnel must not be must-direct",
+        Path("configs/marzban/must-direct-rules.txt"),
+        "DOMAIN-SUFFIX,argotunnel.com",
+    ),
+    (
+        "warp.dev must not be must-direct",
+        Path("configs/marzban/must-direct-rules.txt"),
+        "DOMAIN-SUFFIX,warp.dev",
+    ),
+    (
+        "one.one.one.one must not be must-direct",
+        Path("configs/marzban/must-direct-rules.txt"),
+        "DOMAIN,one.one.one.one",
     ),
 ]
 

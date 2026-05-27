@@ -117,7 +117,7 @@ Phase 4 - Hardening
 5. **console.ruyin.ai is public at nginx and protected by Marzban login** - see `specs/security.md`.
 6. **All containers in one Docker network** - `umbra-net`, internal service discovery by container name.
 7. **Subscription B++ rules built into Marzban template** - no external URL dependencies.
-8. **Microsoft / Cloudflare / Vultr must NOT be forced to PROXY** in B++ rules.
+8. **Microsoft / Vultr / Umbra infrastructure must NOT be forced to PROXY** in B++ rules.
 9. **Node name in subscriptions: `vx-tokyo`** (from `NODE_NAME` env var).
 10. **Backup runs automatically** after every successful deployment and on daily cron.
 11. **`DATA_DIR/private/` permissions: `700` dir, `600` files.**
@@ -136,7 +136,7 @@ Phase 4 - Hardening
 [ ] Marzban subscription URL functional at sub.ruyin.ai
 [ ] Subscription imports correctly into Clash Verge
 [ ] Node name shows vx-tokyo
-[ ] B++ rules present and correct (openai.com PROXY; microsoft.com, cloudflare.com, and vultr.com DIRECT)
+[ ] B++ rules present and correct (openai.com and cloudflare.com PROXY; microsoft.com and vultr.com DIRECT)
 [ ] Vaultwarden login functional at pass.ruyin.ai
 [ ] Placeholder responding at vault.ruyin.ai
 [ ] VPN Portal loading at vpn.ruyin.ai

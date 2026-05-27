@@ -2,7 +2,7 @@
 """Validate generated Clash subscription routing rules.
 
 This is a source-of-truth guard for must-direct domains such as Microsoft,
-Cloudflare, and Umbra's own public services. The validator fails if any
+Vultr, and Umbra's own public services. The validator fails if any
 must-direct domain is missing, forced to PROXY, or placed after the first PROXY
 or MATCH rule.
 """

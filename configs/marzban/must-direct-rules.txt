@@ -52,25 +52,6 @@ DOMAIN-SUFFIX,teams.microsoft.com
 DOMAIN-SUFFIX,xbox.com
 DOMAIN-SUFFIX,xboxlive.com
 
-# Cloudflare / WARP / tunnel / Pages / Workers. These are common edge and DNS
-# dependencies and should not be forced through this proxy node.
-DOMAIN-SUFFIX,cloudflare.com
-DOMAIN-SUFFIX,cloudflare-dns.com
-DOMAIN-SUFFIX,cloudflareaccess.com
-DOMAIN-SUFFIX,cloudflareapps.com
-DOMAIN-SUFFIX,cloudflareclient.com
-DOMAIN-SUFFIX,cloudflareinsights.com
-DOMAIN-SUFFIX,cloudflarestatus.com
-DOMAIN-SUFFIX,cloudflarestream.com
-DOMAIN-SUFFIX,cloudflarestorage.com
-DOMAIN-SUFFIX,cloudflareworkers.com
-DOMAIN-SUFFIX,workers.dev
-DOMAIN-SUFFIX,pages.dev
-DOMAIN-SUFFIX,trycloudflare.com
-DOMAIN-SUFFIX,argotunnel.com
-DOMAIN-SUFFIX,warp.dev
-DOMAIN,one.one.one.one
-
 # Vultr provider control plane and object storage. VPS address ranges are also
 # protected later by IP-ASN,20473,DIRECT,no-resolve.
 DOMAIN-SUFFIX,vultr.com

@@ -157,17 +157,18 @@ Priority  Rule Type                        Action
 0         Node infra (APEX / EDGE domain)  DIRECT
 1         Loopback / LAN / fake-ip         DIRECT
 2         VPS hosting ASN/domain           DIRECT
-3         Microsoft / Cloudflare / Vultr   DIRECT
+3         Microsoft / Vultr                DIRECT
 4         DeepSeek (domestic AI)           DIRECT
-5         AI providers (per-vendor)        PROXY (forced)
-6         Model platforms / aggregators    PROXY (forced)
-7         Design tools (Figma/Notion)      PROXY (forced)
-8         Dev toolchain (GitHub/Docker/npm)PROXY (forced)
-9         Streaming (Netflix/YouTube/etc)  PROXY (forced)
-10        Social / comms                   PROXY (forced)
-11        Google ecosystem                 PROXY (forced)
-12        China IP (GEOIP,CN)              DIRECT
-13        Everything else                  PROXY (fallback)
+5         Cloudflare login / edge services PROXY (forced)
+6         AI providers (per-vendor)        PROXY (forced)
+7         Model platforms / aggregators    PROXY (forced)
+8         Design tools (Figma/Notion)      PROXY (forced)
+9         Dev toolchain (GitHub/Docker/npm)PROXY (forced)
+10        Streaming (Netflix/YouTube/etc)  PROXY (forced)
+11        Social / comms                   PROXY (forced)
+12        Google ecosystem                 PROXY (forced)
+13        China IP (GEOIP,CN)              DIRECT
+14        Everything else                  PROXY (fallback)
 ```
 
 ### Hard Constraint: Must-PROXY (AI providers, per-vendor)
@@ -184,6 +185,12 @@ Cohere:      cohere.com, cohere.ai
 
 Platforms:   openrouter.ai
              huggingface.co, hf.co, replicate.com, together.ai, fireworks.ai, poe.com
+
+Cloudflare:  cloudflare.com, cloudflare-dns.com, cloudflareaccess.com
+             cloudflareapps.com, cloudflareclient.com, cloudflareinsights.com
+             cloudflarestatus.com, cloudflarestream.com, cloudflarestorage.com
+             cloudflareworkers.com, workers.dev, pages.dev, trycloudflare.com
+             argotunnel.com, warp.dev, one.one.one.one
 ```
 
 ### Hard Constraint: Must-NOT-Force-PROXY
@@ -195,10 +202,6 @@ Microsoft:   microsoft.com, microsoftonline.com, windows.com, windowsupdate.com
              azure.com, azurewebsites.net, azureedge.net, trafficmanager.net
              visualstudio.com, vscode.dev, xbox.com, xboxlive.com
 
-Cloudflare:  cloudflare.com, cloudflare-dns.com, cloudflareclient.com
-             cloudflareinsights.com, cloudflareworkers.com, workers.dev
-             pages.dev, trycloudflare.com, argotunnel.com, warp.dev
-
 Vultr:       vultr.com, vultrobjects.com, 108.61.182.248/32, AS20473
 
 DeepSeek:    deepseek.com, deepseek.ai, api.deepseek.com
@@ -206,7 +209,7 @@ DeepSeek:    deepseek.com, deepseek.ai, api.deepseek.com
 
 **Reason:** Microsoft services are accessible from most networks without proxy; forcing them causes latency and auth degradation. DeepSeek is a Chinese domestic service; direct connection is faster and more stable.
 
-Cloudflare hosts DNS, tunnel, WARP, Workers, and Pages dependencies that should not loop through this proxy node. Vultr hosts the VPS control plane and provider storage domains; proxying them through the same node can create management loops.
+Cloudflare login, dashboard, challenge, and edge service domains are forced to `PROXY` because direct routing can leave the Cloudflare account login flow stalled. Vultr hosts the VPS control plane and provider storage domains; proxying them through the same node can create management loops.
 The exact VPN/VPS endpoint IP is pinned as `IP-CIDR,108.61.182.248/32,DIRECT,no-resolve` because ASN matching depends on the local Clash core and database.
 
 ### Full Rules Block
@@ -229,12 +232,6 @@ rules:
   - DOMAIN-SUFFIX,<PASS_DOMAIN>,DIRECT
   - DOMAIN-SUFFIX,<VAULT_DOMAIN>,DIRECT
   - DOMAIN-SUFFIX,microsoft.com,DIRECT
-  - DOMAIN-SUFFIX,cloudflare.com,DIRECT
-  - DOMAIN-SUFFIX,cloudflare-dns.com,DIRECT
-  - DOMAIN-SUFFIX,cloudflareclient.com,DIRECT
-  - DOMAIN-SUFFIX,workers.dev,DIRECT
-  - DOMAIN-SUFFIX,pages.dev,DIRECT
-  - DOMAIN-SUFFIX,argotunnel.com,DIRECT
   - DOMAIN-SUFFIX,vultr.com,DIRECT
   - DOMAIN-SUFFIX,vultrobjects.com,DIRECT
   - IP-CIDR,108.61.182.248/32,DIRECT,no-resolve
@@ -278,7 +275,25 @@ rules:
   - DOMAIN-SUFFIX,deepseek.ai,DIRECT
   - DOMAIN-SUFFIX,api.deepseek.com,DIRECT
 
-  # 5. AI model providers proxy
+  # 5. Cloudflare login and edge services proxy
+  - DOMAIN-SUFFIX,cloudflare.com,PROXY
+  - DOMAIN-SUFFIX,cloudflare-dns.com,PROXY
+  - DOMAIN-SUFFIX,cloudflareaccess.com,PROXY
+  - DOMAIN-SUFFIX,cloudflareapps.com,PROXY
+  - DOMAIN-SUFFIX,cloudflareclient.com,PROXY
+  - DOMAIN-SUFFIX,cloudflareinsights.com,PROXY
+  - DOMAIN-SUFFIX,cloudflarestatus.com,PROXY
+  - DOMAIN-SUFFIX,cloudflarestream.com,PROXY
+  - DOMAIN-SUFFIX,cloudflarestorage.com,PROXY
+  - DOMAIN-SUFFIX,cloudflareworkers.com,PROXY
+  - DOMAIN-SUFFIX,workers.dev,PROXY
+  - DOMAIN-SUFFIX,pages.dev,PROXY
+  - DOMAIN-SUFFIX,trycloudflare.com,PROXY
+  - DOMAIN-SUFFIX,argotunnel.com,PROXY
+  - DOMAIN-SUFFIX,warp.dev,PROXY
+  - DOMAIN,one.one.one.one,PROXY
+
+  # 6. AI model providers proxy
   # OpenAI / ChatGPT
   - DOMAIN-SUFFIX,openai.com,PROXY
   - DOMAIN-SUFFIX,chatgpt.com,PROXY
@@ -308,7 +323,7 @@ rules:
   - DOMAIN-SUFFIX,cohere.com,PROXY
   - DOMAIN-SUFFIX,cohere.ai,PROXY
 
-  # 6. Model aggregators and free model platforms proxy
+  # 7. Model aggregators and free model platforms proxy
   - DOMAIN-SUFFIX,openrouter.ai,PROXY
   - DOMAIN-SUFFIX,huggingface.co,PROXY
   - DOMAIN-SUFFIX,hf.co,PROXY
@@ -317,7 +332,7 @@ rules:
   - DOMAIN-SUFFIX,fireworks.ai,PROXY
   - DOMAIN-SUFFIX,poe.com,PROXY
 
-  # 7. Design tools and workspace apps proxy
+  # 8. Design tools and workspace apps proxy
   - DOMAIN-SUFFIX,figma.com,PROXY
   - DOMAIN-SUFFIX,figma.site,PROXY
   - DOMAIN-SUFFIX,figma.app,PROXY
@@ -326,7 +341,7 @@ rules:
   - DOMAIN-SUFFIX,notion.so,PROXY
   - DOMAIN-SUFFIX,notion.com,PROXY
 
-  # 8. Developer toolchain proxy
+  # 9. Developer toolchain proxy
   - DOMAIN-SUFFIX,github.com,PROXY
   - DOMAIN-SUFFIX,githubusercontent.com,PROXY
   - DOMAIN-SUFFIX,githubassets.com,PROXY
@@ -343,7 +358,7 @@ rules:
   - DOMAIN-SUFFIX,jsdelivr.net,PROXY
   - DOMAIN-SUFFIX,unpkg.com,PROXY
 
-  # 9. Streaming services proxy
+  # 10. Streaming services proxy
   - DOMAIN-SUFFIX,netflix.com,PROXY
   - DOMAIN-SUFFIX,netflix.net,PROXY
   - DOMAIN-SUFFIX,nflxext.com,PROXY
@@ -360,7 +375,7 @@ rules:
   - DOMAIN-SUFFIX,max.com,PROXY
   - DOMAIN-SUFFIX,twitch.tv,PROXY
 
-  # 10. Social and messaging services proxy
+  # 11. Social and messaging services proxy
   - DOMAIN-SUFFIX,x.com,PROXY
   - DOMAIN-SUFFIX,twitter.com,PROXY
   - DOMAIN-SUFFIX,twimg.com,PROXY
@@ -379,17 +394,17 @@ rules:
   - DOMAIN-SUFFIX,medium.com,PROXY
   - DOMAIN-SUFFIX,linkedin.com,PROXY
 
-  # 11. Google ecosystem proxy
+  # 12. Google ecosystem proxy
   - DOMAIN-SUFFIX,google.com,PROXY
   - DOMAIN-SUFFIX,googleapis.com,PROXY
   - DOMAIN-SUFFIX,googleusercontent.com,PROXY
   - DOMAIN-SUFFIX,gstatic.com,PROXY
   - DOMAIN-SUFFIX,g.co,PROXY
 
-  # 12. China IP direct
+  # 13. China IP direct
   - GEOIP,CN,DIRECT
 
-  # 13. Fallback proxy
+  # 14. Fallback proxy
   - MATCH,PROXY
 ```
 

@@ -43,7 +43,7 @@ proxy-groups:
       - DIRECT
 
 rules:
-  # 0. Must-direct services: Umbra, Microsoft, Cloudflare, Vultr
+  # 0. Must-direct services: Umbra, Microsoft, Vultr
   #    Source: configs/marzban/must-direct-rules.txt
 {{ CLASH_MUST_DIRECT_RULES }}
 
@@ -63,7 +63,25 @@ rules:
   - DOMAIN-SUFFIX,deepseek.ai,DIRECT
   - DOMAIN-SUFFIX,api.deepseek.com,DIRECT
 
-  # 4. AI model providers proxy
+  # 4. Cloudflare account, dashboard, challenge, and edge services proxy
+  - DOMAIN-SUFFIX,cloudflare.com,PROXY
+  - DOMAIN-SUFFIX,cloudflare-dns.com,PROXY
+  - DOMAIN-SUFFIX,cloudflareaccess.com,PROXY
+  - DOMAIN-SUFFIX,cloudflareapps.com,PROXY
+  - DOMAIN-SUFFIX,cloudflareclient.com,PROXY
+  - DOMAIN-SUFFIX,cloudflareinsights.com,PROXY
+  - DOMAIN-SUFFIX,cloudflarestatus.com,PROXY
+  - DOMAIN-SUFFIX,cloudflarestream.com,PROXY
+  - DOMAIN-SUFFIX,cloudflarestorage.com,PROXY
+  - DOMAIN-SUFFIX,cloudflareworkers.com,PROXY
+  - DOMAIN-SUFFIX,workers.dev,PROXY
+  - DOMAIN-SUFFIX,pages.dev,PROXY
+  - DOMAIN-SUFFIX,trycloudflare.com,PROXY
+  - DOMAIN-SUFFIX,argotunnel.com,PROXY
+  - DOMAIN-SUFFIX,warp.dev,PROXY
+  - DOMAIN,one.one.one.one,PROXY
+
+  # 5. AI model providers proxy
   - DOMAIN-SUFFIX,openai.com,PROXY
   - DOMAIN-SUFFIX,chatgpt.com,PROXY
   - DOMAIN-SUFFIX,oaistatic.com,PROXY
@@ -85,7 +103,7 @@ rules:
   - DOMAIN-SUFFIX,cohere.com,PROXY
   - DOMAIN-SUFFIX,cohere.ai,PROXY
 
-  # 5. Model aggregators and free model platforms proxy
+  # 6. Model aggregators and free model platforms proxy
   - DOMAIN-SUFFIX,openrouter.ai,PROXY
   - DOMAIN-SUFFIX,huggingface.co,PROXY
   - DOMAIN-SUFFIX,hf.co,PROXY
@@ -94,7 +112,7 @@ rules:
   - DOMAIN-SUFFIX,fireworks.ai,PROXY
   - DOMAIN-SUFFIX,poe.com,PROXY
 
-  # 6. Figma, design tools, and workspace apps proxy
+  # 7. Figma, design tools, and workspace apps proxy
   - DOMAIN-SUFFIX,figma.com,PROXY
   - DOMAIN-SUFFIX,figma.site,PROXY
   - DOMAIN-SUFFIX,figma.app,PROXY
@@ -103,7 +121,7 @@ rules:
   - DOMAIN-SUFFIX,notion.so,PROXY
   - DOMAIN-SUFFIX,notion.com,PROXY
 
-  # 7. Developer toolchain proxy: GitHub / Docker / npm
+  # 8. Developer toolchain proxy: GitHub / Docker / npm
   - DOMAIN-SUFFIX,github.com,PROXY
   - DOMAIN-SUFFIX,githubusercontent.com,PROXY
   - DOMAIN-SUFFIX,githubassets.com,PROXY
@@ -120,7 +138,7 @@ rules:
   - DOMAIN-SUFFIX,jsdelivr.net,PROXY
   - DOMAIN-SUFFIX,unpkg.com,PROXY
 
-  # 8. Streaming media proxy
+  # 9. Streaming media proxy
   - DOMAIN-SUFFIX,netflix.com,PROXY
   - DOMAIN-SUFFIX,netflix.net,PROXY
   - DOMAIN-SUFFIX,nflxext.com,PROXY
@@ -137,7 +155,7 @@ rules:
   - DOMAIN-SUFFIX,max.com,PROXY
   - DOMAIN-SUFFIX,twitch.tv,PROXY
 
-  # 9. Social and communication proxy
+  # 10. Social and communication proxy
   - DOMAIN-SUFFIX,x.com,PROXY
   - DOMAIN-SUFFIX,twitter.com,PROXY
   - DOMAIN-SUFFIX,twimg.com,PROXY
@@ -156,15 +174,15 @@ rules:
   - DOMAIN-SUFFIX,medium.com,PROXY
   - DOMAIN-SUFFIX,linkedin.com,PROXY
 
-  # 10. Google ecosystem proxy
+  # 11. Google ecosystem proxy
   - DOMAIN-SUFFIX,google.com,PROXY
   - DOMAIN-SUFFIX,googleapis.com,PROXY
   - DOMAIN-SUFFIX,googleusercontent.com,PROXY
   - DOMAIN-SUFFIX,gstatic.com,PROXY
   - DOMAIN-SUFFIX,g.co,PROXY
 
-  # 11. China IP direct
+  # 12. China IP direct
   - GEOIP,CN,DIRECT
 
-  # 12. Fallback proxy
+  # 13. Fallback proxy
   - MATCH,PROXY
