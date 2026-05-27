@@ -408,7 +408,7 @@ CHECKS: list[tuple[str, Path, list[str]]] = [
             "MARZBAN_ADMIN_PASSWORD",
             "UPDATE accounts SET subscription_url",
             "data-copy=\"subscription-url\"",
-            "Copy subscription",
+            "Copy subscription URL",
         ],
     ),
     (
@@ -516,6 +516,11 @@ FORBIDDEN: list[tuple[str, Path, str]] = [
         "subproxy must not quote content-disposition filename",
         Path("services/subproxy/subproxy.py"),
         'filename="{safe_filename(title)}"',
+    ),
+    (
+        "account portal dashboard must not open subscription URL",
+        Path("services/account/account.py"),
+        "Open subscription",
     ),
     (
         "cloudflare.com must not be must-direct",

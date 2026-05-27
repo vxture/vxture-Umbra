@@ -744,8 +744,7 @@ class AccountHandler(BaseHTTPRequestHandler):
     <h2>Subscription URL</h2>
     <p><code id="subscription-url">{html.escape(sub_url)}</code></p>
     <div class="row">
-      <a class="button" href="{html.escape(sub_url)}">Open subscription</a>
-      <button class="secondary" type="button" data-copy="subscription-url">Copy subscription</button>
+      <button type="button" data-copy="subscription-url">Copy subscription URL</button>
       <form method="post" action="/logout"><button class="secondary" type="submit">Sign out</button></form>
     </div>
     <p class="muted">Copy this URL into Clash Verge, V2RayN, Sing-box, or any compatible client.</p>
