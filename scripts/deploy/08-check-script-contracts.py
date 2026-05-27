@@ -102,6 +102,15 @@ CHECKS: list[tuple[str, Path, list[str]]] = [
         ],
     ),
     (
+        "renewal checks active cert names only",
+        Path("scripts/ops/certs.sh"),
+        [
+            'for domain in "${DOMAINS[@]}"; do',
+            '--cert-name "$domain"',
+            "Running certbot renew for active domains",
+        ],
+    ),
+    (
         "certificate upgrade uses staged activation and rollback",
         Path("scripts/ops/certs.sh"),
         [

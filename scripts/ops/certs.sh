@@ -413,20 +413,32 @@ rm -f "$RENEW_MARKER"
 log_step "Cleaning invalid renewal state..."
 umbra_clean_empty_renewal_configs "$CERT_DIR"
 
-log_step "Running certbot renew..."
-docker run --rm \
-  -v "$CERT_DIR:/etc/letsencrypt" \
-  -v "$DATA_DIR/certbot/config:/var/lib/letsencrypt" \
-  -v "$WEBROOT:/var/www/certbot" \
-  -v "$RENEW_MARKER_DIR:/hooks" \
-  certbot/certbot renew \
-    --webroot \
-    --webroot-path /var/www/certbot \
-    --non-interactive \
-    --quiet \
-    --deploy-hook "sh -c 'date -u +%Y-%m-%dT%H:%M:%SZ > /hooks/renewed'"
+log_step "Running certbot renew for active domains..."
+RENEW_FAILED=0
+for domain in "${DOMAINS[@]}"; do
+  log_info "Checking renewal for: $domain"
+  if ! docker run --rm \
+    -v "$CERT_DIR:/etc/letsencrypt" \
+    -v "$DATA_DIR/certbot/config:/var/lib/letsencrypt" \
+    -v "$WEBROOT:/var/www/certbot" \
+    -v "$RENEW_MARKER_DIR:/hooks" \
+    certbot/certbot renew \
+      --cert-name "$domain" \
+      --webroot \
+      --webroot-path /var/www/certbot \
+      --non-interactive \
+      --quiet \
+      --deploy-hook "sh -c 'date -u +%Y-%m-%dT%H:%M:%SZ > /hooks/renewed'"; then
+    log_warn "Certbot renewal check failed for: $domain"
+    (( ++RENEW_FAILED ))
+  fi
+done
 
 if [[ ! -f "$RENEW_MARKER" ]]; then
+  if (( RENEW_FAILED > 0 )); then
+    log_error "$RENEW_FAILED certificate renewal check(s) failed."
+    exit 1
+  fi
   log_ok "No certificates renewed; services left untouched."
   exit 0
 fi
@@ -452,6 +464,11 @@ if docker compose -f "$REPO_DIR/docker-compose.yml" restart umbra-marzban 2>/dev
   log_ok "Marzban restarted"
 else
   log_warn "Marzban restart failed; container may not be running"
+fi
+
+if (( RENEW_FAILED > 0 )); then
+  log_error "$RENEW_FAILED certificate renewal check(s) failed."
+  exit 1
 fi
 
 log_ok "Certificate renewal check complete."

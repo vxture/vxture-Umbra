@@ -108,10 +108,12 @@ bash scripts/ops.sh certs --renew
 What it does:
 
 ```bash
-certbot renew --quiet --webroot --webroot-path DATA_DIR/certbot
+certbot renew --cert-name <active-domain> --quiet --webroot --webroot-path DATA_DIR/certbot
 ```
 
-If certbot does not renew any certificate, services are left untouched. If a renewal happens, the script syncs the edge cert into `DATA_DIR/marzban/tls`, reloads nginx after a config test, and restarts Marzban so it reopens the TLS files.
+The script loops over the active domains from `.env` only. Retired or leftover Certbot lineages under `DATA_DIR/letsencrypt/renewal/` are not renewed by cron.
+
+If certbot does not renew any active certificate, services are left untouched. If a renewal happens, the script syncs the edge cert into `DATA_DIR/marzban/tls`, reloads nginx after a config test, and restarts Marzban so it reopens the TLS files.
 
 Before running `certbot renew`, the script removes only invalid zero-byte files under `DATA_DIR/letsencrypt/renewal/`. This cleanup does not issue certificates and does not remove certificate material.
 
