@@ -228,6 +228,9 @@ CHECKS: list[tuple[str, Path, list[str]]] = [
         Path("scripts/deploy/06-verify.sh"),
         [
             "umbra-account",
+            "check_http_body_contains",
+            "$EDGE_DOMAIN account home",
+            "Ruyin Account",
             "$EDGE_DOMAIN account login",
             "$EDGE_DOMAIN account registration",
             "$CONSOLE_DOMAIN invite console",
@@ -409,6 +412,16 @@ CHECKS: list[tuple[str, Path, list[str]]] = [
             "UPDATE accounts SET subscription_url",
             "data-copy=\"subscription-url\"",
             "Copy subscription URL",
+        ],
+    ),
+    (
+        "account portal root defaults to login",
+        Path("services/account/account.py"),
+        [
+            'elif path == "/":',
+            "self.login_page()",
+            'href="/register"',
+            "Register / Activate",
         ],
     ),
     (

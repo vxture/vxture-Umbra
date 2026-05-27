@@ -449,7 +449,7 @@ class AccountHandler(BaseHTTPRequestHandler):
         if path == "/health":
             self.text(200, "ok\n")
         elif path == "/":
-            self.register_page()
+            self.login_page()
         elif path == "/login":
             self.login_page()
         elif path == "/register":
@@ -568,7 +568,9 @@ class AccountHandler(BaseHTTPRequestHandler):
     <label>Password<input name="password" type="password" autocomplete="current-password" required></label>
     <button type="submit">Sign in</button>
   </form>
-  <p class="muted">Have an invite? <a href="/register">Register your account</a>.</p>
+  <div class="row">
+    <a class="button secondary" href="/register">Register / Activate</a>
+  </div>
 </section>"""
         self.html(200, page("Account Login", body, narrow=True))
 

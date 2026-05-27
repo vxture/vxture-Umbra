@@ -53,6 +53,24 @@ check_http_exact() {
   fi
 }
 
+check_http_body_contains() {
+  local desc="$1"
+  local url="$2"
+  local needle="$3"
+  local code
+  local body_file
+  body_file=$(mktemp)
+  code=$(curl -sk --max-time 10 -o "$body_file" -w "%{http_code}" "$url" 2>/dev/null || echo "000")
+  if [[ "$code" == "200" ]] && grep -Fq "$needle" "$body_file"; then
+    log_ok "$desc ($code)"
+    (( ++PASS ))
+  else
+    log_fail "$desc (got $code, expected page containing '$needle')"
+    (( ++FAIL ))
+  fi
+  rm -f "$body_file"
+}
+
 curl_saved_subscription() {
   local url="$1"
   local headers_file="$2"
@@ -111,6 +129,7 @@ log_step "HTTPS endpoints..."
 check_http "$APEX_DOMAIN"        "https://$APEX_DOMAIN"
 check_http "$WWW_DOMAIN"         "https://$WWW_DOMAIN"
 check_http "$EDGE_DOMAIN"        "https://$EDGE_DOMAIN"
+check_http_body_contains "$EDGE_DOMAIN account home" "https://$EDGE_DOMAIN/" "Ruyin Account"
 check_http "$EDGE_DOMAIN account login" "https://$EDGE_DOMAIN/login"
 check_http "$EDGE_DOMAIN account registration" "https://$EDGE_DOMAIN/register"
 check_http "$PASS_DOMAIN"        "https://$PASS_DOMAIN"
