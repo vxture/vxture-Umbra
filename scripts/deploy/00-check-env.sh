@@ -12,19 +12,44 @@ log_banner "Umbra - Environment Check"
 ERRORS=0
 fail() { log_fail "$1"; (( ++ERRORS )); }
 
+require_bool() {
+  local name="$1"
+  local value="${!name:-}"
+  if [[ "$value" =~ ^(true|false)$ ]]; then
+    log_ok "$name is boolean"
+  else
+    fail "$name must be true or false"
+  fi
+}
+
+require_int_range() {
+  local name="$1"
+  local min="$2"
+  local max="$3"
+  local value="${!name:-}"
+  if [[ "$value" =~ ^[0-9]+$ ]] && (( 10#$value >= min && 10#$value <= max )); then
+    log_ok "$name is in range $min-$max"
+  else
+    fail "$name must be an integer in range $min-$max"
+  fi
+}
+
 # -- Required variables --------------------------------------------------------
 log_step "Checking required environment variables..."
 
 REQUIRED_VARS=(
   PROJECT_NAME NODE_NAME
-  REPO_DIR DATA_DIR BACKUP_DIR
+  ROOT_DIR REPO_DIR DATA_DIR BACKUP_DIR
   APEX_DOMAIN WWW_DOMAIN EDGE_DOMAIN SUB_DOMAIN
   CONSOLE_DOMAIN PASS_DOMAIN VAULT_DOMAIN
-  REALITY_SNI REALITY_DEST XRAY_INTERNAL_PORT
+  REALITY_SNI REALITY_DEST XRAY_INTERNAL_PORT REALITY_SHORT_ID_LENGTH
   MARZBAN_ADMIN_USER MARZBAN_ADMIN_PASSWORD
-  SUBSCRIPTION_URL_PREFIX
+  MARZBAN_SSL_CA_TYPE SUBSCRIPTION_URL_PREFIX
+  SUB_PROFILE_PREFIX SUB_PROFILE_TITLE
   VAULTWARDEN_ADMIN_TOKEN
-  CERTBOT_EMAIL
+  CERTBOT_EMAIL CERTBOT_STAGING CERTBOT_SKIP
+  USER_COUNT USER_PREFIX
+  NGINX_CONTAINER
 )
 
 for var in "${REQUIRED_VARS[@]}"; do
@@ -35,6 +60,53 @@ for var in "${REQUIRED_VARS[@]}"; do
     log_ok "$var is set"
   fi
 done
+
+# -- Value validation ----------------------------------------------------------
+log_step "Checking environment value formats..."
+
+for domain_var in APEX_DOMAIN WWW_DOMAIN EDGE_DOMAIN SUB_DOMAIN CONSOLE_DOMAIN PASS_DOMAIN VAULT_DOMAIN REALITY_SNI; do
+  if umbra_validate_cert_domain "${!domain_var:-}"; then
+    log_ok "$domain_var is a valid domain"
+  else
+    fail "$domain_var is not a valid domain"
+  fi
+done
+
+require_int_range XRAY_INTERNAL_PORT 1 65535
+require_int_range USER_COUNT 1 9999
+
+if [[ "${REALITY_SHORT_ID_LENGTH:-}" =~ ^[0-9]+$ ]] && (( 10#$REALITY_SHORT_ID_LENGTH > 0 && 10#$REALITY_SHORT_ID_LENGTH % 2 == 0 )); then
+  log_ok "REALITY_SHORT_ID_LENGTH is a positive even integer"
+else
+  fail "REALITY_SHORT_ID_LENGTH must be a positive even integer"
+fi
+
+if [[ "${MARZBAN_SSL_CA_TYPE:-}" =~ ^(public|private)$ ]]; then
+  log_ok "MARZBAN_SSL_CA_TYPE is valid"
+else
+  fail "MARZBAN_SSL_CA_TYPE must be public or private"
+fi
+
+require_bool CERTBOT_STAGING
+require_bool CERTBOT_SKIP
+
+if [[ "${SUBSCRIPTION_URL_PREFIX:-}" == "https://${SUB_DOMAIN}" ]]; then
+  log_ok "SUBSCRIPTION_URL_PREFIX matches SUB_DOMAIN"
+else
+  fail "SUBSCRIPTION_URL_PREFIX must be https://${SUB_DOMAIN}"
+fi
+
+if [[ "${SUB_PROFILE_PREFIX:-}" =~ ^[A-Za-z0-9._-]+$ ]]; then
+  log_ok "SUB_PROFILE_PREFIX is client-safe"
+else
+  fail "SUB_PROFILE_PREFIX must contain only letters, numbers, dots, underscores, or hyphens"
+fi
+
+if [[ "${REALITY_DEST:-}" =~ ^([^[:space:]:]+):([0-9]+)$ ]] && (( 10#${BASH_REMATCH[2]} >= 1 && 10#${BASH_REMATCH[2]} <= 65535 )); then
+  log_ok "REALITY_DEST has host:port format"
+else
+  fail "REALITY_DEST must be host:port with port in range 1-65535"
+fi
 
 # -- Docker --------------------------------------------------------------------
 log_step "Checking Docker..."

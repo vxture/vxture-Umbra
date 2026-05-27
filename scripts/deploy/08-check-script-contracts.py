@@ -78,6 +78,19 @@ CHECKS: list[tuple[str, Path, list[str]]] = [
         ],
     ),
     (
+        "deploy check validates environment formats",
+        Path("scripts/deploy/00-check-env.sh"),
+        [
+            "Checking environment value formats",
+            "REALITY_SHORT_ID_LENGTH must be a positive even integer",
+            "MARZBAN_SSL_CA_TYPE must be public or private",
+            "SUBSCRIPTION_URL_PREFIX must be https://${SUB_DOMAIN}",
+            "require_bool CERTBOT_SKIP",
+            "must be true or false",
+            "REALITY_DEST must be host:port with port in range 1-65535",
+        ],
+    ),
+    (
         "deploy config prints nginx -t output",
         Path("scripts/deploy.sh"),
         [
