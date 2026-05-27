@@ -30,6 +30,11 @@ docker compose pull --quiet
 log_step "Starting services..."
 docker compose up -d
 
+# Python services mount source files from the repo. Compose does not recreate
+# them when only the mounted Python file changes, so restart them explicitly.
+log_step "Restarting code-mounted Python services..."
+docker compose restart umbra-subproxy umbra-account
+
 log_step "Waiting for services to initialize (15s)..."
 sleep 15
 

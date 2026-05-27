@@ -43,7 +43,7 @@ Scripts are organized by lifecycle boundary.
 | `bash scripts/deploy.sh certs` | Issue initial Let's Encrypt certificates |
 | `bash scripts/deploy.sh config` | Render configs and reload nginx if running |
 | `python3 scripts/deploy/07-validate-clash-rules.py --config <default.yml>` | Validate generated Clash must-direct rules |
-| `bash scripts/deploy.sh up` | Start containers |
+| `bash scripts/deploy.sh up` | Start containers and restart repo-mounted Python services |
 | `bash scripts/deploy.sh verify` | Verify runtime behavior |
 | `bash scripts/deploy.sh post` | Configure Marzban hosts, users, and subscription URLs |
 | `python3 scripts/deploy/08-check-script-contracts.py` | Static guardrails for high-risk script contracts |

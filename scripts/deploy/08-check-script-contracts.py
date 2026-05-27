@@ -344,9 +344,12 @@ CHECKS: list[tuple[str, Path, list[str]]] = [
         ],
     ),
     (
-        "deploy up checks account portal container",
+        "deploy up restarts code-mounted Python services",
         Path("scripts/deploy/05-up.sh"),
         [
+            "Restarting code-mounted Python services",
+            "docker compose restart umbra-subproxy umbra-account",
+            "umbra-subproxy",
             "umbra-account",
         ],
     ),
