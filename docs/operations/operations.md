@@ -125,10 +125,6 @@ The status command reads certificates inside Docker because certbot-owned files 
 
 It reports non-trusted/self-signed issuers as warnings and also warns if zero-byte renewal configs exist.
 
-`STANDBY_CERT_DOMAINS` are included in status, issuance, upgrade, and renewal
-state. They are certificate-only hostnames: no nginx virtual host is rendered
-until the domain is promoted to a real service.
-
 ### Renewal State Cleanup
 
 ```bash
@@ -163,9 +159,7 @@ Upgrade is staged:
 8. Only after every domain succeeds does the script move the old directory to `DATA_DIR/letsencrypt.backup.<timestamp>` and activate the staged directory.
 9. If TLS sync or service restart fails after activation, the script attempts to restore the backup and saves the failed new directory as `DATA_DIR/letsencrypt.failed.<timestamp>`.
 
-The upgrade domain set is active public domains plus `STANDBY_CERT_DOMAINS`.
-For the current plan, `subscribe.ruyin.ai` is maintained as a standby cert while
-`sub.ruyin.ai` remains the native subscription endpoint.
+The upgrade domain set is the active public domain list from `.env`.
 
 ### Wildcard Cert (Future Option)
 

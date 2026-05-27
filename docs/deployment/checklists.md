@@ -40,7 +40,6 @@ Umbra deployment. They may only be edited when explicitly requested, and only th
 | Certificates | `DATA_DIR/letsencrypt/` | Yes | Production cert state |
 | Staged certificates | `DATA_DIR/letsencrypt.staged` | Yes until resolved | Retry state after partial issuance |
 | Certificate backups | `DATA_DIR/letsencrypt.backup.*` | Yes | Rollback state |
-| Standby cert domains | `.env: STANDBY_CERT_DOMAINS` | Yes | Issued/renewed certs without active nginx vhosts |
 | Backups | `BACKUP_DIR` | Yes unless full reset | Runtime archives |
 | Containers | Docker Compose project | Recreated/restarted | No durable state should live only in containers |
 | Cron jobs | deploy script installs | Yes | Renewal and backup cron |
@@ -163,7 +162,6 @@ Safety checklist:
 [ ] Backup finishes before deploy
 [ ] No command removes DATA_DIR or BACKUP_DIR
 [ ] Cert step reuses valid trusted LE certs
-[ ] Standby cert domains are included in cert checks but not nginx vhosts
 [ ] Config render does not require a missing cert path
 [ ] Nginx test succeeds before reload
 ```
@@ -365,7 +363,7 @@ Safety checklist:
 ```text
 [ ] `certs --upgrade` uses DATA_DIR/letsencrypt.staged
 [ ] Existing production certs remain untouched until every domain succeeds
-[ ] Active domains and `STANDBY_CERT_DOMAINS` are both issued/verified before activation
+[ ] Active domains are issued/verified before activation
 [ ] Existing trusted LE certs are reused if not near expiry
 [ ] Missing/non-trusted domains are issued only in staging
 [ ] Partial staged successes are kept for retry

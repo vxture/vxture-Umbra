@@ -48,7 +48,6 @@ Purpose:    Production overseas edge entry node
 | `www.ruyin.ai` | Nginx -> static content | Independent content from apex |
 | `vpn.ruyin.ai` | Nginx -> umbra-portal | VPN user entry, onboarding, client DL |
 | `sub.ruyin.ai` | Nginx -> umbra-subproxy -> umbra-marzban | Marzban-native subscription endpoint with normalized metadata |
-| `subscribe.ruyin.ai` | standby cert | Future user-facing subscription portal; keep in `STANDBY_CERT_DOMAINS`, do not use as `SUB_DOMAIN` |
 | `console.ruyin.ai` | Nginx -> umbra-marzban (Marzban login) | Marzban console |
 | `pass.ruyin.ai` | Nginx -> umbra-vaultwarden | Password manager |
 | `vault.ruyin.ai` | Nginx -> static placeholder | Reserved for future use |
@@ -130,7 +129,7 @@ Phase 4 - Hardening
 
 ```
 [ ] All containers running: nginx, marzban, subproxy, vaultwarden, portal
-[ ] HTTPS working on active public domains; standby cert domains have valid cert state
+[ ] HTTPS working on active public domains
 [ ] Xray REALITY connection functional (test with Clash Verge)
 [ ] Marzban console accessible at console.ruyin.ai and protected by Marzban login
 [ ] Marzban subscription URL functional at sub.ruyin.ai

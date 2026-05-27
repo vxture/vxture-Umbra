@@ -31,16 +31,6 @@ umbra_collect_active_cert_domains() {
     "$VAULT_DOMAIN"
 }
 
-umbra_collect_standby_cert_domains() {
-  local domain
-
-  # Optional whitespace-separated hostnames. Standby domains are issued and
-  # renewed, but no nginx virtual host is rendered for them.
-  for domain in ${STANDBY_CERT_DOMAINS:-}; do
-    [[ -n "$domain" ]] && printf '%s\n' "$domain"
-  done
-}
-
 umbra_collect_cert_domains() {
   local -A seen=()
   local domain
@@ -53,7 +43,6 @@ umbra_collect_cert_domains() {
     fi
   done < <(
     umbra_collect_active_cert_domains
-    umbra_collect_standby_cert_domains
   )
 }
 

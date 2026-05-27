@@ -12,12 +12,6 @@ Domain ownership is explicit. Do not repurpose a domain without updating nginx v
 | `PASS_DOMAIN` | `pass.ruyin.ai` | Vaultwarden web app |
 | `VAULT_DOMAIN` | `vault.ruyin.ai` | Reserved placeholder |
 
-Reserved public hostnames:
-
-| Hostname | Status | Responsibility |
-|---|---|---|
-| `subscribe.ruyin.ai` | Standby cert | Future user-facing subscription portal. It is maintained through `STANDBY_CERT_DOMAINS`, but no nginx vhost is rendered for it yet. It must not be configured as `SUB_DOMAIN` unless the native subscription endpoint is intentionally moved again. |
-
 Subscription URL format is always:
 
 ```text
@@ -25,10 +19,5 @@ https://sub.ruyin.ai/sub/<marzban-token>
 ```
 
 Do not expose `/sub/<token>/clash-meta` publicly. nginx intentionally returns `404` for that and every non-native subscription path.
-
-If `subscribe.ruyin.ai` becomes a user-facing portal, prefer one of these models:
-
-- Marzban-native subscription page/template reached from each user's own token URL.
-- A thin authenticated portal backed by Marzban API that shows only the logged-in user's subscription URL.
 
 Do not publish a static page listing every user's subscription URL.

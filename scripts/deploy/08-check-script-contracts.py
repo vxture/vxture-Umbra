@@ -170,33 +170,28 @@ CHECKS: list[tuple[str, Path, list[str]]] = [
         [
             "SUB_DOMAIN=sub.ruyin.ai",
             "SUBSCRIPTION_URL_PREFIX=https://sub.ruyin.ai",
-            "STANDBY_CERT_DOMAINS=subscribe.ruyin.ai",
         ],
     ),
     (
-        "certificate scripts include standby domains",
+        "certificate scripts use collected active domains",
         Path("scripts/deploy/03-issue-certs.sh"),
         [
             "umbra_collect_cert_domains",
         ],
     ),
     (
-        "cert helper collects active and standby domains",
+        "cert helper collects active domains",
         Path("scripts/lib/certs.sh"),
         [
             "umbra_collect_active_cert_domains",
-            "umbra_collect_standby_cert_domains",
-            "STANDBY_CERT_DOMAINS",
             "umbra_collect_cert_domains",
         ],
     ),
     (
-        "ops certs include standby domains",
+        "ops certs use collected domains",
         Path("scripts/ops/certs.sh"),
         [
             "umbra_collect_cert_domains",
-            "STANDBY_DOMAINS",
-            "Standby cert domains are maintained but not exposed by nginx",
         ],
     ),
     (
@@ -280,6 +275,21 @@ FORBIDDEN: list[tuple[str, Path, str]] = [
         "renewal must not hide nginx -t stderr",
         Path("scripts/ops/certs.sh"),
         'nginx -t >/dev/null 2>&1',
+    ),
+    (
+        "retired extra certificate env variable must not reappear",
+        Path("."),
+        "ST" + "ANDBY_CERT" + "_DOMAINS",
+    ),
+    (
+        "retired extra certificate helper must not reappear",
+        Path("."),
+        "umbra_collect_" + "st" + "andby_cert_domains",
+    ),
+    (
+        "retired extra certificate runtime array must not reappear",
+        Path("."),
+        "ST" + "ANDBY_" + "DOMAINS",
     ),
     (
         "native subscription must not use subscribe portal domain",

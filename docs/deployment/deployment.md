@@ -73,7 +73,6 @@ SUB_DOMAIN=sub.ruyin.ai
 CONSOLE_DOMAIN=console.ruyin.ai
 PASS_DOMAIN=pass.ruyin.ai
 VAULT_DOMAIN=vault.ruyin.ai
-STANDBY_CERT_DOMAINS=subscribe.ruyin.ai
 
 # -- Paths -----------------------------------------------
 ROOT_DIR=/srv/vxture
@@ -123,7 +122,7 @@ bash scripts/deploy.sh all
 00-check-env.sh        Validate environment, DNS, Docker
 01-init-dirs.sh        Create DATA_DIR structure with correct permissions
 02-generate-reality.sh Generate REALITY keypair -> private/reality.json
-03-issue-certs.sh      Issue Let's Encrypt certs for active + standby cert domains
+03-issue-certs.sh      Issue Let's Encrypt certs for active domains
 04-render-configs.py   Render all templates -> DATA_DIR
 05-up.sh               docker compose up -d
 06-verify.sh           Full verification suite
@@ -144,7 +143,7 @@ Checks:
   [ ] Docker is available
   [ ] docker compose v2 is available
   [ ] stone user is in docker group
-  [ ] Active domains and standby cert domains resolve to this server's public IP
+  [ ] Active domains resolve to this server's public IP
   [ ] Ports 80 and 443 are not in use
 ```
 

@@ -15,13 +15,9 @@ Production VPN edge node - SNI routing, VLESS+REALITY proxy, subscription delive
 | `ruyin.ai` / `www.ruyin.ai` | Brand landing page |
 | `vpn.ruyin.ai` | VPN user portal |
 | `sub.ruyin.ai` | Marzban subscription endpoint with `Ruyin-USERNAME` display names |
-| `subscribe.ruyin.ai` | Reserved user subscription portal |
 | `console.ruyin.ai` | Marzban console *(Marzban login)* |
 | `pass.ruyin.ai` | Vaultwarden password manager |
 | `vault.ruyin.ai` | Placeholder (future use) |
-
-`subscribe.ruyin.ai` is reserved and is not part of the active deployment
-domain set until the user portal is implemented.
 
 ---
 
@@ -31,10 +27,10 @@ domain set until the user portal is implemented.
 |-------------|-------|
 | Ubuntu 26.04 LTS | Vultr or similar; 1C1G / 25GB SSD |
 | SSH key access | Key-based login as root (Vultr adds this at provision time) |
-| DNS A records | Active domains plus standby cert domains -> server IP, propagated **before** running deploy |
+| DNS A records | Active domains -> server IP, propagated **before** running deploy |
 | Open ports | 80 (ACME) and 443 (HTTPS + REALITY) |
 
-> **DNS first.** Let's Encrypt cert issuance is the first blocking step. Point active and standby certificate records before starting.
+> **DNS first.** Let's Encrypt cert issuance is the first blocking step. Point active domain records before starting.
 
 ---
 
@@ -87,7 +83,6 @@ SUB_DOMAIN=sub.ruyin.ai              # subscription endpoint
 CONSOLE_DOMAIN=console.ruyin.ai
 PASS_DOMAIN=pass.ruyin.ai
 VAULT_DOMAIN=vault.ruyin.ai
-STANDBY_CERT_DOMAINS=subscribe.ruyin.ai  # cert only, no active nginx vhost
 
 # -- Marzban admin credentials --------------------------
 MARZBAN_ADMIN_USER=admin

@@ -12,21 +12,6 @@ https://sub.ruyin.ai/sub/<marzban-token>
 
 Do not rewrite public URLs to `/clash-meta`, `/v2ray`, username-based tokens, or custom converter paths.
 
-## User-Facing Portal
-
-`subscribe.ruyin.ai` is reserved for a future user-facing subscription portal.
-Do not use it as the native subscription endpoint while `SUB_DOMAIN=sub.ruyin.ai`.
-Keep it in `STANDBY_CERT_DOMAINS` so DNS and certificate state are maintained
-without exposing a public nginx vhost.
-
-Preferred portal options:
-
-1. Marzban-native subscription page/template, opened from the user's own token URL.
-2. A thin authenticated portal that calls Marzban API and displays only the
-   logged-in user's subscription URL.
-
-Do not generate a static public index of all user subscription URLs.
-
 ## Metadata Normalization
 
 `umbra-subproxy` is a thin metadata normalizer between nginx and Marzban. It

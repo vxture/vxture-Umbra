@@ -124,13 +124,6 @@ The public subscription domain is intentionally narrow:
 | `/sub/<token>/clash-meta` | `404` |
 | `/sub/<token>` | Marzban native subscription response |
 
-`subscribe.ruyin.ai` is reserved for a future user-facing portal. It should not
-list every user's token. If implemented, use either Marzban's native
-subscription page/template on per-user token links, or a thin authenticated
-portal backed by Marzban API that displays only the logged-in user's own
-subscription URL. Until then it stays in `STANDBY_CERT_DOMAINS`, which means
-certificates are issued and renewed but no nginx virtual host is rendered.
-
 ### Node Naming
 
 All users see node name `vx-tokyo` (from `NODE_NAME` env var). Marzban's native response uses the raw username as the download filename, so Umbra routes `/sub/<token>` through `umbra-subproxy` to normalize client-visible metadata to `Ruyin-USERNAME`. Do not use `user.username` in the Clash template because Marzban does not expose per-user objects to that renderer. Real server hostname and UUID are never visible in subscription output.
