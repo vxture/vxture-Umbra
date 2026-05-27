@@ -1,4 +1,4 @@
-# vpn.ruyin.ai - VPN Portal (user onboarding, client downloads)
+# vpn.ruyin.ai - User account portal
 server {
     listen 8443 ssl proxy_protocol;
     server_name {{ EDGE_DOMAIN }};
@@ -8,8 +8,17 @@ server {
     include /etc/nginx/snippets/ssl-params.conf;
     include /etc/nginx/snippets/security-headers.conf;
 
+    location = /guide {
+        return 301 /guide/;
+    }
+
+    location /guide/ {
+        proxy_pass http://umbra-portal:80/;
+        include /etc/nginx/snippets/proxy-headers.conf;
+    }
+
     location / {
-        proxy_pass http://umbra-portal:80;
+        proxy_pass http://umbra-account:8081;
         include /etc/nginx/snippets/proxy-headers.conf;
     }
 }

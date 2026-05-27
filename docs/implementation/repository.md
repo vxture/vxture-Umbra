@@ -25,7 +25,9 @@ Key implementation paths:
 | `configs/xray/config.json.template` | Marzban-managed Xray config rendered to `DATA_DIR/marzban/xray_config.json` |
 | `configs/marzban/clash-subscription.j2` | Marzban Clash template rendered to `DATA_DIR/marzban/templates/clash/default.yml` |
 | `landing/html/` | Source for `ruyin.ai` and `www.ruyin.ai` static pages, including `assets/` |
-| `portal/html/` | Source for the VPN portal container |
+| `portal/html/` | Source for the legacy static guide served under `vpn.ruyin.ai/guide/` |
+| `services/account/account.py` | Invite-bound account portal and invite console |
+| `services/subproxy/subproxy.py` | Subscription response metadata normalizer |
 | `scripts/server/` | Server lifecycle implementation |
 | `scripts/deploy/` | Deploy pipeline implementation |
 | `scripts/ops/` | Runtime operations implementation |

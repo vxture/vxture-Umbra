@@ -25,6 +25,7 @@ mk "$DATA_DIR/nginx/logs"
 mk "$DATA_DIR/marzban/templates/clash"
 mk "$DATA_DIR/marzban/templates/v2ray"
 mk "$DATA_DIR/marzban/logs"
+mk "$DATA_DIR/account"
 mk "$DATA_DIR/vaultwarden/data"
 mk "$DATA_DIR/portal/html"
 
@@ -43,6 +44,9 @@ log_step "Setting permissions on sensitive directories..."
 
 chmod 700 "$DATA_DIR/private"
 log_ok "chmod 700 $DATA_DIR/private"
+
+chmod 700 "$DATA_DIR/account"
+log_ok "chmod 700 $DATA_DIR/account"
 
 chmod 711 "$DATA_DIR/nginx/private"
 log_ok "chmod 711 $DATA_DIR/nginx/private"

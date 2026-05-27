@@ -1,0 +1,857 @@
+#!/usr/bin/env python3
+"""Umbra account portal.
+
+The portal is intentionally small and self-contained:
+- Admins authenticate against Marzban and generate one-time invite codes.
+- Invite codes bind to existing Marzban users such as USER08.
+- End users register with an invite and then view only their own subscription.
+"""
+
+from __future__ import annotations
+
+import base64
+import datetime as dt
+import hashlib
+import hmac
+import html
+import json
+import os
+import re
+import secrets
+import sqlite3
+import ssl
+import time
+import urllib.error
+import urllib.parse
+import urllib.request
+from http import cookies
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from typing import Any
+
+
+LISTEN_HOST = os.environ.get("ACCOUNT_HOST", "0.0.0.0")
+LISTEN_PORT = int(os.environ.get("ACCOUNT_PORT", "8081"))
+DB_PATH = os.environ.get("ACCOUNT_DB_PATH", "/var/lib/umbra-account/account.db")
+SESSION_SECRET = os.environ.get("ACCOUNT_SESSION_SECRET", "")
+INVITE_SECRET = os.environ.get("ACCOUNT_INVITE_SECRET", "")
+INVITE_TTL_DAYS = int(os.environ.get("ACCOUNT_INVITE_TTL_DAYS", "30"))
+MARZBAN_BASE_URL = os.environ.get("MARZBAN_BASE_URL", "https://umbra-marzban:8000").rstrip("/")
+PROFILE_PREFIX = (os.environ.get("SUB_PROFILE_PREFIX", "Ruyin").strip() or "Ruyin")
+
+USER_RE = re.compile(r"^[A-Za-z][A-Za-z0-9_-]{1,63}$")
+INVITE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
+SESSION_COOKIE = "umbra_session"
+ADMIN_COOKIE = "umbra_admin"
+
+
+def require_secret(name: str, value: str) -> bytes:
+    if len(value) < 32:
+        raise SystemExit(f"{name} must be set to at least 32 characters")
+    return value.encode("utf-8")
+
+
+SESSION_KEY = require_secret("ACCOUNT_SESSION_SECRET", SESSION_SECRET)
+INVITE_KEY = require_secret("ACCOUNT_INVITE_SECRET", INVITE_SECRET)
+TLS_CONTEXT = ssl._create_unverified_context()
+
+
+def utcnow() -> dt.datetime:
+    return dt.datetime.now(dt.timezone.utc).replace(microsecond=0)
+
+
+def iso_now() -> str:
+    return utcnow().isoformat()
+
+
+def parse_iso(value: str | None) -> dt.datetime | None:
+    if not value:
+        return None
+    try:
+        return dt.datetime.fromisoformat(value.replace("Z", "+00:00"))
+    except ValueError:
+        return None
+
+
+def b64url(data: bytes) -> str:
+    return base64.urlsafe_b64encode(data).rstrip(b"=").decode("ascii")
+
+
+def unb64url(value: str) -> bytes:
+    padding = "=" * (-len(value) % 4)
+    return base64.urlsafe_b64decode((value + padding).encode("ascii"))
+
+
+def sign_payload(payload: dict[str, Any]) -> str:
+    body = b64url(json.dumps(payload, separators=(",", ":")).encode("utf-8"))
+    sig = hmac.new(SESSION_KEY, body.encode("ascii"), hashlib.sha256).digest()
+    return f"{body}.{b64url(sig)}"
+
+
+def verify_payload(value: str | None) -> dict[str, Any] | None:
+    if not value or "." not in value:
+        return None
+    body, sig = value.rsplit(".", 1)
+    expected = b64url(hmac.new(SESSION_KEY, body.encode("ascii"), hashlib.sha256).digest())
+    if not hmac.compare_digest(sig, expected):
+        return None
+    try:
+        payload = json.loads(unb64url(body).decode("utf-8"))
+    except Exception:
+        return None
+    exp = int(payload.get("exp", 0) or 0)
+    if exp and exp < int(time.time()):
+        return None
+    return payload
+
+
+def invite_hash(code: str) -> str:
+    normalized = code.strip().upper()
+    return hmac.new(INVITE_KEY, normalized.encode("utf-8"), hashlib.sha256).hexdigest()
+
+
+def session_hash(value: str) -> str:
+    return hmac.new(SESSION_KEY, value.encode("utf-8"), hashlib.sha256).hexdigest()
+
+
+def password_hash(password: str) -> tuple[str, str]:
+    salt = secrets.token_bytes(16)
+    digest = hashlib.pbkdf2_hmac("sha256", password.encode("utf-8"), salt, 240_000)
+    return b64url(salt), b64url(digest)
+
+
+def password_ok(password: str, salt_text: str, hash_text: str) -> bool:
+    try:
+        salt = unb64url(salt_text)
+        expected = unb64url(hash_text)
+    except Exception:
+        return False
+    digest = hashlib.pbkdf2_hmac("sha256", password.encode("utf-8"), salt, 240_000)
+    return hmac.compare_digest(digest, expected)
+
+
+def generate_invite_code() -> str:
+    groups = []
+    for _ in range(4):
+        groups.append("".join(secrets.choice(INVITE_ALPHABET) for _ in range(4)))
+    return "RY-" + "-".join(groups)
+
+
+def format_bytes(value: Any) -> str:
+    try:
+        size = float(value or 0)
+    except (TypeError, ValueError):
+        return "-"
+    units = ["B", "KB", "MB", "GB", "TB", "PB"]
+    for unit in units:
+        if size < 1024 or unit == units[-1]:
+            if unit == "B":
+                return f"{int(size)} {unit}"
+            return f"{size:.2f} {unit}"
+        size /= 1024
+    return "-"
+
+
+def format_epoch(value: Any) -> str:
+    try:
+        ts = int(value)
+    except (TypeError, ValueError):
+        return "Unlimited"
+    if ts <= 0:
+        return "Unlimited"
+    return dt.datetime.fromtimestamp(ts, dt.timezone.utc).strftime("%Y-%m-%d")
+
+
+def format_datetime(value: Any) -> str:
+    if not value:
+        return "-"
+    text = str(value)
+    parsed = parse_iso(text)
+    if parsed:
+        return parsed.astimezone(dt.timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
+    return text
+
+
+def db() -> sqlite3.Connection:
+    db_dir = os.path.dirname(DB_PATH)
+    if db_dir:
+        os.makedirs(db_dir, exist_ok=True)
+    conn = sqlite3.connect(DB_PATH, timeout=15)
+    conn.row_factory = sqlite3.Row
+    conn.execute("PRAGMA foreign_keys = ON")
+    return conn
+
+
+def init_db() -> None:
+    with db() as conn:
+        conn.executescript(
+            """
+            CREATE TABLE IF NOT EXISTS accounts (
+              id INTEGER PRIMARY KEY AUTOINCREMENT,
+              username TEXT NOT NULL UNIQUE,
+              password_salt TEXT NOT NULL,
+              password_hash TEXT NOT NULL,
+              subscription_url TEXT NOT NULL,
+              created_at TEXT NOT NULL,
+              last_login_at TEXT,
+              disabled INTEGER NOT NULL DEFAULT 0
+            );
+
+            CREATE TABLE IF NOT EXISTS invites (
+              id INTEGER PRIMARY KEY AUTOINCREMENT,
+              code_hash TEXT NOT NULL UNIQUE,
+              code_plain TEXT,
+              username TEXT NOT NULL,
+              subscription_url TEXT NOT NULL,
+              expires_at TEXT NOT NULL,
+              used_at TEXT,
+              used_by_account_id INTEGER,
+              disabled INTEGER NOT NULL DEFAULT 0,
+              created_at TEXT NOT NULL,
+              FOREIGN KEY(used_by_account_id) REFERENCES accounts(id)
+            );
+
+            CREATE TABLE IF NOT EXISTS admin_sessions (
+              id INTEGER PRIMARY KEY AUTOINCREMENT,
+              session_hash TEXT NOT NULL UNIQUE,
+              token TEXT NOT NULL,
+              created_at TEXT NOT NULL,
+              expires_at TEXT NOT NULL
+            );
+
+            CREATE UNIQUE INDEX IF NOT EXISTS idx_active_invite_username
+              ON invites(username)
+              WHERE used_at IS NULL AND disabled = 0;
+            """
+        )
+
+
+def request_json(url: str, token: str | None = None, data: dict[str, Any] | None = None, timeout: int = 10) -> dict[str, Any]:
+    headers = {"Accept": "application/json", "Accept-Encoding": "identity"}
+    body = None
+    method = "GET"
+    if token:
+        headers["Authorization"] = f"Bearer {token}"
+    if data is not None:
+        body = json.dumps(data).encode("utf-8")
+        headers["Content-Type"] = "application/json"
+        method = "POST"
+    req = urllib.request.Request(url, data=body, headers=headers, method=method)
+    with urllib.request.urlopen(req, timeout=timeout, context=TLS_CONTEXT) as res:
+        raw = res.read()
+        if not raw:
+            return {}
+        return json.loads(raw.decode("utf-8"))
+
+
+def marzban_login(username: str, password: str) -> str:
+    data = urllib.parse.urlencode({"username": username, "password": password}).encode("utf-8")
+    req = urllib.request.Request(f"{MARZBAN_BASE_URL}/api/admin/token", data=data, method="POST")
+    with urllib.request.urlopen(req, timeout=10, context=TLS_CONTEXT) as res:
+        payload = json.loads(res.read().decode("utf-8"))
+    token = payload.get("access_token")
+    if not isinstance(token, str) or not token:
+        raise ValueError("missing access token")
+    return token
+
+
+def marzban_user(token: str, username: str) -> dict[str, Any]:
+    safe = urllib.parse.quote(username, safe="")
+    return request_json(f"{MARZBAN_BASE_URL}/api/user/{safe}", token=token)
+
+
+def token_path_from_url(subscription_url: str) -> str:
+    parsed = urllib.parse.urlsplit(subscription_url)
+    if not parsed.path.startswith("/sub/"):
+        raise ValueError("subscription URL is not a /sub/<token> URL")
+    return parsed.path
+
+
+def subscription_info(subscription_url: str) -> dict[str, Any]:
+    path = token_path_from_url(subscription_url)
+    return request_json(f"{MARZBAN_BASE_URL}{path}/info", timeout=10)
+
+
+def get_cookie(header: str | None, name: str) -> str | None:
+    if not header:
+        return None
+    jar = cookies.SimpleCookie()
+    try:
+        jar.load(header)
+    except cookies.CookieError:
+        return None
+    morsel = jar.get(name)
+    return morsel.value if morsel else None
+
+
+def page(title: str, body: str, *, narrow: bool = False) -> bytes:
+    width = "480px" if narrow else "1040px"
+    html_text = f"""<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{html.escape(title)} - Ruyin</title>
+  <style>
+    :root {{
+      color-scheme: dark;
+      --bg: #07121d;
+      --panel: rgba(11, 26, 39, .84);
+      --line: rgba(142, 199, 255, .18);
+      --text: #edf6ff;
+      --muted: #95a8ba;
+      --accent: #68e1fd;
+      --accent2: #8ee6a8;
+      --danger: #ff7b7b;
+    }}
+    * {{ box-sizing: border-box; }}
+    body {{
+      margin: 0;
+      min-height: 100vh;
+      font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 20% 10%, rgba(104, 225, 253, .18), transparent 28%),
+        radial-gradient(circle at 90% 0%, rgba(142, 230, 168, .14), transparent 28%),
+        linear-gradient(135deg, #07121d, #0b1827 54%, #09151f);
+    }}
+    a {{ color: var(--accent); text-decoration: none; }}
+    .shell {{ width: min(calc(100% - 32px), {width}); margin: 0 auto; padding: 36px 0; }}
+    .top {{ display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 28px; }}
+    .brand {{ font-weight: 700; letter-spacing: .04em; }}
+    .muted {{ color: var(--muted); }}
+    .panel {{
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: 0 20px 60px rgba(0,0,0,.28);
+      padding: 24px;
+    }}
+    h1 {{ margin: 0 0 8px; font-size: clamp(26px, 4vw, 42px); letter-spacing: 0; }}
+    h2 {{ margin: 0 0 16px; font-size: 20px; }}
+    p {{ line-height: 1.65; }}
+    form {{ display: grid; gap: 14px; }}
+    label {{ display: grid; gap: 8px; color: var(--muted); font-size: 14px; }}
+    input {{
+      width: 100%;
+      padding: 12px 13px;
+      border-radius: 6px;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,.055);
+      color: var(--text);
+      outline: none;
+    }}
+    input:focus {{ border-color: rgba(104, 225, 253, .7); }}
+    button, .button {{
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 40px;
+      padding: 0 16px;
+      border-radius: 6px;
+      border: 1px solid rgba(104,225,253,.44);
+      background: rgba(104,225,253,.14);
+      color: var(--text);
+      cursor: pointer;
+      font-weight: 650;
+    }}
+    .button.secondary, button.secondary {{ border-color: var(--line); background: rgba(255,255,255,.06); }}
+    .row {{ display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }}
+    .grid {{ display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 12px; }}
+    .metric {{ border: 1px solid var(--line); border-radius: 8px; padding: 14px; background: rgba(255,255,255,.045); }}
+    .metric .value {{ font-size: 22px; font-weight: 750; margin-top: 4px; }}
+    .alert {{ border: 1px solid rgba(255,123,123,.34); color: #ffd2d2; background: rgba(255,123,123,.09); padding: 12px; border-radius: 6px; }}
+    .ok {{ border-color: rgba(142,230,168,.34); color: #d7ffe1; background: rgba(142,230,168,.09); }}
+    table {{ width: 100%; border-collapse: collapse; overflow: hidden; }}
+    th, td {{ padding: 11px 10px; border-bottom: 1px solid var(--line); text-align: left; font-size: 14px; }}
+    th {{ color: var(--muted); font-weight: 600; }}
+    code {{ color: #d7ffe1; word-break: break-all; }}
+    .split {{ display: grid; grid-template-columns: minmax(0, 1fr) minmax(280px, 360px); gap: 16px; }}
+    @media (max-width: 760px) {{ .split {{ grid-template-columns: 1fr; }} .top {{ align-items: flex-start; flex-direction: column; }} }}
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <div class="top">
+      <div>
+        <div class="brand">RUYIN</div>
+        <div class="muted">Subscription Portal</div>
+      </div>
+    </div>
+    {body}
+  </main>
+</body>
+</html>"""
+    return html_text.encode("utf-8")
+
+
+class AccountHandler(BaseHTTPRequestHandler):
+    server_version = "UmbraAccount/1.0"
+
+    def do_GET(self) -> None:
+        path = urllib.parse.urlsplit(self.path).path
+        if path == "/health":
+            self.text(200, "ok\n")
+        elif path in {"/", "/login"}:
+            self.login_page()
+        elif path == "/register":
+            self.register_page()
+        elif path == "/dashboard":
+            self.dashboard()
+        elif path in {"/invites", "/invites/"}:
+            self.admin_invites()
+        else:
+            self.not_found()
+
+    def do_POST(self) -> None:
+        path = urllib.parse.urlsplit(self.path).path
+        if path == "/login":
+            self.login_submit()
+        elif path == "/register":
+            self.register_submit()
+        elif path == "/logout":
+            self.logout()
+        elif path == "/invites/login":
+            self.admin_login()
+        elif path == "/invites/logout":
+            self.admin_logout()
+        elif path == "/invites/create":
+            self.admin_create_invite()
+        elif path == "/invites/revoke":
+            self.admin_revoke_invite()
+        else:
+            self.not_found()
+
+    def form(self) -> dict[str, str]:
+        length = int(self.headers.get("Content-Length", "0") or "0")
+        raw = self.rfile.read(length).decode("utf-8", errors="replace")
+        parsed = urllib.parse.parse_qs(raw, keep_blank_values=True)
+        return {key: values[-1].strip() for key, values in parsed.items()}
+
+    def user_session(self) -> dict[str, Any] | None:
+        payload = verify_payload(get_cookie(self.headers.get("Cookie"), SESSION_COOKIE))
+        if payload and payload.get("role") == "user":
+            return payload
+        return None
+
+    def admin_session(self) -> dict[str, Any] | None:
+        payload = verify_payload(get_cookie(self.headers.get("Cookie"), ADMIN_COOKIE))
+        if not payload or payload.get("role") != "admin":
+            return None
+        sid = str(payload.get("sid") or "")
+        if not sid:
+            return None
+        with db() as conn:
+            row = conn.execute(
+                "SELECT token, expires_at FROM admin_sessions WHERE session_hash = ?",
+                (session_hash(sid),),
+            ).fetchone()
+            if not row:
+                return None
+            expires = parse_iso(row["expires_at"])
+            if expires and expires < utcnow():
+                conn.execute("DELETE FROM admin_sessions WHERE session_hash = ?", (session_hash(sid),))
+                return None
+        return {"role": "admin", "sid": sid, "token": row["token"]}
+
+    def send_cookie(self, name: str, value: str, *, max_age: int, path: str = "/") -> None:
+        self.send_header(
+            "Set-Cookie",
+            f"{name}={value}; Max-Age={max_age}; Path={path}; HttpOnly; Secure; SameSite=Lax",
+        )
+
+    def clear_cookie(self, name: str, *, path: str = "/") -> None:
+        self.send_header(
+            "Set-Cookie",
+            f"{name}=; Max-Age=0; Path={path}; HttpOnly; Secure; SameSite=Lax",
+        )
+
+    def html(self, status: int, content: bytes, extra_headers: dict[str, str] | None = None) -> None:
+        self.send_response(status)
+        self.send_header("Content-Type", "text/html; charset=utf-8")
+        self.send_header("Content-Length", str(len(content)))
+        if extra_headers:
+            for key, value in extra_headers.items():
+                self.send_header(key, value)
+        self.end_headers()
+        self.wfile.write(content)
+
+    def text(self, status: int, content: str) -> None:
+        raw = content.encode("utf-8")
+        self.send_response(status)
+        self.send_header("Content-Type", "text/plain; charset=utf-8")
+        self.send_header("Content-Length", str(len(raw)))
+        self.end_headers()
+        self.wfile.write(raw)
+
+    def redirect(self, target: str, cookies_to_clear: list[tuple[str, str]] | None = None) -> None:
+        self.send_response(303)
+        self.send_header("Location", target)
+        if cookies_to_clear:
+            for name, path in cookies_to_clear:
+                self.clear_cookie(name, path=path)
+        self.end_headers()
+
+    def not_found(self) -> None:
+        self.text(404, "not found\n")
+
+    def login_page(self, error: str = "") -> None:
+        if self.user_session():
+            self.redirect("/dashboard")
+            return
+        alert = f'<div class="alert">{html.escape(error)}</div>' if error else ""
+        body = f"""
+<section class="panel">
+  <h1>Ruyin Account</h1>
+  <p class="muted">Sign in with your bound user code to view subscription status and usage.</p>
+  {alert}
+  <form method="post" action="/login">
+    <label>User code<input name="username" autocomplete="username" placeholder="USER08" required></label>
+    <label>Password<input name="password" type="password" autocomplete="current-password" required></label>
+    <button type="submit">Sign in</button>
+  </form>
+  <p class="muted">Have an invite? <a href="/register">Register your account</a>.</p>
+</section>"""
+        self.html(200, page("Account Login", body, narrow=True))
+
+    def register_page(self, error: str = "", ok: str = "") -> None:
+        alert = f'<div class="alert">{html.escape(error)}</div>' if error else ""
+        done = f'<div class="alert ok">{html.escape(ok)}</div>' if ok else ""
+        body = f"""
+<section class="panel">
+  <h1>Activate Invite</h1>
+  <p class="muted">Your invite is already bound to a prepared Ruyin user. You only set the login password.</p>
+  {alert}{done}
+  <form method="post" action="/register">
+    <label>Invite code<input name="invite" autocomplete="one-time-code" placeholder="RY-XXXX-XXXX-XXXX-XXXX" required></label>
+    <label>Password<input name="password" type="password" autocomplete="new-password" minlength="8" required></label>
+    <label>Confirm password<input name="password2" type="password" autocomplete="new-password" minlength="8" required></label>
+    <button type="submit">Activate account</button>
+  </form>
+  <p class="muted">Already activated? <a href="/login">Sign in</a>.</p>
+</section>"""
+        self.html(200, page("Activate Invite", body, narrow=True))
+
+    def login_submit(self) -> None:
+        data = self.form()
+        username = data.get("username", "")
+        password = data.get("password", "")
+        with db() as conn:
+            row = conn.execute("SELECT * FROM accounts WHERE username = ?", (username,)).fetchone()
+            if not row or row["disabled"] or not password_ok(password, row["password_salt"], row["password_hash"]):
+                self.login_page("Invalid user code or password.")
+                return
+            conn.execute("UPDATE accounts SET last_login_at = ? WHERE id = ?", (iso_now(), row["id"]))
+        payload = {"role": "user", "sub": username, "exp": int(time.time()) + 86400 * 14}
+        self.send_response(303)
+        self.send_header("Location", "/dashboard")
+        self.send_cookie(SESSION_COOKIE, sign_payload(payload), max_age=86400 * 14)
+        self.end_headers()
+
+    def register_submit(self) -> None:
+        data = self.form()
+        code = data.get("invite", "")
+        password = data.get("password", "")
+        password2 = data.get("password2", "")
+        if len(password) < 8:
+            self.register_page("Password must be at least 8 characters.")
+            return
+        if password != password2:
+            self.register_page("Passwords do not match.")
+            return
+
+        code_digest = invite_hash(code)
+        conn: sqlite3.Connection | None = None
+        try:
+            conn = db()
+            conn.execute("BEGIN IMMEDIATE")
+            invite = conn.execute("SELECT * FROM invites WHERE code_hash = ?", (code_digest,)).fetchone()
+            if not invite or invite["disabled"] or invite["used_at"]:
+                raise ValueError("Invitation is invalid or already used.")
+            expires = parse_iso(invite["expires_at"])
+            if expires and expires < utcnow():
+                raise ValueError("Invitation is invalid or already used.")
+            if conn.execute("SELECT id FROM accounts WHERE username = ?", (invite["username"],)).fetchone():
+                raise ValueError("This user code is already bound.")
+
+            info = subscription_info(invite["subscription_url"])
+            if info.get("username") != invite["username"]:
+                raise ValueError("Invitation target could not be verified.")
+
+            salt, digest = password_hash(password)
+            now = iso_now()
+            cur = conn.execute(
+                """
+                INSERT INTO accounts(username, password_salt, password_hash, subscription_url, created_at)
+                VALUES (?, ?, ?, ?, ?)
+                """,
+                (invite["username"], salt, digest, invite["subscription_url"], now),
+            )
+            account_id = cur.lastrowid
+            conn.execute(
+                """
+                UPDATE invites
+                   SET used_at = ?, used_by_account_id = ?, code_plain = NULL
+                 WHERE id = ?
+                """,
+                (now, account_id, invite["id"]),
+            )
+            conn.commit()
+        except (sqlite3.IntegrityError, ValueError) as exc:
+            if conn is not None:
+                conn.rollback()
+            self.register_page(str(exc))
+            return
+        except Exception:
+            if conn is not None:
+                conn.rollback()
+            self.register_page("Invitation target could not be verified.")
+            return
+        finally:
+            if conn is not None:
+                conn.close()
+
+        payload = {"role": "user", "sub": invite["username"], "exp": int(time.time()) + 86400 * 14}
+        self.send_response(303)
+        self.send_header("Location", "/dashboard")
+        self.send_cookie(SESSION_COOKIE, sign_payload(payload), max_age=86400 * 14)
+        self.end_headers()
+
+    def dashboard(self) -> None:
+        sess = self.user_session()
+        if not sess:
+            self.redirect("/login")
+            return
+        username = str(sess.get("sub"))
+        with db() as conn:
+            account = conn.execute("SELECT * FROM accounts WHERE username = ?", (username,)).fetchone()
+        if not account or account["disabled"]:
+            self.redirect("/login", cookies_to_clear=[(SESSION_COOKIE, "/")])
+            return
+
+        try:
+            info = subscription_info(account["subscription_url"])
+        except Exception:
+            info = {}
+
+        used = int(info.get("used_traffic") or 0)
+        total = int(info.get("data_limit") or 0)
+        remain = max(total - used, 0) if total else 0
+        status = str(info.get("status") or "unknown")
+        sub_url = account["subscription_url"]
+        body = f"""
+<section class="split">
+  <div class="panel">
+    <h1>{html.escape(PROFILE_PREFIX)}-{html.escape(username)}</h1>
+    <p class="muted">Your Ruyin subscription status and client address.</p>
+    <div class="grid">
+      <div class="metric"><div class="muted">Status</div><div class="value">{html.escape(status)}</div></div>
+      <div class="metric"><div class="muted">Used traffic</div><div class="value">{format_bytes(used)}</div></div>
+      <div class="metric"><div class="muted">Total traffic</div><div class="value">{format_bytes(total) if total else "Unlimited"}</div></div>
+      <div class="metric"><div class="muted">Remaining</div><div class="value">{format_bytes(remain) if total else "Unlimited"}</div></div>
+      <div class="metric"><div class="muted">Expire</div><div class="value">{format_epoch(info.get("expire"))}</div></div>
+      <div class="metric"><div class="muted">Last online</div><div class="value">{format_datetime(info.get("online_at"))}</div></div>
+    </div>
+  </div>
+  <aside class="panel">
+    <h2>Subscription URL</h2>
+    <p><code>{html.escape(sub_url)}</code></p>
+    <div class="row">
+      <a class="button" href="{html.escape(sub_url)}">Open subscription</a>
+      <form method="post" action="/logout"><button class="secondary" type="submit">Sign out</button></form>
+    </div>
+    <p class="muted">Copy this URL into Clash Verge, V2RayN, Sing-box, or any compatible client.</p>
+  </aside>
+</section>"""
+        self.html(200, page("Dashboard", body))
+
+    def logout(self) -> None:
+        self.redirect("/login", cookies_to_clear=[(SESSION_COOKIE, "/")])
+
+    def admin_login_form(self, error: str = "") -> bytes:
+        alert = f'<div class="alert">{html.escape(error)}</div>' if error else ""
+        body = f"""
+<section class="panel">
+  <h1>Invite Console</h1>
+  <p class="muted">Sign in with a Marzban admin account to generate one-time user invites.</p>
+  {alert}
+  <form method="post" action="/invites/login">
+    <label>Admin username<input name="username" autocomplete="username" required></label>
+    <label>Admin password<input name="password" type="password" autocomplete="current-password" required></label>
+    <button type="submit">Open invite console</button>
+  </form>
+</section>"""
+        return page("Invite Console", body, narrow=True)
+
+    def admin_invites(self) -> None:
+        sess = self.admin_session()
+        if not sess:
+            self.html(200, self.admin_login_form())
+            return
+        with db() as conn:
+            invites = conn.execute("SELECT * FROM invites ORDER BY created_at DESC LIMIT 100").fetchall()
+            accounts = conn.execute("SELECT username, created_at, last_login_at, disabled FROM accounts ORDER BY username").fetchall()
+
+        invite_rows = []
+        for inv in invites:
+            status = "used" if inv["used_at"] else "disabled" if inv["disabled"] else "active"
+            code = inv["code_plain"] or "-"
+            code_html = f'<code id="invite-{inv["id"]}">{html.escape(code)}</code>'
+            action = ""
+            if status == "active":
+                action = (
+                    f'<button class="secondary" type="button" data-copy="invite-{inv["id"]}">Copy</button>'
+                    f'<form method="post" action="/invites/revoke"><input type="hidden" name="id" value="{inv["id"]}"><button class="secondary" type="submit">Revoke</button></form>'
+                )
+            invite_rows.append(
+                "<tr>"
+                f"<td>{html.escape(inv['username'])}</td>"
+                f"<td>{html.escape(status)}</td>"
+                f"<td>{code_html}</td>"
+                f"<td>{html.escape(inv['expires_at'])}</td>"
+                f"<td>{action}</td>"
+                "</tr>"
+            )
+
+        account_rows = [
+            "<tr>"
+            f"<td>{html.escape(row['username'])}</td>"
+            f"<td>{html.escape(row['created_at'])}</td>"
+            f"<td>{html.escape(row['last_login_at'] or '-')}</td>"
+            f"<td>{'disabled' if row['disabled'] else 'active'}</td>"
+            "</tr>"
+            for row in accounts
+        ]
+
+        body = f"""
+<section class="split">
+  <div class="panel">
+    <h1>Invite Console</h1>
+    <p class="muted">Generate a random one-time invite for an existing Marzban user such as USER08.</p>
+    <form method="post" action="/invites/create" class="row">
+      <input name="username" placeholder="USER08" required>
+      <button type="submit">Generate invite</button>
+    </form>
+  </div>
+  <aside class="panel">
+    <h2>Admin session</h2>
+    <form method="post" action="/invites/logout"><button class="secondary" type="submit">Sign out</button></form>
+  </aside>
+</section>
+<section class="panel" style="margin-top:16px">
+  <h2>Invites</h2>
+  <table><thead><tr><th>User</th><th>Status</th><th>Invite</th><th>Expires</th><th></th></tr></thead><tbody>{''.join(invite_rows) or '<tr><td colspan="5" class="muted">No invites yet.</td></tr>'}</tbody></table>
+</section>
+<section class="panel" style="margin-top:16px">
+  <h2>Bound accounts</h2>
+  <table><thead><tr><th>User</th><th>Created</th><th>Last login</th><th>Status</th></tr></thead><tbody>{''.join(account_rows) or '<tr><td colspan="4" class="muted">No bound accounts yet.</td></tr>'}</tbody></table>
+</section>
+<script>
+document.addEventListener("click", function (event) {{
+  var target = event.target;
+  if (!target || !target.dataset || !target.dataset.copy) return;
+  var source = document.getElementById(target.dataset.copy);
+  if (!source || !navigator.clipboard) return;
+  navigator.clipboard.writeText(source.textContent || "");
+}});
+</script>"""
+        self.html(200, page("Invite Console", body))
+
+    def admin_login(self) -> None:
+        data = self.form()
+        try:
+            token = marzban_login(data.get("username", ""), data.get("password", ""))
+        except Exception:
+            self.html(401, self.admin_login_form("Invalid Marzban admin credentials."))
+            return
+        sid = b64url(secrets.token_bytes(32))
+        expires_ts = int(time.time()) + 3600 * 8
+        expires_at = dt.datetime.fromtimestamp(expires_ts, dt.timezone.utc).replace(microsecond=0).isoformat()
+        with db() as conn:
+            conn.execute("DELETE FROM admin_sessions WHERE expires_at < ?", (iso_now(),))
+            conn.execute(
+                "INSERT INTO admin_sessions(session_hash, token, created_at, expires_at) VALUES (?, ?, ?, ?)",
+                (session_hash(sid), token, iso_now(), expires_at),
+            )
+        payload = {"role": "admin", "sid": sid, "exp": expires_ts}
+        self.send_response(303)
+        self.send_header("Location", "/invites/")
+        self.send_cookie(ADMIN_COOKIE, sign_payload(payload), max_age=3600 * 8, path="/invites")
+        self.end_headers()
+
+    def admin_logout(self) -> None:
+        sess = self.admin_session()
+        if sess:
+            with db() as conn:
+                conn.execute("DELETE FROM admin_sessions WHERE session_hash = ?", (session_hash(str(sess["sid"])),))
+        self.redirect("/invites/", cookies_to_clear=[(ADMIN_COOKIE, "/invites")])
+
+    def admin_create_invite(self) -> None:
+        sess = self.admin_session()
+        if not sess:
+            self.redirect("/invites/")
+            return
+        username = self.form().get("username", "").upper()
+        if not USER_RE.match(username):
+            self.redirect("/invites/")
+            return
+        try:
+            user = marzban_user(str(sess["token"]), username)
+        except urllib.error.HTTPError:
+            self.redirect("/invites/")
+            return
+        except Exception:
+            self.redirect("/invites/")
+            return
+        sub_url = user.get("subscription_url")
+        if not isinstance(sub_url, str) or "/sub/" not in sub_url:
+            self.redirect("/invites/")
+            return
+        code = generate_invite_code()
+        expires_at = (utcnow() + dt.timedelta(days=INVITE_TTL_DAYS)).isoformat()
+        with db() as conn:
+            conn.execute("BEGIN IMMEDIATE")
+            conn.execute(
+                "UPDATE invites SET disabled = 1, code_plain = NULL WHERE username = ? AND used_at IS NULL AND disabled = 0",
+                (username,),
+            )
+            if conn.execute("SELECT id FROM accounts WHERE username = ?", (username,)).fetchone():
+                conn.rollback()
+                self.redirect("/invites/")
+                return
+            conn.execute(
+                """
+                INSERT INTO invites(code_hash, code_plain, username, subscription_url, expires_at, created_at)
+                VALUES (?, ?, ?, ?, ?, ?)
+                """,
+                (invite_hash(code), code, username, sub_url, expires_at, iso_now()),
+            )
+            conn.commit()
+        self.redirect("/invites/")
+
+    def admin_revoke_invite(self) -> None:
+        if not self.admin_session():
+            self.redirect("/invites/")
+            return
+        invite_id = self.form().get("id", "")
+        if invite_id.isdigit():
+            with db() as conn:
+                conn.execute(
+                    "UPDATE invites SET disabled = 1, code_plain = NULL WHERE id = ? AND used_at IS NULL",
+                    (int(invite_id),),
+                )
+        self.redirect("/invites/")
+
+    def log_message(self, fmt: str, *args: Any) -> None:
+        print("%s - %s" % (self.address_string(), fmt % args), flush=True)
+
+
+def main() -> int:
+    init_db()
+    server = ThreadingHTTPServer((LISTEN_HOST, LISTEN_PORT), AccountHandler)
+    print(f"umbra-account listening on {LISTEN_HOST}:{LISTEN_PORT}", flush=True)
+    server.serve_forever()
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

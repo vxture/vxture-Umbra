@@ -4,13 +4,14 @@ Umbra is a single-node production VPN edge for the Ruyin service.
 
 It provides:
 
-- Public HTTPS entry for Ruyin landing and VPN portal pages.
+- Public HTTPS entry for Ruyin landing and the invite-bound account portal.
 - Marzban-managed VLESS + REALITY VPN access.
 - Native Marzban subscription delivery at `/sub/<token>`.
 - Subscription metadata normalization so clients display `Ruyin-USERNAME`.
 - Marzban console protected by Marzban login.
+- Invite management at `console.ruyin.ai/invites/` for binding existing Marzban users to portal logins.
 - Vaultwarden password management at the password domain.
-- File-based deployment state under `DATA_DIR`, with SQLite for Marzban and Vaultwarden.
+- File-based deployment state under `DATA_DIR`, with SQLite for Marzban, Account Portal, and Vaultwarden.
 
 It intentionally does not provide:
 

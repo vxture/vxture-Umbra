@@ -60,6 +60,36 @@ else
   log_warn "Vaultwarden data dir not found at $VW_DATA - skipping"
 fi
 
+# -- Account portal data -------------------------------------------------------
+log_step "Backing up account portal data..."
+ACCOUNT_DATA="$DATA_DIR/account"
+if [[ -d "$ACCOUNT_DATA" ]]; then
+  ACCOUNT_ARCHIVE="$BACKUP_DIR/account-data-${TIMESTAMP}.tar.gz"
+  HOST_UID="$(id -u)"
+  HOST_GID="$(id -g)"
+  docker run --rm \
+    -v "$ACCOUNT_DATA:/data/account:ro" \
+    -v "$BACKUP_DIR:/backup" \
+    -e OUT="/backup/$(basename "$ACCOUNT_ARCHIVE")" \
+    -e HOST_UID="$HOST_UID" \
+    -e HOST_GID="$HOST_GID" \
+    alpine sh -c '
+      set -eu
+      tar -czf "$OUT" -C /data account
+      chown "$HOST_UID:$HOST_GID" "$OUT"
+      chmod 600 "$OUT"
+    '
+  if tar -tzf "$ACCOUNT_ARCHIVE" >/dev/null 2>&1; then
+    SIZE=$(du -sh "$ACCOUNT_ARCHIVE" | cut -f1)
+    log_ok "Account portal data -> $(basename "$ACCOUNT_ARCHIVE") ($SIZE)"
+  else
+    log_error "Account portal archive failed integrity check: $ACCOUNT_ARCHIVE"
+    exit 1
+  fi
+else
+  log_warn "Account portal data dir not found at $ACCOUNT_DATA - skipping"
+fi
+
 # -- Let's Encrypt certificate state ------------------------------------------
 # Certbot writes private keys as root from inside Docker. Archive this tree from
 # a root container, then hand ownership back to the deploy user.

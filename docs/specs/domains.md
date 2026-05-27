@@ -6,9 +6,9 @@ Domain ownership is explicit. Do not repurpose a domain without updating nginx v
 |---|---|---|
 | `APEX_DOMAIN` | `ruyin.ai` | Brand landing page |
 | `WWW_DOMAIN` | `www.ruyin.ai` | Landing page copy and REALITY camouflage target is separate via `REALITY_SNI` |
-| `EDGE_DOMAIN` | `vpn.ruyin.ai` | VPN portal and user-facing edge host |
+| `EDGE_DOMAIN` | `vpn.ruyin.ai` | Invite-bound user account portal and user-facing edge host |
 | `SUB_DOMAIN` | `sub.ruyin.ai` | Marzban native subscription endpoint with normalized response metadata |
-| `CONSOLE_DOMAIN` | `console.ruyin.ai` | Marzban console, protected by Marzban login |
+| `CONSOLE_DOMAIN` | `console.ruyin.ai` | Marzban console and `/invites/` invite management page |
 | `PASS_DOMAIN` | `pass.ruyin.ai` | Vaultwarden web app |
 | `VAULT_DOMAIN` | `vault.ruyin.ai` | Reserved placeholder |
 
@@ -21,3 +21,5 @@ https://sub.ruyin.ai/sub/<marzban-token>
 Do not expose `/sub/<token>/clash-meta` publicly. nginx intentionally returns `404` for that and every non-native subscription path.
 
 Do not publish a static page listing every user's subscription URL.
+
+Invite management lives at `https://console.ruyin.ai/invites/`. Admins generate one-time invite codes for existing Marzban users. The public account portal at `https://vpn.ruyin.ai` lets users activate the invite, set a password, and view only their own subscription data.

@@ -217,7 +217,7 @@ subprocess.run(
     check=True,
 )
 
-print("\n-- Rendering VPN portal -------------------------------------------------")
+print("\n-- Rendering static VPN guide ------------------------------------------")
 portal_src = REPO_DIR / "portal" / "html"
 portal_dst = DATA_DIR / "portal" / "html"
 if portal_src.exists():

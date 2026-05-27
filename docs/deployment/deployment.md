@@ -94,6 +94,11 @@ MARZBAN_ADMIN_USER=<admin-username>
 MARZBAN_ADMIN_PASSWORD=<strong-password>
 SUBSCRIPTION_URL_PREFIX=https://sub.ruyin.ai
 
+# -- Account portal --------------------------------------
+ACCOUNT_SESSION_SECRET=<generate-with: openssl rand -base64 48>
+ACCOUNT_INVITE_SECRET=<generate-with: openssl rand -base64 48>
+ACCOUNT_INVITE_TTL_DAYS=30
+
 # -- Vaultwarden -----------------------------------------
 VAULTWARDEN_ADMIN_TOKEN=<generate-with: openssl rand -base64 48>
 
@@ -104,7 +109,7 @@ CERTBOT_EMAIL=<your-email>
 
 ### Step 3: Secrets
 
-No database passwords needed - SQLite requires no credentials. The only secret file is `DATA_DIR/private/reality.json`, which is generated automatically by `02-generate-reality.sh`.
+No database passwords needed - SQLite requires no credentials. The account portal secrets sign sessions and hash invite codes; generate them separately. The REALITY secret file is `DATA_DIR/private/reality.json`, which is generated automatically by `02-generate-reality.sh`.
 
 ---
 
@@ -334,10 +339,11 @@ Marzban console may display a different subscription token after each refresh. T
 
 ```bash
 ls -la /srv/vxture/data/umbra/marzban/db.sqlite3
+ls -la /srv/vxture/data/umbra/account/account.db
 ls -la /srv/vxture/data/umbra/vaultwarden/data/db.sqlite3
 ```
 
-Expected: both files exist and are non-zero size.
+Expected: all files exist and are non-zero size after services have started.
 
 ---
 

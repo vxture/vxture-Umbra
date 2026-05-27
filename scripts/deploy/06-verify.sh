@@ -58,7 +58,7 @@ log_step "Container health..."
 
 CONTAINERS=(
   umbra-nginx umbra-marzban
-  umbra-subproxy
+  umbra-subproxy umbra-account
   umbra-vaultwarden umbra-portal
 )
 
@@ -80,6 +80,8 @@ log_step "HTTPS endpoints..."
 check_http "$APEX_DOMAIN"        "https://$APEX_DOMAIN"
 check_http "$WWW_DOMAIN"         "https://$WWW_DOMAIN"
 check_http "$EDGE_DOMAIN"        "https://$EDGE_DOMAIN"
+check_http "$EDGE_DOMAIN account login" "https://$EDGE_DOMAIN/login"
+check_http "$EDGE_DOMAIN account registration" "https://$EDGE_DOMAIN/register"
 check_http "$PASS_DOMAIN"        "https://$PASS_DOMAIN"
 check_http "$VAULT_DOMAIN"       "https://$VAULT_DOMAIN"
 
@@ -135,6 +137,7 @@ fi
 # -- CONSOLE_DOMAIN login -----------------------------------------------------
 # The console vhost must be publicly reachable. Marzban owns authentication.
 log_step "$CONSOLE_DOMAIN login..."
+check_http "$CONSOLE_DOMAIN invite console" "https://$CONSOLE_DOMAIN/invites/"
 CONSOLE_CODE=$(curl -sk --max-time 10 -o /dev/null -w "%{http_code}" "https://$CONSOLE_DOMAIN/dashboard/" || echo "000")
 if [[ "$CONSOLE_CODE" =~ ^(200|301|302|307|308|401)$ ]]; then
   log_ok "$CONSOLE_DOMAIN login reachable ($CONSOLE_CODE)"
@@ -159,10 +162,11 @@ log_step "Database check..."
 
 declare -A SQLITE_DBS=(
   ["marzban"]="$DATA_DIR/marzban/db.sqlite3"
+  ["account"]="$DATA_DIR/account/account.db"
   ["vaultwarden"]="$DATA_DIR/vaultwarden/data/db.sqlite3"
 )
 
-for label in marzban vaultwarden; do
+for label in marzban account vaultwarden; do
   db_path="${SQLITE_DBS[$label]}"
   if [[ -f "$db_path" ]]; then
     size=$(du -sh "$db_path" 2>/dev/null | cut -f1 || echo "?")

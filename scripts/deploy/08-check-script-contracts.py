@@ -88,6 +88,9 @@ CHECKS: list[tuple[str, Path, list[str]]] = [
             "require_bool CERTBOT_SKIP",
             "must be true or false",
             "REALITY_DEST must be host:port with port in range 1-65535",
+            "ACCOUNT_SESSION_SECRET must be at least 32 characters",
+            "ACCOUNT_INVITE_SECRET must be at least 32 characters",
+            "require_int_range ACCOUNT_INVITE_TTL_DAYS 1 3650",
         ],
     ),
     (
@@ -184,6 +187,15 @@ CHECKS: list[tuple[str, Path, list[str]]] = [
         ],
     ),
     (
+        "backup archives account portal data",
+        Path("scripts/ops/backup.sh"),
+        [
+            "Backing up account portal data",
+            "account-data-${TIMESTAMP}.tar.gz",
+            "$ACCOUNT_DATA:/data/account:ro",
+        ],
+    ),
+    (
         "deploy all rejects root",
         Path("scripts/deploy/all.sh"),
         [
@@ -212,6 +224,17 @@ CHECKS: list[tuple[str, Path, list[str]]] = [
         ],
     ),
     (
+        "deploy verify checks account portal",
+        Path("scripts/deploy/06-verify.sh"),
+        [
+            "umbra-account",
+            "$EDGE_DOMAIN account login",
+            "$EDGE_DOMAIN account registration",
+            "$CONSOLE_DOMAIN invite console",
+            "$DATA_DIR/account/account.db",
+        ],
+    ),
+    (
         "deploy verify checks every active certificate domain",
         Path("scripts/deploy/06-verify.sh"),
         [
@@ -233,6 +256,13 @@ CHECKS: list[tuple[str, Path, list[str]]] = [
         [
             "Type YES to confirm full reset",
             '[[ "$confirm" != "YES" ]]',
+        ],
+    ),
+    (
+        "soft reset includes account portal container",
+        Path("scripts/server/reset.sh"),
+        [
+            "umbra-account",
         ],
     ),
     (
@@ -300,6 +330,56 @@ CHECKS: list[tuple[str, Path, list[str]]] = [
             "umbra-subproxy:",
             "SUB_PROFILE_PREFIX",
             "./services/subproxy/subproxy.py:/app/subproxy.py:ro",
+        ],
+    ),
+    (
+        "compose includes invite-bound account portal",
+        Path("docker-compose.yml"),
+        [
+            "umbra-account:",
+            "ACCOUNT_SESSION_SECRET",
+            "ACCOUNT_INVITE_SECRET",
+            "./services/account/account.py:/app/account.py:ro",
+            "${DATA_DIR}/account:/var/lib/umbra-account",
+        ],
+    ),
+    (
+        "deploy up checks account portal container",
+        Path("scripts/deploy/05-up.sh"),
+        [
+            "umbra-account",
+        ],
+    ),
+    (
+        "vpn vhost serves account portal",
+        Path("configs/nginx/vhosts/03-vpn-portal.conf.template"),
+        [
+            "proxy_pass http://umbra-account:8081",
+            "location /guide/",
+            "proxy_pass http://umbra-portal:80/",
+        ],
+    ),
+    (
+        "console vhost exposes invite console",
+        Path("configs/nginx/vhosts/05-console.conf.template"),
+        [
+            "location = /invites",
+            "location ^~ /invites/",
+            "proxy_pass http://umbra-account:8081",
+        ],
+    ),
+    (
+        "account portal binds invites to existing Marzban users",
+        Path("services/account/account.py"),
+        [
+            "CREATE UNIQUE INDEX IF NOT EXISTS idx_active_invite_username",
+            "marzban_user",
+            "subscription_info(invite[\"subscription_url\"])",
+            "This user code is already bound.",
+            "UPDATE invites",
+            "code_plain = NULL",
+            "CREATE TABLE IF NOT EXISTS admin_sessions",
+            "session_hash",
         ],
     ),
     (

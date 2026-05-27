@@ -13,9 +13,10 @@ Production VPN edge node - SNI routing, VLESS+REALITY proxy, subscription delive
 | Domain | Service |
 |--------|---------|
 | `ruyin.ai` / `www.ruyin.ai` | Brand landing page |
-| `vpn.ruyin.ai` | VPN user portal |
+| `vpn.ruyin.ai` | Invite-bound user account portal |
 | `sub.ruyin.ai` | Marzban subscription endpoint with `Ruyin-USERNAME` display names |
 | `console.ruyin.ai` | Marzban console *(Marzban login)* |
+| `console.ruyin.ai/invites/` | Invite console for binding existing Marzban users |
 | `pass.ruyin.ai` | Vaultwarden password manager |
 | `vault.ruyin.ai` | Placeholder (future use) |
 
@@ -78,7 +79,7 @@ NODE_NAME=vx-tokyo                    # label shown in subscription config
 # -- Domains --------------------------------------------
 APEX_DOMAIN=ruyin.ai
 WWW_DOMAIN=www.ruyin.ai
-EDGE_DOMAIN=vpn.ruyin.ai             # VPN user portal
+EDGE_DOMAIN=vpn.ruyin.ai             # account portal and VPN edge host
 SUB_DOMAIN=sub.ruyin.ai              # subscription endpoint
 CONSOLE_DOMAIN=console.ruyin.ai
 PASS_DOMAIN=pass.ruyin.ai
@@ -90,6 +91,11 @@ MARZBAN_ADMIN_PASSWORD=              # openssl rand -base64 32
 
 # -- Vaultwarden -----------------------------------------
 VAULTWARDEN_ADMIN_TOKEN=             # openssl rand -base64 48
+
+# -- Account portal --------------------------------------
+ACCOUNT_SESSION_SECRET=              # openssl rand -base64 48
+ACCOUNT_INVITE_SECRET=               # openssl rand -base64 48
+ACCOUNT_INVITE_TTL_DAYS=30
 
 # -- Let's Encrypt ---------------------------------------
 CERTBOT_EMAIL=your@email.com
@@ -166,6 +172,8 @@ curl -sk -o /tmp/sub.yaml -w "%{http_code}\n" 'https://sub.ruyin.ai/sub/<token>'
 Expected: `200`. `curl -I` sends HEAD and Marzban responds `405 Method Not Allowed`.
 
 Clash subscription files and response headers are normalized to `Ruyin-USERNAME`, for example `Ruyin-USER01`, while the proxy node name remains `NODE_NAME`.
+
+User-facing subscription access is handled by `https://vpn.ruyin.ai`. Admins open `https://console.ruyin.ai/invites/`, sign in with Marzban admin credentials, and generate a one-time invite for an existing Marzban user such as `USER08`. The invite code binds only that user code; the registrant cannot choose another `USER**` value.
 
 ---
 
@@ -324,9 +332,9 @@ Internet
                 |- SNI = www.microsoft.com -> Xray VLESS+REALITY (port 10443 internal)
                 `- SNI = anything else     -> nginx HTTP block (:8443)
                                                |- ruyin.ai          -> landing page
-                                               |- vpn.ruyin.ai      -> VPN portal
+                                               |- vpn.ruyin.ai      -> account portal
                                                |- sub.ruyin.ai      -> Marzban /sub/<token>
-                                               |- console.ruyin.ai  -> Marzban dashboard (Marzban login)
+                                               |- console.ruyin.ai  -> Marzban dashboard and /invites/
                                                |- pass.ruyin.ai     -> Vaultwarden
                                                `- vault.ruyin.ai    -> placeholder
 ```

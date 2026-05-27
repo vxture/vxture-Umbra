@@ -34,7 +34,8 @@ Purpose:    Production overseas edge entry node
 | Nginx | `umbra-nginx` | gateway | SNI stream + HTTP virtual hosts |
 | Marzban + Xray | `umbra-marzban` | sub.ruyin.ai, console.ruyin.ai, REALITY ingress | VPN user management, subscription, bundled Xray subprocess |
 | Subscription Proxy | `umbra-subproxy` | internal | Normalizes subscription response metadata only |
-| VPN Portal | `umbra-portal` | vpn.ruyin.ai | User onboarding, client downloads, docs |
+| Account Portal | `umbra-account` | vpn.ruyin.ai, console.ruyin.ai/invites/ | Invite-bound user dashboard and invite management |
+| Static Guide | `umbra-portal` | vpn.ruyin.ai/guide/ | Legacy onboarding guide and docs |
 | Vaultwarden | `umbra-vaultwarden` | pass.ruyin.ai | Password manager |
 | Certbot | one-shot Docker container | ACME webroot | Let's Encrypt issue/renew automation |
 
@@ -46,9 +47,9 @@ Purpose:    Production overseas edge entry node
 |--------|--------|-------|
 | `ruyin.ai` | Nginx -> static landing | Brand home, navigation to services |
 | `www.ruyin.ai` | Nginx -> static content | Independent content from apex |
-| `vpn.ruyin.ai` | Nginx -> umbra-portal | VPN user entry, onboarding, client DL |
+| `vpn.ruyin.ai` | Nginx -> umbra-account | User login, invite activation, subscription dashboard |
 | `sub.ruyin.ai` | Nginx -> umbra-subproxy -> umbra-marzban | Marzban-native subscription endpoint with normalized metadata |
-| `console.ruyin.ai` | Nginx -> umbra-marzban (Marzban login) | Marzban console |
+| `console.ruyin.ai` | Nginx -> umbra-marzban; /invites/ -> umbra-account | Marzban console and invite generation |
 | `pass.ruyin.ai` | Nginx -> umbra-vaultwarden | Password manager |
 | `vault.ruyin.ai` | Nginx -> static placeholder | Reserved for future use |
 
@@ -69,7 +70,7 @@ Phase 1 - Infrastructure
 Phase 2 - Core Services
   [ ] Xray-core (VLESS + REALITY)
   [ ] Marzban
-  [ ] VPN Portal (static site)
+  [ ] Account Portal
 
 Phase 3 - Supporting Services
   [ ] Vaultwarden
@@ -111,7 +112,7 @@ Phase 4 - Hardening
 
 1. **Edge Mode only** - no Simple Mode. Xray runs on internal port, never public.
 2. **All traffic enters on 443** - Nginx SNI stream routes to correct internal service.
-3. **SQLite** - all services (Marzban, Vaultwarden) use SQLite for data storage. No PostgreSQL.
+3. **SQLite** - Marzban, Account Portal, and Vaultwarden use SQLite for data storage. No PostgreSQL.
 4. **Secrets never in Git** - `.env`, keys, certs, DB passwords all stay in `DATA_DIR/private/`.
 5. **console.ruyin.ai is public at nginx and protected by Marzban login** - see `specs/security.md`.
 6. **All containers in one Docker network** - `umbra-net`, internal service discovery by container name.
@@ -128,7 +129,7 @@ Phase 4 - Hardening
 ## v1.0 Success Criteria
 
 ```
-[ ] All containers running: nginx, marzban, subproxy, vaultwarden, portal
+[ ] All containers running: nginx, marzban, subproxy, account, vaultwarden, portal
 [ ] HTTPS working on active public domains
 [ ] Xray REALITY connection functional (test with Clash Verge)
 [ ] Marzban console accessible at console.ruyin.ai and protected by Marzban login
@@ -138,7 +139,8 @@ Phase 4 - Hardening
 [ ] B++ rules present and correct (openai.com and cloudflare.com PROXY; microsoft.com and vultr.com DIRECT)
 [ ] Vaultwarden login functional at pass.ruyin.ai
 [ ] Placeholder responding at vault.ruyin.ai
-[ ] VPN Portal loading at vpn.ruyin.ai
+[ ] Account Portal loading at vpn.ruyin.ai
+[ ] Invite Console loading at console.ruyin.ai/invites/
 [ ] Backup archive created with correct permissions (600)
 [ ] Cert renewal cron configured
 [ ] Sensitive files not present in Git

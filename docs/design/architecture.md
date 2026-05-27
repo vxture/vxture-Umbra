@@ -16,9 +16,9 @@ Internet
            `-- other SNI values -> umbra-nginx internal HTTPS listener :8443
                                       |-- ruyin.ai         -> static landing
                                       |-- www.ruyin.ai     -> static landing copy
-                                      |-- EDGE_DOMAIN      -> umbra-portal:80
+                                      |-- EDGE_DOMAIN      -> umbra-account:8081
                                       |-- sub.ruyin.ai           -> umbra-subproxy:8080 -> umbra-marzban:8000 /sub/<token>
-                                      |-- console.ruyin.ai -> umbra-marzban:8000
+                                      |-- console.ruyin.ai -> umbra-marzban:8000 and /invites/ -> umbra-account:8081
                                       |-- pass.ruyin.ai    -> umbra-vaultwarden:80
                                       `-- vault.ruyin.ai   -> placeholder
 ```
@@ -91,10 +91,14 @@ Services:
 
   umbra-subproxy
     - internal-only metadata normalizer for /sub/<token>
-    - SQLite database in DATA_DIR/marzban/db.sqlite3
+
+  umbra-account
+    - invite-bound user account portal on :8081
+    - stores account and invite state in DATA_DIR/account/account.db
+    - talks to Marzban API and native subscription info endpoints
 
   umbra-portal
-    - static VPN portal on :80
+    - legacy static guide on :80, exposed under EDGE_DOMAIN /guide/
 
   umbra-vaultwarden
     - Vaultwarden on :80
@@ -178,6 +182,8 @@ Services:
 |       |   `-- tls/
 |       |-- portal/
 |       |   `-- html/
+|       |-- account/
+|       |   `-- account.db
 |       |-- vaultwarden/
 |       |   `-- data/
 |       |-- letsencrypt/
@@ -199,8 +205,9 @@ Services:
 | 10443 | Internal | umbra-marzban | Bundled Xray subprocess: VLESS + REALITY |
 | 8000 | Internal | umbra-marzban | Marzban API + admin + subscription |
 | 8080 | Internal | umbra-subproxy | Subscription metadata normalization |
+| 8081 | Internal | umbra-account | Invite-bound account portal |
 | 80 | Internal | umbra-vaultwarden | Vaultwarden HTTP |
-| 80 | Internal | umbra-portal | VPN portal static site |
+| 80 | Internal | umbra-portal | Legacy static guide |
 
 ---
 

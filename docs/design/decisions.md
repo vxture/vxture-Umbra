@@ -48,14 +48,14 @@ Marzban runs Xray as an internal subprocess. Do not deploy a separate Xray conta
 
 ### Decision
 
-SQLite is the database backend for all services (Marzban, Vaultwarden) on this 1C1G node.
+SQLite is the database backend for all stateful services (Marzban, Account Portal, Vaultwarden) on this 1C1G node.
 
 ### Rationale
 
 - At 10 concurrent VPN users, SQLite write contention is not a concern
 - SQLite eliminates the ~100MB PostgreSQL process and the associated tuning burden
 - Backup is a simple file copy - `cp db.sqlite3` or tar of the data directory
-- Marzban and Vaultwarden both support SQLite natively
+- Marzban, Account Portal, and Vaultwarden all use local SQLite state
 
 ### Database Files
 

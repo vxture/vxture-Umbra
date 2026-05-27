@@ -28,6 +28,7 @@ DATA_DIR/private/               <- REALITY keys
 
 # SQLite database copies
 DATA_DIR/marzban/db.sqlite3        -> backup/marzban-db-<ts>.sqlite3
+DATA_DIR/account/                  -> backup/account-data-<ts>.tar.gz
 DATA_DIR/vaultwarden/data/         -> backup/vaultwarden-data-<ts>.tar.gz  (full dir: DB + attachments + sends)
 
 # Certs
@@ -43,6 +44,7 @@ crontab -l -> backup/root-crontab-<ts>.txt
 BACKUP_DIR/umbra-config-<YYYYMMDD-HHMMSS>.tar.gz        permissions: 600
 BACKUP_DIR/env-<YYYYMMDD-HHMMSS>.txt                    permissions: 600
 BACKUP_DIR/marzban-db-<YYYYMMDD-HHMMSS>.sqlite3         permissions: 600
+BACKUP_DIR/account-data-<YYYYMMDD-HHMMSS>.tar.gz        permissions: 600
 BACKUP_DIR/vaultwarden-data-<YYYYMMDD-HHMMSS>.tar.gz    permissions: 600
 BACKUP_DIR/letsencrypt-state-<YYYYMMDD-HHMMSS>.tar.gz   permissions: 600
 BACKUP_DIR/root-crontab-<YYYYMMDD-HHMMSS>.txt           permissions: 600
@@ -81,6 +83,9 @@ tar -xzf BACKUP_DIR/letsencrypt-state-<timestamp>.tar.gz -C DATA_DIR/
 
 # 3. Restore SQLite databases
 cp BACKUP_DIR/marzban-db-<timestamp>.sqlite3 DATA_DIR/marzban/db.sqlite3
+
+# Account portal - invite/account bindings
+tar -xzf BACKUP_DIR/account-data-<timestamp>.tar.gz -C DATA_DIR/
 
 # Vaultwarden - full data dir (DB + attachments + sends)
 tar -xzf BACKUP_DIR/vaultwarden-data-<timestamp>.tar.gz -C DATA_DIR/vaultwarden/

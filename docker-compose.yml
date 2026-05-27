@@ -12,6 +12,7 @@ services:
     depends_on:
       - umbra-marzban
       - umbra-subproxy
+      - umbra-account
       - umbra-vaultwarden
       - umbra-portal
     ports:
@@ -83,6 +84,27 @@ services:
     networks:
       - umbra-net
 
+  # -- Account Portal: invite-bound user subscription dashboard ----------------
+  umbra-account:
+    image: python:3.12-alpine
+    container_name: umbra-account
+    restart: always
+    depends_on:
+      - umbra-marzban
+    environment:
+      ACCOUNT_DB_PATH: "/var/lib/umbra-account/account.db"
+      ACCOUNT_SESSION_SECRET: "${ACCOUNT_SESSION_SECRET}"
+      ACCOUNT_INVITE_SECRET: "${ACCOUNT_INVITE_SECRET}"
+      ACCOUNT_INVITE_TTL_DAYS: "${ACCOUNT_INVITE_TTL_DAYS:-30}"
+      MARZBAN_BASE_URL: "https://umbra-marzban:8000"
+      SUB_PROFILE_PREFIX: "${SUB_PROFILE_PREFIX:-Ruyin}"
+    volumes:
+      - ${DATA_DIR}/account:/var/lib/umbra-account
+      - ./services/account/account.py:/app/account.py:ro
+    command: ["python", "/app/account.py"]
+    networks:
+      - umbra-net
+
   # -- Vaultwarden: Password manager --------------------------------------------
   # Uses SQLite by default - database stored in the /data volume.
   umbra-vaultwarden:
@@ -99,7 +121,7 @@ services:
     networks:
       - umbra-net
 
-  # -- VPN Portal: User onboarding static site -----------------------------------
+  # -- Static Guide: Legacy onboarding content under /guide/ ---------------------
   umbra-portal:
     image: nginx:alpine
     container_name: umbra-portal

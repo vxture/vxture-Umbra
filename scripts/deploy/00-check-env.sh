@@ -46,6 +46,7 @@ REQUIRED_VARS=(
   MARZBAN_ADMIN_USER MARZBAN_ADMIN_PASSWORD
   MARZBAN_SSL_CA_TYPE SUBSCRIPTION_URL_PREFIX
   SUB_PROFILE_PREFIX SUB_PROFILE_TITLE
+  ACCOUNT_SESSION_SECRET ACCOUNT_INVITE_SECRET ACCOUNT_INVITE_TTL_DAYS
   VAULTWARDEN_ADMIN_TOKEN
   CERTBOT_EMAIL CERTBOT_STAGING CERTBOT_SKIP
   USER_COUNT USER_PREFIX
@@ -74,6 +75,7 @@ done
 
 require_int_range XRAY_INTERNAL_PORT 1 65535
 require_int_range USER_COUNT 1 9999
+require_int_range ACCOUNT_INVITE_TTL_DAYS 1 3650
 
 if [[ "${REALITY_SHORT_ID_LENGTH:-}" =~ ^[0-9]+$ ]] && (( 10#$REALITY_SHORT_ID_LENGTH > 0 && 10#$REALITY_SHORT_ID_LENGTH % 2 == 0 )); then
   log_ok "REALITY_SHORT_ID_LENGTH is a positive even integer"
@@ -100,6 +102,20 @@ if [[ "${SUB_PROFILE_PREFIX:-}" =~ ^[A-Za-z0-9._-]+$ ]]; then
   log_ok "SUB_PROFILE_PREFIX is client-safe"
 else
   fail "SUB_PROFILE_PREFIX must contain only letters, numbers, dots, underscores, or hyphens"
+fi
+
+account_session_secret="${ACCOUNT_SESSION_SECRET:-}"
+if [[ "${#account_session_secret}" -ge 32 ]]; then
+  log_ok "ACCOUNT_SESSION_SECRET length is valid"
+else
+  fail "ACCOUNT_SESSION_SECRET must be at least 32 characters"
+fi
+
+account_invite_secret="${ACCOUNT_INVITE_SECRET:-}"
+if [[ "${#account_invite_secret}" -ge 32 ]]; then
+  log_ok "ACCOUNT_INVITE_SECRET length is valid"
+else
+  fail "ACCOUNT_INVITE_SECRET must be at least 32 characters"
 fi
 
 if [[ "${REALITY_DEST:-}" =~ ^([^[:space:]:]+):([0-9]+)$ ]] && (( 10#${BASH_REMATCH[2]} >= 1 && 10#${BASH_REMATCH[2]} <= 65535 )); then
