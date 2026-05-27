@@ -193,6 +193,29 @@ else
   log_warn "Marzban API check inconclusive (got $MARZBAN_CODE) - check manually"
 fi
 
+# -- Cron jobs -----------------------------------------------------------------
+log_step "Cron jobs..."
+
+CERT_CRON="17 3 * * * $REPO_DIR/scripts/ops.sh certs --renew >> /var/log/umbra-cert-renew.log 2>&1"
+BACKUP_CRON="0 2 * * * $REPO_DIR/scripts/ops.sh backup >> /var/log/umbra-backup.log 2>&1"
+CRONTAB_CONTENT="$(crontab -l 2>/dev/null || true)"
+
+if grep -Fxq "$CERT_CRON" <<< "$CRONTAB_CONTENT"; then
+  log_ok "Certificate renewal cron installed"
+  (( ++PASS ))
+else
+  log_fail "Certificate renewal cron missing"
+  (( ++FAIL ))
+fi
+
+if grep -Fxq "$BACKUP_CRON" <<< "$CRONTAB_CONTENT"; then
+  log_ok "Backup cron installed"
+  (( ++PASS ))
+else
+  log_fail "Backup cron missing"
+  (( ++FAIL ))
+fi
+
 # -- TLS certificates ----------------------------------------------------------
 log_step "Certificate expiry check..."
 for domain in "$APEX_DOMAIN" "$EDGE_DOMAIN" "$SUB_DOMAIN" "$PASS_DOMAIN" "$VAULT_DOMAIN"; do

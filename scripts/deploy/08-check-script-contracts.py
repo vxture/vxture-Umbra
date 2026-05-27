@@ -149,6 +149,26 @@ CHECKS: list[tuple[str, Path, list[str]]] = [
         ],
     ),
     (
+        "deploy all installs cron before final verification",
+        Path("scripts/deploy/all.sh"),
+        [
+            "Configuring cron jobs",
+            'CRON_LINE="17 3 * * * $REPO_DIR/scripts/ops.sh certs --renew',
+            'BACKUP_CRON_LINE="0 2 * * * $REPO_DIR/scripts/ops.sh backup',
+            'run_step_warn "06-verify.sh"',
+        ],
+    ),
+    (
+        "deploy verify checks cron installation",
+        Path("scripts/deploy/06-verify.sh"),
+        [
+            "Certificate renewal cron installed",
+            "Backup cron installed",
+            "Certificate renewal cron missing",
+            "Backup cron missing",
+        ],
+    ),
+    (
         "post deploy rejects root",
         Path("scripts/deploy/post.sh"),
         [

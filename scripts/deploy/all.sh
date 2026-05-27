@@ -118,22 +118,6 @@ echo ""
 
 run_step "05-up.sh"              "Start Docker services"
 
-if [[ "$SKIP_VERIFY" == "true" ]]; then
-  log_info "Skipping verification (--skip-verify)"
-else
-  run_step_warn "06-verify.sh"   "Verify deployment"
-fi
-
-if [[ "$SKIP_BACKUP" == "true" ]]; then
-  log_info "Skipping backup (--skip-backup)"
-else
-  bash "$SCRIPT_DIR/../ops/backup.sh" || {
-    log_warn "Backup reported failures - services may still be running."
-    log_warn "Check manually: bash scripts/ops.sh backup"
-  }
-  echo ""
-fi
-
 # -- Configure cert renewal and backup cron ------------------------------------
 log_step "Configuring cron jobs..."
 
@@ -162,6 +146,23 @@ remove_legacy_cron "$REPO_DIR/scripts/deploy-certs.sh"
 remove_legacy_cron "$REPO_DIR/scripts/steps/07-backup.sh"
 add_cron "$CRON_LINE"
 add_cron "$BACKUP_CRON_LINE"
+echo ""
+
+if [[ "$SKIP_BACKUP" == "true" ]]; then
+  log_info "Skipping backup (--skip-backup)"
+else
+  bash "$SCRIPT_DIR/../ops/backup.sh" || {
+    log_warn "Backup reported failures - services may still be running."
+    log_warn "Check manually: bash scripts/ops.sh backup"
+  }
+  echo ""
+fi
+
+if [[ "$SKIP_VERIFY" == "true" ]]; then
+  log_info "Skipping verification (--skip-verify)"
+else
+  run_step_warn "06-verify.sh"   "Verify deployment"
+fi
 
 # -- Done ----------------------------------------------------------------------
 echo ""
