@@ -467,6 +467,8 @@ class AccountHandler(BaseHTTPRequestHandler):
             self.login_submit()
         elif path == "/register":
             self.register_submit()
+        elif path == "/dashboard/refresh-subscription":
+            self.refresh_subscription_submit()
         elif path == "/logout":
             self.logout()
         elif path == "/invites/login":
@@ -709,15 +711,6 @@ class AccountHandler(BaseHTTPRequestHandler):
 
         sub_url = account["subscription_url"]
         try:
-            fresh_sub_url = refresh_subscription_url(username)
-            if fresh_sub_url and fresh_sub_url != sub_url:
-                sub_url = fresh_sub_url
-                with db() as conn:
-                    conn.execute("UPDATE accounts SET subscription_url = ? WHERE username = ?", (sub_url, username))
-        except Exception:
-            pass
-
-        try:
             info = subscription_info(sub_url)
         except Exception:
             info = {}
@@ -727,6 +720,16 @@ class AccountHandler(BaseHTTPRequestHandler):
         remain = max(total - used, 0) if total else 0
         status = str(info.get("status") or "unknown")
         display_name = account["display_name"] or username
+        query = urllib.parse.parse_qs(urllib.parse.urlsplit(self.path).query)
+        update_status = query.get("subscription", [""])[0]
+        if update_status == "updated":
+            notice = '<div class="alert ok">Subscription URL updated.</div>'
+        elif update_status == "current":
+            notice = '<div class="alert ok">Subscription URL is already current.</div>'
+        elif update_status == "failed":
+            notice = '<div class="alert">Subscription URL could not be updated. Try again later.</div>'
+        else:
+            notice = ""
         body = f"""
 <section class="split">
   <div class="panel">
@@ -744,9 +747,11 @@ class AccountHandler(BaseHTTPRequestHandler):
   </div>
   <aside class="panel">
     <h2>Subscription URL</h2>
+    {notice}
     <p><code id="subscription-url">{html.escape(sub_url)}</code></p>
     <div class="row">
       <button type="button" data-copy="subscription-url">Copy subscription URL</button>
+      <form method="post" action="/dashboard/refresh-subscription"><button class="secondary" type="submit">Update subscription URL</button></form>
       <form method="post" action="/logout"><button class="secondary" type="submit">Sign out</button></form>
     </div>
     <p class="muted">Copy this URL into Clash Verge, V2RayN, Sing-box, or any compatible client.</p>
@@ -762,6 +767,32 @@ document.addEventListener("click", function (event) {{
 }});
 </script>"""
         self.html(200, page("Dashboard", body))
+
+    def refresh_subscription_submit(self) -> None:
+        sess = self.user_session()
+        if not sess:
+            self.redirect("/login")
+            return
+        username = str(sess.get("sub"))
+        with db() as conn:
+            account = conn.execute("SELECT * FROM accounts WHERE username = ?", (username,)).fetchone()
+        if not account or account["disabled"]:
+            self.redirect("/login", cookies_to_clear=[(SESSION_COOKIE, "/")])
+            return
+
+        try:
+            fresh_sub_url = refresh_subscription_url(username)
+            if not fresh_sub_url:
+                self.redirect("/dashboard?subscription=failed")
+                return
+            if fresh_sub_url != account["subscription_url"]:
+                with db() as conn:
+                    conn.execute("UPDATE accounts SET subscription_url = ? WHERE username = ?", (fresh_sub_url, username))
+                self.redirect("/dashboard?subscription=updated")
+                return
+            self.redirect("/dashboard?subscription=current")
+        except Exception:
+            self.redirect("/dashboard?subscription=failed")
 
     def logout(self) -> None:
         self.redirect("/login", cookies_to_clear=[(SESSION_COOKIE, "/")])

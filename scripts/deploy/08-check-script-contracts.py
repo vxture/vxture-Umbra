@@ -403,13 +403,16 @@ CHECKS: list[tuple[str, Path, list[str]]] = [
         ],
     ),
     (
-        "account portal refreshes current subscription URL",
+        "account portal updates subscription URL on demand",
         Path("services/account/account.py"),
         [
             "def refresh_subscription_url",
+            "def refresh_subscription_submit",
             "MARZBAN_ADMIN_USER",
             "MARZBAN_ADMIN_PASSWORD",
             "UPDATE accounts SET subscription_url",
+            "action=\"/dashboard/refresh-subscription\"",
+            "Update subscription URL",
             "data-copy=\"subscription-url\"",
             "Copy subscription URL",
         ],
@@ -534,6 +537,11 @@ FORBIDDEN: list[tuple[str, Path, str]] = [
         "account portal dashboard must not open subscription URL",
         Path("services/account/account.py"),
         "Open subscription",
+    ),
+    (
+        "account portal dashboard GET must not auto-update subscription URL",
+        Path("services/account/account.py"),
+        "if fresh_sub_url and fresh_sub_url != sub_url:",
     ),
     (
         "cloudflare.com must not be must-direct",
