@@ -339,6 +339,8 @@ CHECKS: list[tuple[str, Path, list[str]]] = [
             "umbra-account:",
             "ACCOUNT_SESSION_SECRET",
             "ACCOUNT_INVITE_SECRET",
+            "MARZBAN_ADMIN_USER",
+            "MARZBAN_ADMIN_PASSWORD",
             "./services/account/account.py:/app/account.py:ro",
             "${DATA_DIR}/account:/var/lib/umbra-account",
         ],
@@ -393,6 +395,18 @@ CHECKS: list[tuple[str, Path, list[str]]] = [
             "marzban_users",
             "Pending binding",
             "Generate invite",
+        ],
+    ),
+    (
+        "account portal refreshes current subscription URL",
+        Path("services/account/account.py"),
+        [
+            "def refresh_subscription_url",
+            "MARZBAN_ADMIN_USER",
+            "MARZBAN_ADMIN_PASSWORD",
+            "UPDATE accounts SET subscription_url",
+            "data-copy=\"subscription-url\"",
+            "Copy subscription",
         ],
     ),
     (

@@ -97,6 +97,8 @@ services:
       ACCOUNT_INVITE_SECRET: "${ACCOUNT_INVITE_SECRET}"
       ACCOUNT_INVITE_TTL_DAYS: "${ACCOUNT_INVITE_TTL_DAYS:-30}"
       MARZBAN_BASE_URL: "https://umbra-marzban:8000"
+      MARZBAN_ADMIN_USER: "${MARZBAN_ADMIN_USER}"
+      MARZBAN_ADMIN_PASSWORD: "${MARZBAN_ADMIN_PASSWORD}"
       SUB_PROFILE_PREFIX: "${SUB_PROFILE_PREFIX:-Ruyin}"
     volumes:
       - ${DATA_DIR}/account:/var/lib/umbra-account

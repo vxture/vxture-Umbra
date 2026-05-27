@@ -36,6 +36,8 @@ SESSION_SECRET = os.environ.get("ACCOUNT_SESSION_SECRET", "")
 INVITE_SECRET = os.environ.get("ACCOUNT_INVITE_SECRET", "")
 INVITE_TTL_DAYS = int(os.environ.get("ACCOUNT_INVITE_TTL_DAYS", "30"))
 MARZBAN_BASE_URL = os.environ.get("MARZBAN_BASE_URL", "https://umbra-marzban:8000").rstrip("/")
+MARZBAN_ADMIN_USER = os.environ.get("MARZBAN_ADMIN_USER", "")
+MARZBAN_ADMIN_PASSWORD = os.environ.get("MARZBAN_ADMIN_PASSWORD", "")
 PROFILE_PREFIX = (os.environ.get("SUB_PROFILE_PREFIX", "Ruyin").strip() or "Ruyin")
 
 USER_RE = re.compile(r"^[A-Za-z][A-Za-z0-9_-]{1,63}$")
@@ -300,6 +302,18 @@ def marzban_users(token: str) -> list[dict[str, Any]]:
         if isinstance(value, list):
             return [item for item in value if isinstance(item, dict)]
     return []
+
+
+def refresh_subscription_url(username: str) -> str | None:
+    if not MARZBAN_ADMIN_USER or not MARZBAN_ADMIN_PASSWORD:
+        return None
+    token = marzban_login(MARZBAN_ADMIN_USER, MARZBAN_ADMIN_PASSWORD)
+    user = marzban_user(token, username)
+    sub_url = user.get("subscription_url")
+    if not isinstance(sub_url, str) or "/sub/" not in sub_url:
+        return None
+    token_path_from_url(sub_url)
+    return sub_url
 
 
 def token_path_from_url(subscription_url: str) -> str:
@@ -691,8 +705,18 @@ class AccountHandler(BaseHTTPRequestHandler):
             self.redirect("/login", cookies_to_clear=[(SESSION_COOKIE, "/")])
             return
 
+        sub_url = account["subscription_url"]
         try:
-            info = subscription_info(account["subscription_url"])
+            fresh_sub_url = refresh_subscription_url(username)
+            if fresh_sub_url and fresh_sub_url != sub_url:
+                sub_url = fresh_sub_url
+                with db() as conn:
+                    conn.execute("UPDATE accounts SET subscription_url = ? WHERE username = ?", (sub_url, username))
+        except Exception:
+            pass
+
+        try:
+            info = subscription_info(sub_url)
         except Exception:
             info = {}
 
@@ -700,7 +724,6 @@ class AccountHandler(BaseHTTPRequestHandler):
         total = int(info.get("data_limit") or 0)
         remain = max(total - used, 0) if total else 0
         status = str(info.get("status") or "unknown")
-        sub_url = account["subscription_url"]
         display_name = account["display_name"] or username
         body = f"""
 <section class="split">
@@ -719,14 +742,24 @@ class AccountHandler(BaseHTTPRequestHandler):
   </div>
   <aside class="panel">
     <h2>Subscription URL</h2>
-    <p><code>{html.escape(sub_url)}</code></p>
+    <p><code id="subscription-url">{html.escape(sub_url)}</code></p>
     <div class="row">
       <a class="button" href="{html.escape(sub_url)}">Open subscription</a>
+      <button class="secondary" type="button" data-copy="subscription-url">Copy subscription</button>
       <form method="post" action="/logout"><button class="secondary" type="submit">Sign out</button></form>
     </div>
     <p class="muted">Copy this URL into Clash Verge, V2RayN, Sing-box, or any compatible client.</p>
   </aside>
-</section>"""
+</section>
+<script>
+document.addEventListener("click", function (event) {{
+  var target = event.target;
+  if (!target || !target.dataset || !target.dataset.copy) return;
+  var source = document.getElementById(target.dataset.copy);
+  if (!source || !navigator.clipboard) return;
+  navigator.clipboard.writeText(source.textContent || "");
+}});
+</script>"""
         self.html(200, page("Dashboard", body))
 
     def logout(self) -> None:
