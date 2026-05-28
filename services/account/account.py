@@ -304,7 +304,7 @@ def marzban_users(token: str) -> list[dict[str, Any]]:
     return []
 
 
-def refresh_subscription_url(username: str) -> str | None:
+def fetch_marzban_subscription_url(username: str) -> str | None:
     if not MARZBAN_ADMIN_USER or not MARZBAN_ADMIN_PASSWORD:
         return None
     token = marzban_login(MARZBAN_ADMIN_USER, MARZBAN_ADMIN_PASSWORD)
@@ -316,9 +316,9 @@ def refresh_subscription_url(username: str) -> str | None:
     return sub_url
 
 
-def update_bound_account_subscription_url(username: str) -> str:
+def reset_bound_account_subscription_url(username: str) -> str:
     try:
-        fresh_sub_url = refresh_subscription_url(username)
+        fresh_sub_url = fetch_marzban_subscription_url(username)
         if not fresh_sub_url:
             return "failed"
         with db() as conn:
@@ -432,6 +432,11 @@ def page(title: str, body: str, *, narrow: bool = False) -> bytes:
       font-weight: 650;
     }}
     .button.secondary, button.secondary {{ border-color: var(--line); background: rgba(255,255,255,.06); }}
+    .button.danger, button.danger {{
+      border-color: rgba(255,123,123,.58);
+      background: rgba(255,123,123,.14);
+      color: #ffd2d2;
+    }}
     .row {{ display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }}
     .grid {{ display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 12px; }}
     .metric {{ border: 1px solid var(--line); border-radius: 8px; padding: 14px; background: rgba(255,255,255,.045); }}
@@ -487,8 +492,8 @@ class AccountHandler(BaseHTTPRequestHandler):
             self.login_submit()
         elif path == "/register":
             self.register_submit()
-        elif path == "/dashboard/refresh-subscription":
-            self.refresh_subscription_submit()
+        elif path == "/dashboard/reset-subscription":
+            self.reset_subscription_submit()
         elif path == "/logout":
             self.logout()
         elif path == "/invites/login":
@@ -497,8 +502,8 @@ class AccountHandler(BaseHTTPRequestHandler):
             self.admin_logout()
         elif path == "/invites/create":
             self.admin_create_invite()
-        elif path == "/invites/update-subscription":
-            self.admin_update_subscription()
+        elif path == "/invites/reset-subscription":
+            self.admin_reset_subscription()
         elif path == "/invites/revoke":
             self.admin_revoke_invite()
         else:
@@ -745,11 +750,11 @@ class AccountHandler(BaseHTTPRequestHandler):
         query = urllib.parse.parse_qs(urllib.parse.urlsplit(self.path).query)
         update_status = query.get("subscription", [""])[0]
         if update_status == "updated":
-            notice = '<div class="alert ok">Subscription URL updated.</div>'
+            notice = '<div class="alert ok">Subscription URL reset.</div>'
         elif update_status == "current":
-            notice = '<div class="alert ok">Subscription URL is already current.</div>'
+            notice = '<div class="alert ok">Subscription URL already matches Marzban.</div>'
         elif update_status == "failed":
-            notice = '<div class="alert">Subscription URL could not be updated. Try again later.</div>'
+            notice = '<div class="alert">Subscription URL could not be reset. Try again later.</div>'
         else:
             notice = ""
         body = f"""
@@ -773,7 +778,7 @@ class AccountHandler(BaseHTTPRequestHandler):
     <p><code id="subscription-url">{html.escape(sub_url)}</code></p>
     <div class="row">
       <button type="button" data-copy="subscription-url">Copy subscription URL</button>
-      <form method="post" action="/dashboard/refresh-subscription"><button class="secondary" type="submit">Update subscription URL</button></form>
+      <form method="post" action="/dashboard/reset-subscription"><button class="danger" type="submit">Reset subscription URL</button></form>
       <form method="post" action="/logout"><button class="secondary" type="submit">Sign out</button></form>
     </div>
     <p class="muted">Copy this URL into Clash Verge, V2RayN, Sing-box, or any compatible client.</p>
@@ -790,7 +795,7 @@ document.addEventListener("click", function (event) {{
 </script>"""
         self.html(200, page("Dashboard", body))
 
-    def refresh_subscription_submit(self) -> None:
+    def reset_subscription_submit(self) -> None:
         sess = self.user_session()
         if not sess:
             self.redirect("/login")
@@ -802,7 +807,7 @@ document.addEventListener("click", function (event) {{
             self.redirect("/login", cookies_to_clear=[(SESSION_COOKIE, "/")])
             return
 
-        status = update_bound_account_subscription_url(username)
+        status = reset_bound_account_subscription_url(username)
         self.redirect(f"/dashboard?subscription={status}")
 
     def logout(self) -> None:
@@ -862,11 +867,11 @@ document.addEventListener("click", function (event) {{
         query = urllib.parse.parse_qs(urllib.parse.urlsplit(self.path).query)
         update_status = query.get("subscription", [""])[0]
         if update_status == "updated":
-            notice = '<div class="alert ok">Subscription URL updated.</div>'
+            notice = '<div class="alert ok">Subscription URL reset.</div>'
         elif update_status == "current":
-            notice = '<div class="alert ok">Subscription URL is already current.</div>'
+            notice = '<div class="alert ok">Subscription URL already matches Marzban.</div>'
         elif update_status == "failed":
-            notice = '<div class="alert">Subscription URL could not be updated.</div>'
+            notice = '<div class="alert">Subscription URL could not be reset.</div>'
         else:
             notice = ""
 
@@ -886,9 +891,9 @@ document.addEventListener("click", function (event) {{
                 invite_cell = f'<code id="{sub_id}">{html.escape(account["subscription_url"] or "-")}</code>'
                 action = (
                     f'<button class="secondary" type="button" data-copy="{sub_id}">Copy URL</button>'
-                    '<form method="post" action="/invites/update-subscription">'
+                    '<form method="post" action="/invites/reset-subscription">'
                     f'<input type="hidden" name="username" value="{html.escape(username)}">'
-                    '<button class="secondary" type="submit">Update URL</button>'
+                    '<button class="danger" type="submit">Reset URL</button>'
                     '</form>'
                 )
             elif invite:
@@ -1029,7 +1034,7 @@ document.addEventListener("click", function (event) {{
             conn.commit()
         self.redirect("/invites/")
 
-    def admin_update_subscription(self) -> None:
+    def admin_reset_subscription(self) -> None:
         if not self.admin_session():
             self.redirect("/invites/")
             return
@@ -1037,7 +1042,7 @@ document.addEventListener("click", function (event) {{
         if not USER_RE.match(username):
             self.redirect("/invites/?subscription=failed")
             return
-        status = update_bound_account_subscription_url(username)
+        status = reset_bound_account_subscription_url(username)
         self.redirect(f"/invites/?subscription={status}")
 
     def admin_revoke_invite(self) -> None:
