@@ -43,6 +43,7 @@ VXTURE_JWT_SECRET = os.environ.get("VXTURE_JWT_SECRET", os.environ.get("JWT_SECR
 VXTURE_COOKIE_ACCESS = os.environ.get("VXTURE_COOKIE_ACCESS", "ry_access_token")
 VXTURE_LOGIN_URL = os.environ.get("VXTURE_LOGIN_URL", "https://console.vxture.com/zh-CN/signin")
 VXTURE_SSO_URL = os.environ.get("VXTURE_SSO_URL", "")
+PUBLIC_ACCOUNT_URL = os.environ.get("PUBLIC_ACCOUNT_URL", f"https://{os.environ.get('EDGE_DOMAIN', 'vpn.ruyin.ai')}").rstrip("/")
 INVITE_ADMIN_PERMISSION = os.environ.get(
     "UMBRA_INVITE_ADMIN_PERMISSION",
     os.environ.get("UMRBA_INVITE_ADMIN_PERMISSION", "ruyin.vpn.invite.manage"),
@@ -204,6 +205,12 @@ def generate_invite_code() -> str:
     for _ in range(4):
         groups.append("".join(secrets.choice(INVITE_ALPHABET) for _ in range(4)))
     return "RY-" + "-".join(groups)
+
+
+def invite_url(code: str | None) -> str | None:
+    if not code:
+        return None
+    return f"{PUBLIC_ACCOUNT_URL}/register?invite={urllib.parse.quote(code)}"
 
 
 def format_bytes(value: Any) -> str:
@@ -955,6 +962,7 @@ class AccountHandler(BaseHTTPRequestHandler):
                     "bindingState": state,
                     "displayName": display_name,
                     "inviteCode": invite_code,
+                    "inviteUrl": invite_url(invite_code),
                     "inviteId": invite["id"] if invite else None,
                     "subscriptionUrl": subscription_url,
                 }
@@ -1010,7 +1018,7 @@ class AccountHandler(BaseHTTPRequestHandler):
                 (invite_hash(code), code, username, sub_url, expires_at, iso_now()),
             )
             conn.commit()
-        self.json(200, {"status": "created", "username": username, "inviteCode": code})
+        self.json(200, {"status": "created", "username": username, "inviteCode": code, "inviteUrl": invite_url(code)})
 
     def api_admin_reset_subscription(self) -> None:
         if not self.require_invite_admin():

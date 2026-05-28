@@ -44,6 +44,7 @@ export interface AdminUserRow {
   bindingState: "bound" | "invite_pending" | "pending_binding";
   displayName: string | null;
   inviteCode: string | null;
+  inviteUrl: string | null;
   inviteId: number | null;
   subscriptionUrl: string | null;
 }

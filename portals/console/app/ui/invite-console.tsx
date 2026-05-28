@@ -44,11 +44,11 @@ export function InviteConsole() {
     setBusy(username);
     setMessage("");
     try {
-      const payload = await api<{ inviteCode?: string }>("/api/account/admin/invites", {
+      const payload = await api<{ inviteCode?: string; inviteUrl?: string }>("/api/account/admin/invites", {
         method: "POST",
         body: JSON.stringify({ username }),
       });
-      setMessage(payload.inviteCode ? `Invite for ${username}: ${payload.inviteCode}` : "Invite generated.");
+      setMessage(payload.inviteUrl ? `Invite link for ${username}: ${payload.inviteUrl}` : "Invite generated.");
       await refresh();
     } finally {
       setBusy("");
@@ -134,7 +134,7 @@ export function InviteConsole() {
                   <th>Expire</th>
                   <th>Last online</th>
                   <th>Binding</th>
-                  <th>Subscription / Invite</th>
+                  <th>Subscription / Invite link</th>
                   <th>Actions</th>
                 </tr>
               </thead>
@@ -149,8 +149,8 @@ export function InviteConsole() {
                     <td>{row.onlineText}</td>
                     <td>{bindingLabel(row)}</td>
                     <td>
-                      {row.subscriptionUrl || row.inviteCode ? (
-                        <code className="code-box">{row.subscriptionUrl || row.inviteCode}</code>
+                      {row.subscriptionUrl || row.inviteUrl || row.inviteCode ? (
+                        <code className="code-box">{row.subscriptionUrl || row.inviteUrl || row.inviteCode}</code>
                       ) : (
                         <span className="muted">-</span>
                       )}
@@ -177,10 +177,18 @@ export function InviteConsole() {
                           <>
                             <button
                               className="btn btn-secondary"
-                              onClick={() => navigator.clipboard.writeText(row.inviteCode || "")}
+                              onClick={() => navigator.clipboard.writeText(row.inviteUrl || row.inviteCode || "")}
                             >
-                              Copy
+                              Copy link
                             </button>
+                            {row.inviteCode ? (
+                              <button
+                                className="btn btn-secondary"
+                                onClick={() => navigator.clipboard.writeText(row.inviteCode || "")}
+                              >
+                                Copy code
+                              </button>
+                            ) : null}
                             <button
                               className="btn btn-secondary"
                               disabled={busy === String(row.inviteId)}

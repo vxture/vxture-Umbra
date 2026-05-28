@@ -250,8 +250,21 @@ Planned behavior:
 - The final binding still happens only through `POST /api/account/bind-invite`
   after Vxture identity is present.
 
-For the first SSO rollout, the existing manual two-step flow remains acceptable:
-sign in first, then paste the invite code in Ruyin.
+Invite admins should distribute invite links, not bare codes:
+
+```text
+https://vpn.ruyin.ai/register?invite=<code>
+```
+
+The invite console should show the link in the `Subscription / Invite link`
+column after an invite is generated. Its primary copy action should copy the
+full invite link. A secondary action may copy the bare invite code for
+compatibility.
+
+For the current rollout, the link lands on the existing `/register` page and the
+user can still paste or confirm the invite code manually. The next UX step is to
+prefill `invite` from the query string and preserve it through SSO when the user
+is anonymous.
 
 ## Confirmed Vxture Contract
 

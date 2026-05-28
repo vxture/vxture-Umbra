@@ -366,6 +366,7 @@ CHECKS: list[tuple[str, Path, list[str]]] = [
             "AUTH_BFF_URL",
             "AUTH_INTERNAL_TOKEN",
             "VXTURE_SSO_URL",
+            "PUBLIC_ACCOUNT_URL",
             "./services/account/account.py:/app/account.py:ro",
             "${DATA_DIR}/account:/var/lib/umbra-account",
         ],
@@ -437,6 +438,17 @@ CHECKS: list[tuple[str, Path, list[str]]] = [
         ],
     ),
     (
+        "invite console distributes invite links",
+        Path("portals/console/app/ui/invite-console.tsx"),
+        [
+            "inviteUrl",
+            "Invite link",
+            "Subscription / Invite link",
+            "Copy link",
+            "Copy code",
+        ],
+    ),
+    (
         "account API accepts Vxture SSO bindings",
         Path("services/account/account.py"),
         [
@@ -445,6 +457,9 @@ CHECKS: list[tuple[str, Path, list[str]]] = [
             "vxture_account_id",
             "def api_bind_invite",
             "def api_admin_invites",
+            "PUBLIC_ACCOUNT_URL",
+            "def invite_url",
+            "inviteUrl",
             "UMBRA_INVITE_ADMIN_PERMISSION",
         ],
     ),
