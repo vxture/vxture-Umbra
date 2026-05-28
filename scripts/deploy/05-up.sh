@@ -35,6 +35,10 @@ docker compose up -d --build
 log_step "Restarting code-mounted Python services..."
 docker compose restart umbra-subproxy umbra-account
 
+log_step "Reloading nginx rendered configuration..."
+docker compose exec -T umbra-nginx nginx -t
+docker compose restart umbra-nginx
+
 log_step "Waiting for services to initialize (15s)..."
 sleep 15
 
