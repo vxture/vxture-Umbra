@@ -126,6 +126,7 @@ services:
       PORT: "3000"
       AUTH_BFF_URL: "${AUTH_BFF_URL}"
       AUTH_INTERNAL_TOKEN: "${AUTH_INTERNAL_TOKEN}"
+      VXTURE_SSO_URL: "${VXTURE_SSO_URL:-}"
       NEXT_PUBLIC_RUYIN_ACCOUNT_URL: "https://${EDGE_DOMAIN}"
     networks:
       - umbra-net

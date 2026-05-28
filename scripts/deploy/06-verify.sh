@@ -132,6 +132,20 @@ check_http "$EDGE_DOMAIN"        "https://$EDGE_DOMAIN"
 check_http_body_contains "$EDGE_DOMAIN account home" "https://$EDGE_DOMAIN/" "Ruyin Account"
 check_http "$EDGE_DOMAIN account login" "https://$EDGE_DOMAIN/login"
 check_http "$EDGE_DOMAIN account registration" "https://$EDGE_DOMAIN/register"
+if [[ -n "${VXTURE_SSO_URL:-}" ]]; then
+  sso_headers="$(mktemp)"
+  sso_code=$(curl -sk --max-time 10 -D "$sso_headers" -o /dev/null -w "%{http_code}" "https://$EDGE_DOMAIN/auth/start" || true)
+  if [[ "$sso_code" =~ ^(301|302|303|307|308)$ ]] \
+     && grep -Fqi "location: $VXTURE_SSO_URL?ctx=" "$sso_headers"; then
+    log_ok "$EDGE_DOMAIN SSO start redirects to Vxture ($sso_code)"
+    (( ++PASS ))
+  else
+    log_fail "$EDGE_DOMAIN SSO start redirect invalid (got $sso_code)"
+    sed -n '1,20p' "$sso_headers" || true
+    (( ++FAIL ))
+  fi
+  rm -f "$sso_headers"
+fi
 check_http "$PASS_DOMAIN"        "https://$PASS_DOMAIN"
 check_http "$VAULT_DOMAIN"       "https://$VAULT_DOMAIN"
 

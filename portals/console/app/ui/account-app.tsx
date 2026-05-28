@@ -25,9 +25,7 @@ async function fetchJson<T>(url: string, init?: RequestInit): Promise<T> {
 
 function ssoStartUrl(session: SessionPayload) {
   if (session.ssoUrl) {
-    const url = new URL(session.ssoUrl);
-    url.searchParams.set("returnTo", window.location.href);
-    return url.toString();
+    return "/auth/start";
   }
   return session.loginUrl || "https://console.vxture.com/zh-CN/signin";
 }

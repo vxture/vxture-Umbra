@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
+import { timingSafeEqual } from "node:crypto";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
+
+const STATE_COOKIE = "umbra_sso_state";
 
 function authBffUrl() {
   return (process.env.AUTH_BFF_URL || "").replace(/\/+$/, "");
@@ -25,14 +28,40 @@ function readSetCookies(headers: Headers) {
   return single ? [single] : [];
 }
 
+function stateMatches(received: string | null, expected: string | undefined) {
+  if (!received || !expected) return false;
+  const receivedBuffer = Buffer.from(received);
+  const expectedBuffer = Buffer.from(expected);
+  if (receivedBuffer.length !== expectedBuffer.length) return false;
+  return timingSafeEqual(receivedBuffer, expectedBuffer);
+}
+
+function redirectClearingState(path: string, target: string) {
+  const response = NextResponse.redirect(new URL(path, target));
+  response.cookies.set(STATE_COOKIE, "", {
+    httpOnly: true,
+    secure: true,
+    sameSite: "lax",
+    path: "/auth",
+    maxAge: 0,
+  });
+  return response;
+}
+
 export async function GET(request: NextRequest) {
   const token = request.nextUrl.searchParams.get("token");
+  const state = request.nextUrl.searchParams.get("state");
+  const expectedState = request.cookies.get(STATE_COOKIE)?.value;
   const authUrl = authBffUrl();
   const authSecret = internalToken();
   const target = appUrl(request);
 
+  if (!stateMatches(state, expectedState)) {
+    return redirectClearingState("/login?sso=state", target);
+  }
+
   if (!token || !authUrl || !authSecret) {
-    return NextResponse.redirect(new URL("/?sso=missing", target));
+    return redirectClearingState("/login?sso=missing", target);
   }
 
   const verify = await fetch(`${authUrl}/auth/crossdomain/verify`, {
@@ -46,7 +75,7 @@ export async function GET(request: NextRequest) {
   });
 
   if (!verify.ok) {
-    return NextResponse.redirect(new URL("/?sso=invalid", target));
+    return redirectClearingState("/login?sso=invalid", target);
   }
 
   const payload = (await verify.json().catch(() => ({}))) as {
@@ -71,10 +100,10 @@ export async function GET(request: NextRequest) {
   });
 
   if (!sign.ok) {
-    return NextResponse.redirect(new URL("/?sso=failed", target));
+    return redirectClearingState("/login?sso=failed", target);
   }
 
-  const response = NextResponse.redirect(new URL("/dashboard", target));
+  const response = redirectClearingState("/dashboard", target);
   for (const cookie of readSetCookies(sign.headers)) {
     response.headers.append("set-cookie", cookie);
   }

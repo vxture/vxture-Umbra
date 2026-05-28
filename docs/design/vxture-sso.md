@@ -1,8 +1,7 @@
 # Vxture SSO Integration Design
 
-This document defines the planned SSO handoff between Umbra/Ruyin and the
-Vxture console. It is a design record only. Implementation starts after this
-contract is confirmed.
+This document defines the SSO handoff between Umbra/Ruyin and the Vxture
+console.
 
 ## Status
 
@@ -23,7 +22,7 @@ VXTURE_SSO_URL=
 After Vxture publishes the endpoint, set:
 
 ```env
-VXTURE_SSO_URL=https://console.vxture.com/zh-CN/sso/ruyin
+VXTURE_SSO_URL=https://console.vxture.com/zh-CN/sso/start
 ```
 
 ## Goals
@@ -55,16 +54,16 @@ GET https://vpn.ruyin.ai/auth/start
 The route redirects to:
 
 ```text
-https://console.vxture.com/zh-CN/sso/ruyin?ctx=<json>
+https://console.vxture.com/zh-CN/sso/start?ctx=<json>
 ```
 
 The `ctx` JSON object:
 
 ```json
 {
-  "from": "umbra-vpn",
+  "from": "ruyin",
   "returnTo": "https://vpn.ruyin.ai/auth/callback",
-  "caller": "Ruyin VPN",
+  "caller": "Ruyin",
   "state": "<uuid>"
 }
 ```
@@ -131,7 +130,7 @@ HTTP 302 Location: /login?error=sso_state
 Umbra console portal:
 
 ```env
-VXTURE_SSO_URL=https://console.vxture.com/zh-CN/sso/ruyin
+VXTURE_SSO_URL=https://console.vxture.com/zh-CN/sso/start
 AUTH_BFF_URL=<vxture-auth-bff-origin>
 AUTH_INTERNAL_TOKEN=<internal-sign-token>
 NEXT_PUBLIC_RUYIN_ACCOUNT_URL=https://vpn.ruyin.ai
@@ -142,7 +141,7 @@ Umbra account API:
 ```env
 JWT_SECRET=<same-secret-used-for-ry_access_token>
 VXTURE_LOGIN_URL=https://console.vxture.com/zh-CN/signin
-VXTURE_SSO_URL=https://console.vxture.com/zh-CN/sso/ruyin
+VXTURE_SSO_URL=https://console.vxture.com/zh-CN/sso/start
 ```
 
 Current deployment may keep `VXTURE_SSO_URL` empty until the Vxture endpoint is
@@ -160,7 +159,7 @@ Umbra account web
   -> 302 VXTURE_SSO_URL?ctx=<json>
 
 Browser
-  -> GET console.vxture.com/zh-CN/sso/ruyin?ctx=<json>
+  -> GET console.vxture.com/zh-CN/sso/start?ctx=<json>
 
 Vxture SSO
   -> authenticate user if needed
@@ -175,17 +174,14 @@ Umbra account web
   -> 302 /dashboard
 ```
 
-## Required Umbra Changes After Confirmation
+## Implemented Umbra Behavior
 
-1. Add `GET /auth/start` as a server route in `portals/console`.
-2. Change the login button to link to `/auth/start` when `VXTURE_SSO_URL` is
-   configured.
-3. Keep the fallback login link to `VXTURE_LOGIN_URL` while `VXTURE_SSO_URL` is
+1. `GET /auth/start` is a server route in `portals/console`.
+2. The login button links to `/auth/start` when `VXTURE_SSO_URL` is configured.
+3. The login button falls back to `VXTURE_LOGIN_URL` while `VXTURE_SSO_URL` is
    empty.
-4. Add state cookie validation to `GET /auth/callback`.
-5. Clear the state cookie after callback handling.
-6. Update deploy verification to check `/auth/start` only when
-   `VXTURE_SSO_URL` is configured.
+4. `GET /auth/callback` validates the state cookie before token exchange.
+5. `GET /auth/callback` clears the state cookie after callback handling.
 
 ## Acceptance Criteria
 
@@ -205,4 +201,4 @@ Umbra account web
 - Confirm whether Vxture returns `state` as a top-level query parameter exactly
   named `state`.
 - Confirm whether Vxture requires any fixed allowed origin or caller registry
-  for `from: "umbra-vpn"`.
+  for `from: "ruyin"`.
