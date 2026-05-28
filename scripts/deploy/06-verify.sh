@@ -107,7 +107,7 @@ log_step "Container health..."
 
 CONTAINERS=(
   umbra-nginx umbra-marzban
-  umbra-subproxy umbra-account
+  umbra-subproxy umbra-account umbra-account-web
   umbra-vaultwarden umbra-portal
 )
 

@@ -39,6 +39,24 @@ MARZBAN_BASE_URL = os.environ.get("MARZBAN_BASE_URL", "https://umbra-marzban:800
 MARZBAN_ADMIN_USER = os.environ.get("MARZBAN_ADMIN_USER", "")
 MARZBAN_ADMIN_PASSWORD = os.environ.get("MARZBAN_ADMIN_PASSWORD", "")
 PROFILE_PREFIX = (os.environ.get("SUB_PROFILE_PREFIX", "Ruyin").strip() or "Ruyin")
+VXTURE_JWT_SECRET = os.environ.get("VXTURE_JWT_SECRET", os.environ.get("JWT_SECRET", ""))
+VXTURE_COOKIE_ACCESS = os.environ.get("VXTURE_COOKIE_ACCESS", "ry_access_token")
+VXTURE_LOGIN_URL = os.environ.get("VXTURE_LOGIN_URL", "https://console.vxture.com/zh-CN/signin")
+VXTURE_SSO_URL = os.environ.get("VXTURE_SSO_URL", "")
+INVITE_ADMIN_PERMISSION = os.environ.get(
+    "UMBRA_INVITE_ADMIN_PERMISSION",
+    os.environ.get("UMRBA_INVITE_ADMIN_PERMISSION", "ruyin.vpn.invite.manage"),
+)
+INVITE_ADMIN_EMAILS = {
+    item.strip().casefold()
+    for item in os.environ.get("UMBRA_INVITE_ADMIN_EMAILS", "").split(",")
+    if item.strip()
+}
+INVITE_ADMIN_ACCOUNT_IDS = {
+    item.strip()
+    for item in os.environ.get("UMBRA_INVITE_ADMIN_ACCOUNT_IDS", "").split(",")
+    if item.strip()
+}
 
 USER_RE = re.compile(r"^[A-Za-z][A-Za-z0-9_-]{1,63}$")
 INVITE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
@@ -104,6 +122,56 @@ def verify_payload(value: str | None) -> dict[str, Any] | None:
     if exp and exp < int(time.time()):
         return None
     return payload
+
+
+def verify_vxture_jwt(value: str | None) -> dict[str, Any] | None:
+    if not VXTURE_JWT_SECRET or not value or value.count(".") != 2:
+        return None
+    header_text, body_text, sig_text = value.split(".")
+    try:
+        header = json.loads(unb64url(header_text).decode("utf-8"))
+        if header.get("alg") != "HS256":
+            return None
+        expected = hmac.new(
+            VXTURE_JWT_SECRET.encode("utf-8"),
+            f"{header_text}.{body_text}".encode("ascii"),
+            hashlib.sha256,
+        ).digest()
+        if not hmac.compare_digest(sig_text, b64url(expected)):
+            return None
+        payload = json.loads(unb64url(body_text).decode("utf-8"))
+    except Exception:
+        return None
+    exp = int(payload.get("exp", 0) or 0)
+    if exp and exp < int(time.time()):
+        return None
+    if payload.get("userType") != "tenant_user" or payload.get("authScope") != "tenant-console":
+        return None
+    return payload
+
+
+def public_vxture_user(payload: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "id": str(payload.get("sub") or ""),
+        "email": str(payload.get("email") or ""),
+        "tenantId": str(payload.get("tenantId") or ""),
+        "role": str(payload.get("role") or "member"),
+        "permissions": payload.get("permissions") if isinstance(payload.get("permissions"), list) else [],
+        "provider": str(payload.get("provider") or ""),
+    }
+
+
+def can_manage_invites(payload: dict[str, Any]) -> bool:
+    user_id = str(payload.get("sub") or "")
+    email = str(payload.get("email") or "").casefold()
+    permissions = payload.get("permissions")
+    if not isinstance(permissions, list):
+        permissions = []
+    return (
+        bool(INVITE_ADMIN_PERMISSION and INVITE_ADMIN_PERMISSION in permissions)
+        or bool(user_id and user_id in INVITE_ADMIN_ACCOUNT_IDS)
+        or bool(email and email in INVITE_ADMIN_EMAILS)
+    )
 
 
 def invite_hash(code: str) -> str:
@@ -233,6 +301,14 @@ def init_db() -> None:
             conn.execute("ALTER TABLE accounts ADD COLUMN display_name TEXT")
         if "display_name_key" not in columns:
             conn.execute("ALTER TABLE accounts ADD COLUMN display_name_key TEXT")
+        if "vxture_account_id" not in columns:
+            conn.execute("ALTER TABLE accounts ADD COLUMN vxture_account_id TEXT")
+        if "vxture_email" not in columns:
+            conn.execute("ALTER TABLE accounts ADD COLUMN vxture_email TEXT")
+        if "vxture_tenant_id" not in columns:
+            conn.execute("ALTER TABLE accounts ADD COLUMN vxture_tenant_id TEXT")
+        if "bound_at" not in columns:
+            conn.execute("ALTER TABLE accounts ADD COLUMN bound_at TEXT")
         conn.execute(
             """
             UPDATE accounts
@@ -246,6 +322,13 @@ def init_db() -> None:
             CREATE UNIQUE INDEX IF NOT EXISTS idx_account_display_name_key
               ON accounts(display_name_key)
               WHERE disabled = 0
+            """
+        )
+        conn.execute(
+            """
+            CREATE UNIQUE INDEX IF NOT EXISTS idx_account_vxture_account_id
+              ON accounts(vxture_account_id)
+              WHERE vxture_account_id IS NOT NULL AND disabled = 0
             """
         )
 
@@ -346,6 +429,127 @@ def token_path_from_url(subscription_url: str) -> str:
 def subscription_info(subscription_url: str) -> dict[str, Any]:
     path = token_path_from_url(subscription_url)
     return request_json(f"{MARZBAN_BASE_URL}{path}/info", timeout=10)
+
+
+def account_for_vxture_user(vxture_user_id: str) -> sqlite3.Row | None:
+    if not vxture_user_id:
+        return None
+    with db() as conn:
+        return conn.execute(
+            "SELECT * FROM accounts WHERE vxture_account_id = ? AND disabled = 0",
+            (vxture_user_id,),
+        ).fetchone()
+
+
+def account_payload(row: sqlite3.Row | None) -> dict[str, Any] | None:
+    if not row:
+        return None
+    sub_url = row["subscription_url"]
+    try:
+        info = subscription_info(sub_url)
+    except Exception:
+        info = {}
+    used = int(info.get("used_traffic") or 0)
+    total = int(info.get("data_limit") or 0)
+    return {
+        "username": row["username"],
+        "displayName": row["display_name"] or row["username"],
+        "profileName": f"{PROFILE_PREFIX}-{row['username']}",
+        "subscriptionUrl": sub_url,
+        "status": str(info.get("status") or "unknown"),
+        "usedTraffic": used,
+        "dataLimit": total,
+        "remainingTraffic": max(total - used, 0) if total else 0,
+        "expire": info.get("expire"),
+        "onlineAt": info.get("online_at"),
+        "usedText": format_bytes(used),
+        "dataLimitText": format_bytes(total) if total else "Unlimited",
+        "remainingText": format_bytes(max(total - used, 0)) if total else "Unlimited",
+        "expireText": format_epoch(info.get("expire")),
+        "onlineText": format_datetime(info.get("online_at")),
+        "vxtureAccountId": row["vxture_account_id"],
+        "vxtureEmail": row["vxture_email"],
+        "vxtureTenantId": row["vxture_tenant_id"],
+    }
+
+
+def bind_invite_to_vxture_account(code: str, user: dict[str, Any]) -> dict[str, Any]:
+    user_id = str(user.get("id") or "")
+    if not user_id:
+        raise ValueError("No active Vxture session.")
+    if account_for_vxture_user(user_id):
+        raise ValueError("This Vxture account is already bound.")
+
+    code_digest = invite_hash(code)
+    conn: sqlite3.Connection | None = None
+    try:
+        conn = db()
+        conn.execute("BEGIN IMMEDIATE")
+        invite = conn.execute("SELECT * FROM invites WHERE code_hash = ?", (code_digest,)).fetchone()
+        if not invite or invite["disabled"] or invite["used_at"]:
+            raise ValueError("Invitation is invalid or already used.")
+        expires = parse_iso(invite["expires_at"])
+        if expires and expires < utcnow():
+            raise ValueError("Invitation is invalid or already used.")
+        if conn.execute("SELECT id FROM accounts WHERE username = ?", (invite["username"],)).fetchone():
+            raise ValueError("This user code is already bound.")
+
+        info = subscription_info(invite["subscription_url"])
+        if info.get("username") != invite["username"]:
+            raise ValueError("Invitation target could not be verified.")
+
+        display_name = str(user.get("email") or user_id)
+        display_name_key = display_name.casefold()
+        now = iso_now()
+        cur = conn.execute(
+            """
+            INSERT INTO accounts(
+              username, display_name, display_name_key,
+              password_salt, password_hash, subscription_url, created_at,
+              vxture_account_id, vxture_email, vxture_tenant_id, bound_at
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                invite["username"],
+                display_name,
+                display_name_key,
+                "vxture-sso",
+                "vxture-sso",
+                invite["subscription_url"],
+                now,
+                user_id,
+                user.get("email") or "",
+                user.get("tenantId") or "",
+                now,
+            ),
+        )
+        account_id = cur.lastrowid
+        conn.execute(
+            """
+            UPDATE invites
+               SET used_at = ?, used_by_account_id = ?, code_plain = NULL
+             WHERE id = ?
+            """,
+            (now, account_id, invite["id"]),
+        )
+        conn.commit()
+    except Exception:
+        if conn is not None:
+            conn.rollback()
+        raise
+    finally:
+        if conn is not None:
+            conn.close()
+
+    account = account_for_vxture_user(user_id)
+    return account_payload(account) or {}
+
+
+def marzban_admin_token() -> str:
+    if not MARZBAN_ADMIN_USER or not MARZBAN_ADMIN_PASSWORD:
+        raise ValueError("Marzban admin credentials are not configured.")
+    return marzban_login(MARZBAN_ADMIN_USER, MARZBAN_ADMIN_PASSWORD)
 
 
 def get_cookie(header: str | None, name: str) -> str | None:
@@ -473,6 +677,14 @@ class AccountHandler(BaseHTTPRequestHandler):
         path = urllib.parse.urlsplit(self.path).path
         if path == "/health":
             self.text(200, "ok\n")
+        elif path == "/api/account/health":
+            self.json(200, {"status": "ok"})
+        elif path == "/api/account/session":
+            self.api_session()
+        elif path == "/api/account/dashboard":
+            self.api_dashboard()
+        elif path == "/api/account/admin/invites":
+            self.api_admin_invites()
         elif path == "/":
             self.login_page()
         elif path == "/login":
@@ -488,7 +700,17 @@ class AccountHandler(BaseHTTPRequestHandler):
 
     def do_POST(self) -> None:
         path = urllib.parse.urlsplit(self.path).path
-        if path == "/login":
+        if path == "/api/account/bind-invite":
+            self.api_bind_invite()
+        elif path == "/api/account/reset-subscription":
+            self.api_reset_subscription()
+        elif path == "/api/account/admin/invites":
+            self.api_admin_create_invite()
+        elif path == "/api/account/admin/reset-subscription":
+            self.api_admin_reset_subscription()
+        elif path == "/api/account/admin/revoke":
+            self.api_admin_revoke_invite()
+        elif path == "/login":
             self.login_submit()
         elif path == "/register":
             self.register_submit()
@@ -514,6 +736,24 @@ class AccountHandler(BaseHTTPRequestHandler):
         raw = self.rfile.read(length).decode("utf-8", errors="replace")
         parsed = urllib.parse.parse_qs(raw, keep_blank_values=True)
         return {key: values[-1].strip() for key, values in parsed.items()}
+
+    def json_body(self) -> dict[str, Any]:
+        length = int(self.headers.get("Content-Length", "0") or "0")
+        if length <= 0:
+            return {}
+        raw = self.rfile.read(length).decode("utf-8", errors="replace")
+        try:
+            payload = json.loads(raw)
+        except json.JSONDecodeError:
+            return {}
+        return payload if isinstance(payload, dict) else {}
+
+    def current_vxture_payload(self) -> dict[str, Any] | None:
+        return verify_vxture_jwt(get_cookie(self.headers.get("Cookie"), VXTURE_COOKIE_ACCESS))
+
+    def current_vxture_user(self) -> dict[str, Any] | None:
+        payload = self.current_vxture_payload()
+        return public_vxture_user(payload) if payload else None
 
     def user_session(self) -> dict[str, Any] | None:
         payload = verify_payload(get_cookie(self.headers.get("Cookie"), SESSION_COOKIE))
@@ -563,6 +803,15 @@ class AccountHandler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(content)
 
+    def json(self, status: int, payload: dict[str, Any] | list[Any]) -> None:
+        raw = json.dumps(payload, separators=(",", ":")).encode("utf-8")
+        self.send_response(status)
+        self.send_header("Content-Type", "application/json; charset=utf-8")
+        self.send_header("Cache-Control", "no-store")
+        self.send_header("Content-Length", str(len(raw)))
+        self.end_headers()
+        self.wfile.write(raw)
+
     def text(self, status: int, content: str) -> None:
         raw = content.encode("utf-8")
         self.send_response(status)
@@ -581,6 +830,210 @@ class AccountHandler(BaseHTTPRequestHandler):
 
     def not_found(self) -> None:
         self.text(404, "not found\n")
+
+    def api_unauthorized(self) -> None:
+        self.json(401, {"status": "anonymous", "loginUrl": VXTURE_LOGIN_URL, "ssoUrl": VXTURE_SSO_URL})
+
+    def api_forbidden(self) -> None:
+        self.json(403, {"status": "forbidden"})
+
+    def api_session(self) -> None:
+        auth_config = {"loginUrl": VXTURE_LOGIN_URL, "ssoUrl": VXTURE_SSO_URL}
+        user = self.current_vxture_user()
+        if not user:
+            self.json(200, {"status": "anonymous", **auth_config})
+            return
+        account = account_for_vxture_user(str(user["id"]))
+        self.json(
+            200,
+            {
+                "status": "active",
+                "user": user,
+                "canManageInvites": bool(self.current_vxture_payload() and can_manage_invites(self.current_vxture_payload() or {})),
+                "account": account_payload(account),
+                **auth_config,
+            },
+        )
+
+    def api_dashboard(self) -> None:
+        user = self.current_vxture_user()
+        if not user:
+            self.api_unauthorized()
+            return
+        account = account_for_vxture_user(str(user["id"]))
+        if not account:
+            self.json(404, {"status": "unbound", "user": user})
+            return
+        self.json(200, {"status": "bound", "user": user, "account": account_payload(account)})
+
+    def api_bind_invite(self) -> None:
+        user = self.current_vxture_user()
+        if not user:
+            self.api_unauthorized()
+            return
+        code = str(self.json_body().get("inviteCode") or "")
+        try:
+            account = bind_invite_to_vxture_account(code, user)
+        except ValueError as exc:
+            self.json(400, {"status": "failed", "message": str(exc)})
+            return
+        except Exception:
+            self.json(500, {"status": "failed", "message": "Invitation target could not be verified."})
+            return
+        self.json(200, {"status": "bound", "account": account})
+
+    def api_reset_subscription(self) -> None:
+        user = self.current_vxture_user()
+        if not user:
+            self.api_unauthorized()
+            return
+        account = account_for_vxture_user(str(user["id"]))
+        if not account:
+            self.json(404, {"status": "unbound"})
+            return
+        status = reset_bound_account_subscription_url(str(account["username"]))
+        account = account_for_vxture_user(str(user["id"]))
+        self.json(200, {"status": status, "account": account_payload(account)})
+
+    def require_invite_admin(self) -> dict[str, Any] | None:
+        payload = self.current_vxture_payload()
+        if not payload:
+            self.api_unauthorized()
+            return None
+        if not can_manage_invites(payload):
+            self.api_forbidden()
+            return None
+        return payload
+
+    def api_admin_invites(self) -> None:
+        if not self.require_invite_admin():
+            return
+        try:
+            token = marzban_admin_token()
+            users = marzban_users(token)
+        except Exception:
+            self.json(502, {"status": "marzban_unavailable", "users": []})
+            return
+        with db() as conn:
+            active_invites = conn.execute(
+                "SELECT * FROM invites WHERE used_at IS NULL AND disabled = 0 ORDER BY created_at DESC"
+            ).fetchall()
+            accounts = conn.execute(
+                "SELECT username, display_name, subscription_url, created_at, last_login_at, disabled, vxture_account_id, vxture_email, vxture_tenant_id FROM accounts ORDER BY username"
+            ).fetchall()
+
+        accounts_by_user = {row["username"]: row for row in accounts}
+        invites_by_user = {row["username"]: row for row in active_invites}
+        rows = []
+        for item in sorted(users, key=lambda user: str(user.get("username") or "").upper()):
+            username = str(item.get("username") or "")
+            if not username:
+                continue
+            account = accounts_by_user.get(username)
+            invite = invites_by_user.get(username)
+            state = "pending_binding"
+            invite_code = None
+            subscription_url = None
+            display_name = None
+            if account:
+                state = "bound"
+                subscription_url = account["subscription_url"]
+                display_name = account["display_name"] or username
+            elif invite:
+                state = "invite_pending"
+                invite_code = invite["code_plain"]
+            rows.append(
+                {
+                    "username": username,
+                    "status": str(item.get("status") or "-"),
+                    "usedTraffic": int(item.get("used_traffic") or 0),
+                    "dataLimit": int(item.get("data_limit") or 0),
+                    "usedText": format_bytes(item.get("used_traffic")),
+                    "dataLimitText": format_bytes(item.get("data_limit")) if item.get("data_limit") else "Unlimited",
+                    "expireText": format_epoch(item.get("expire")),
+                    "onlineText": format_datetime(item.get("online_at")),
+                    "bindingState": state,
+                    "displayName": display_name,
+                    "inviteCode": invite_code,
+                    "inviteId": invite["id"] if invite else None,
+                    "subscriptionUrl": subscription_url,
+                }
+            )
+        self.json(
+            200,
+            {
+                "status": "ok",
+                "users": rows,
+                "summary": {
+                    "users": len(rows),
+                    "bound": sum(1 for row in rows if row["bindingState"] == "bound"),
+                    "invitePending": sum(1 for row in rows if row["bindingState"] == "invite_pending"),
+                    "pendingBinding": sum(1 for row in rows if row["bindingState"] == "pending_binding"),
+                },
+            },
+        )
+
+    def api_admin_create_invite(self) -> None:
+        if not self.require_invite_admin():
+            return
+        username = str(self.json_body().get("username") or "").upper()
+        if not USER_RE.match(username):
+            self.json(400, {"status": "failed", "message": "Invalid username."})
+            return
+        try:
+            token = marzban_admin_token()
+            user = marzban_user(token, username)
+        except Exception:
+            self.json(502, {"status": "failed", "message": "Marzban user could not be loaded."})
+            return
+        sub_url = user.get("subscription_url")
+        if not isinstance(sub_url, str) or "/sub/" not in sub_url:
+            self.json(502, {"status": "failed", "message": "Marzban subscription URL is missing."})
+            return
+        code = generate_invite_code()
+        expires_at = (utcnow() + dt.timedelta(days=INVITE_TTL_DAYS)).isoformat()
+        with db() as conn:
+            conn.execute("BEGIN IMMEDIATE")
+            conn.execute(
+                "UPDATE invites SET disabled = 1, code_plain = NULL WHERE username = ? AND used_at IS NULL AND disabled = 0",
+                (username,),
+            )
+            if conn.execute("SELECT id FROM accounts WHERE username = ?", (username,)).fetchone():
+                conn.rollback()
+                self.json(409, {"status": "failed", "message": "User is already bound."})
+                return
+            conn.execute(
+                """
+                INSERT INTO invites(code_hash, code_plain, username, subscription_url, expires_at, created_at)
+                VALUES (?, ?, ?, ?, ?, ?)
+                """,
+                (invite_hash(code), code, username, sub_url, expires_at, iso_now()),
+            )
+            conn.commit()
+        self.json(200, {"status": "created", "username": username, "inviteCode": code})
+
+    def api_admin_reset_subscription(self) -> None:
+        if not self.require_invite_admin():
+            return
+        username = str(self.json_body().get("username") or "").upper()
+        if not USER_RE.match(username):
+            self.json(400, {"status": "failed"})
+            return
+        self.json(200, {"status": reset_bound_account_subscription_url(username)})
+
+    def api_admin_revoke_invite(self) -> None:
+        if not self.require_invite_admin():
+            return
+        invite_id = self.json_body().get("id")
+        if not isinstance(invite_id, int):
+            self.json(400, {"status": "failed"})
+            return
+        with db() as conn:
+            conn.execute(
+                "UPDATE invites SET disabled = 1, code_plain = NULL WHERE id = ? AND used_at IS NULL",
+                (invite_id,),
+            )
+        self.json(200, {"status": "revoked"})
 
     def login_page(self, error: str = "") -> None:
         if self.user_session():

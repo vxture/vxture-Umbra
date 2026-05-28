@@ -13,6 +13,7 @@ services:
       - umbra-marzban
       - umbra-subproxy
       - umbra-account
+      - umbra-account-web
       - umbra-vaultwarden
       - umbra-portal
     ports:
@@ -100,10 +101,32 @@ services:
       MARZBAN_ADMIN_USER: "${MARZBAN_ADMIN_USER}"
       MARZBAN_ADMIN_PASSWORD: "${MARZBAN_ADMIN_PASSWORD}"
       SUB_PROFILE_PREFIX: "${SUB_PROFILE_PREFIX:-Ruyin}"
+      JWT_SECRET: "${JWT_SECRET}"
+      VXTURE_LOGIN_URL: "${VXTURE_LOGIN_URL}"
+      VXTURE_SSO_URL: "${VXTURE_SSO_URL:-}"
+      UMBRA_INVITE_ADMIN_PERMISSION: "${UMBRA_INVITE_ADMIN_PERMISSION:-ruyin.vpn.invite.manage}"
+      UMBRA_INVITE_ADMIN_EMAILS: "${UMBRA_INVITE_ADMIN_EMAILS:-}"
+      UMBRA_INVITE_ADMIN_ACCOUNT_IDS: "${UMBRA_INVITE_ADMIN_ACCOUNT_IDS:-}"
     volumes:
       - ${DATA_DIR}/account:/var/lib/umbra-account
       - ./services/account/account.py:/app/account.py:ro
     command: ["python", "/app/account.py"]
+    networks:
+      - umbra-net
+
+  # -- Account Web: Vxture SSO + invite-bound subscription UI -----------------
+  umbra-account-web:
+    build:
+      context: ./account-web
+    container_name: umbra-account-web
+    restart: always
+    depends_on:
+      - umbra-account
+    environment:
+      PORT: "3000"
+      AUTH_BFF_URL: "${AUTH_BFF_URL}"
+      AUTH_INTERNAL_TOKEN: "${AUTH_INTERNAL_TOKEN}"
+      NEXT_PUBLIC_RUYIN_ACCOUNT_URL: "https://${EDGE_DOMAIN}"
     networks:
       - umbra-net
 

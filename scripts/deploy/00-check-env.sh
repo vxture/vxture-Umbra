@@ -47,6 +47,8 @@ REQUIRED_VARS=(
   MARZBAN_SSL_CA_TYPE SUBSCRIPTION_URL_PREFIX
   SUB_PROFILE_PREFIX SUB_PROFILE_TITLE
   ACCOUNT_SESSION_SECRET ACCOUNT_INVITE_SECRET ACCOUNT_INVITE_TTL_DAYS
+  JWT_SECRET AUTH_BFF_URL AUTH_INTERNAL_TOKEN VXTURE_LOGIN_URL
+  UMBRA_INVITE_ADMIN_PERMISSION
   VAULTWARDEN_ADMIN_TOKEN
   CERTBOT_EMAIL CERTBOT_STAGING CERTBOT_SKIP
   USER_COUNT USER_PREFIX
@@ -116,6 +118,32 @@ if [[ "${#account_invite_secret}" -ge 32 ]]; then
   log_ok "ACCOUNT_INVITE_SECRET length is valid"
 else
   fail "ACCOUNT_INVITE_SECRET must be at least 32 characters"
+fi
+
+jwt_secret="${JWT_SECRET:-}"
+if [[ "${#jwt_secret}" -ge 32 ]]; then
+  log_ok "JWT_SECRET length is valid"
+else
+  fail "JWT_SECRET must be at least 32 characters and match Vxture auth-bff"
+fi
+
+auth_internal_token="${AUTH_INTERNAL_TOKEN:-}"
+if [[ "${#auth_internal_token}" -ge 32 ]]; then
+  log_ok "AUTH_INTERNAL_TOKEN length is valid"
+else
+  fail "AUTH_INTERNAL_TOKEN must be at least 32 characters and match Vxture auth-bff"
+fi
+
+if [[ "${AUTH_BFF_URL:-}" =~ ^https?://[^[:space:]]+$ ]]; then
+  log_ok "AUTH_BFF_URL is valid"
+else
+  fail "AUTH_BFF_URL must be an http(s) URL"
+fi
+
+if [[ "${VXTURE_LOGIN_URL:-}" =~ ^https?://[^[:space:]]+$ ]]; then
+  log_ok "VXTURE_LOGIN_URL is valid"
+else
+  fail "VXTURE_LOGIN_URL must be an http(s) URL"
 fi
 
 if [[ "${REALITY_DEST:-}" =~ ^([^[:space:]:]+):([0-9]+)$ ]] && (( 10#${BASH_REMATCH[2]} >= 1 && 10#${BASH_REMATCH[2]} <= 65535 )); then

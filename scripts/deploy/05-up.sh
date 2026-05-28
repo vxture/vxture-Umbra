@@ -28,7 +28,7 @@ log_step "Pulling latest images..."
 docker compose pull --quiet
 
 log_step "Starting services..."
-docker compose up -d
+docker compose up -d --build
 
 # Python services mount source files from the repo. Compose does not recreate
 # them when only the mounted Python file changes, so restart them explicitly.
@@ -44,7 +44,7 @@ docker compose ps
 # Health check: fail if any service exited or is crash-looping
 PROBLEMS=""
 
-for container in umbra-nginx umbra-marzban umbra-subproxy umbra-account umbra-vaultwarden umbra-portal; do
+for container in umbra-nginx umbra-marzban umbra-subproxy umbra-account umbra-account-web umbra-vaultwarden umbra-portal; do
   state=$(docker inspect "$container" --format '{{.State.Status}}' 2>/dev/null || echo "missing")
 
   if [[ "$state" == "exited" ]]; then

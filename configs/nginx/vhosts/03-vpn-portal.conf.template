@@ -10,6 +10,7 @@ server {
 
     resolver 127.0.0.11 valid=30s ipv6=off;
     set $account_upstream "umbra-account:8081";
+    set $account_web_upstream "umbra-account-web:3000";
 
     location = /guide {
         return 301 /guide/;
@@ -20,8 +21,13 @@ server {
         include /etc/nginx/snippets/proxy-headers.conf;
     }
 
-    location / {
+    location ^~ /api/account/ {
         proxy_pass http://$account_upstream;
+        include /etc/nginx/snippets/proxy-headers.conf;
+    }
+
+    location / {
+        proxy_pass http://$account_web_upstream;
         include /etc/nginx/snippets/proxy-headers.conf;
     }
 }
