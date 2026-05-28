@@ -191,7 +191,7 @@ check_http "$CONSOLE_DOMAIN invite console" "https://$CONSOLE_DOMAIN/invites/"
 
 console_root_headers="$(mktemp)"
 CONSOLE_ROOT_CODE=$(curl -sk --max-time 10 -D "$console_root_headers" -o /dev/null -w "%{http_code}" "https://$CONSOLE_DOMAIN/" || true)
-if [[ "$CONSOLE_ROOT_CODE" =~ ^(301|302|307|308)$ ]] && grep -Eiq '^location: /dashboard/?' "$console_root_headers"; then
+if [[ "$CONSOLE_ROOT_CODE" =~ ^(301|302|307|308)$ ]] && grep -Eiq '^location: (https?://[^/]+)?/dashboard/?[[:space:]]*$' "$console_root_headers"; then
   log_ok "$CONSOLE_DOMAIN root redirects to dashboard ($CONSOLE_ROOT_CODE)"
   (( ++PASS ))
 else
