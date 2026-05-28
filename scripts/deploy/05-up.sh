@@ -37,7 +37,7 @@ docker compose restart umbra-subproxy umbra-account
 
 log_step "Reloading nginx rendered configuration..."
 docker compose exec -T umbra-nginx nginx -t
-docker compose restart umbra-nginx
+docker compose exec -T umbra-nginx nginx -s reload
 
 log_step "Waiting for services to initialize (15s)..."
 sleep 15
