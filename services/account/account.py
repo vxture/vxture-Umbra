@@ -44,20 +44,6 @@ VXTURE_COOKIE_ACCESS = os.environ.get("VXTURE_COOKIE_ACCESS", "ry_access_token")
 VXTURE_LOGIN_URL = os.environ.get("VXTURE_LOGIN_URL", "https://console.vxture.com/zh-CN/signin")
 VXTURE_SSO_URL = os.environ.get("VXTURE_SSO_URL", "")
 PUBLIC_ACCOUNT_URL = os.environ.get("PUBLIC_ACCOUNT_URL", f"https://{os.environ.get('CONSOLE_DOMAIN', 'console.ruyin.ai')}").rstrip("/")
-INVITE_ADMIN_PERMISSION = os.environ.get(
-    "UMBRA_INVITE_ADMIN_PERMISSION",
-    os.environ.get("UMRBA_INVITE_ADMIN_PERMISSION", "ruyin.vpn.invite.manage"),
-)
-INVITE_ADMIN_EMAILS = {
-    item.strip().casefold()
-    for item in os.environ.get("UMBRA_INVITE_ADMIN_EMAILS", "").split(",")
-    if item.strip()
-}
-INVITE_ADMIN_ACCOUNT_IDS = {
-    item.strip()
-    for item in os.environ.get("UMBRA_INVITE_ADMIN_ACCOUNT_IDS", "").split(",")
-    if item.strip()
-}
 
 USER_RE = re.compile(r"^[A-Za-z][A-Za-z0-9_-]{1,63}$")
 INVITE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
@@ -160,19 +146,6 @@ def public_vxture_user(payload: dict[str, Any]) -> dict[str, Any]:
         "permissions": payload.get("permissions") if isinstance(payload.get("permissions"), list) else [],
         "provider": str(payload.get("provider") or ""),
     }
-
-
-def can_manage_invites(payload: dict[str, Any]) -> bool:
-    user_id = str(payload.get("sub") or "")
-    email = str(payload.get("email") or "").casefold()
-    permissions = payload.get("permissions")
-    if not isinstance(permissions, list):
-        permissions = []
-    return (
-        bool(INVITE_ADMIN_PERMISSION and INVITE_ADMIN_PERMISSION in permissions)
-        or bool(user_id and user_id in INVITE_ADMIN_ACCOUNT_IDS)
-        or bool(email and email in INVITE_ADMIN_EMAILS)
-    )
 
 
 def invite_hash(code: str) -> str:
@@ -711,6 +684,10 @@ class AccountHandler(BaseHTTPRequestHandler):
             self.api_bind_invite()
         elif path == "/api/account/reset-subscription":
             self.api_reset_subscription()
+        elif path == "/api/account/admin/login":
+            self.api_admin_login()
+        elif path == "/api/account/admin/logout":
+            self.api_admin_logout()
         elif path == "/api/account/admin/invites":
             self.api_admin_create_invite()
         elif path == "/api/account/admin/reset-subscription":
@@ -856,7 +833,6 @@ class AccountHandler(BaseHTTPRequestHandler):
             {
                 "status": "active",
                 "user": user,
-                "canManageInvites": bool(self.current_vxture_payload() and can_manage_invites(self.current_vxture_payload() or {})),
                 "account": account_payload(account),
                 **auth_config,
             },
@@ -902,22 +878,61 @@ class AccountHandler(BaseHTTPRequestHandler):
         account = account_for_vxture_user(str(user["id"]))
         self.json(200, {"status": status, "account": account_payload(account)})
 
+    def create_admin_session(self, token: str) -> str:
+        sid = b64url(secrets.token_bytes(32))
+        expires_ts = int(time.time()) + 3600 * 8
+        expires_at = dt.datetime.fromtimestamp(expires_ts, dt.timezone.utc).replace(microsecond=0).isoformat()
+        with db() as conn:
+            conn.execute("DELETE FROM admin_sessions WHERE expires_at < ?", (iso_now(),))
+            conn.execute(
+                "INSERT INTO admin_sessions(session_hash, token, created_at, expires_at) VALUES (?, ?, ?, ?)",
+                (session_hash(sid), token, iso_now(), expires_at),
+            )
+        return sign_payload({"role": "admin", "sid": sid, "exp": expires_ts})
+
     def require_invite_admin(self) -> dict[str, Any] | None:
-        payload = self.current_vxture_payload()
-        if not payload:
-            self.api_unauthorized()
+        sess = self.admin_session()
+        if not sess:
+            self.json(401, {"status": "admin_login_required"})
             return None
-        if not can_manage_invites(payload):
-            self.api_forbidden()
-            return None
-        return payload
+        return sess
+
+    def api_admin_login(self) -> None:
+        data = self.json_body()
+        try:
+            token = marzban_login(str(data.get("username") or ""), str(data.get("password") or ""))
+        except Exception:
+            self.json(401, {"status": "failed", "message": "Invalid Marzban admin credentials."})
+            return
+
+        raw = json.dumps({"status": "ok"}, separators=(",", ":")).encode("utf-8")
+        self.send_response(200)
+        self.send_header("Content-Type", "application/json; charset=utf-8")
+        self.send_header("Content-Length", str(len(raw)))
+        self.send_cookie(ADMIN_COOKIE, self.create_admin_session(token), max_age=3600 * 8, path="/api/account/admin")
+        self.end_headers()
+        self.wfile.write(raw)
+
+    def api_admin_logout(self) -> None:
+        sess = self.admin_session()
+        if sess:
+            with db() as conn:
+                conn.execute("DELETE FROM admin_sessions WHERE session_hash = ?", (session_hash(str(sess["sid"])),))
+        raw = json.dumps({"status": "ok"}, separators=(",", ":")).encode("utf-8")
+        self.send_response(200)
+        self.send_header("Content-Type", "application/json; charset=utf-8")
+        self.send_header("Content-Length", str(len(raw)))
+        self.clear_cookie(ADMIN_COOKIE, path="/api/account/admin")
+        self.clear_cookie(ADMIN_COOKIE, path="/invites")
+        self.end_headers()
+        self.wfile.write(raw)
 
     def api_admin_invites(self) -> None:
-        if not self.require_invite_admin():
+        sess = self.require_invite_admin()
+        if not sess:
             return
         try:
-            token = marzban_admin_token()
-            users = marzban_users(token)
+            users = marzban_users(str(sess["token"]))
         except Exception:
             self.json(502, {"status": "marzban_unavailable", "users": []})
             return
@@ -982,15 +997,15 @@ class AccountHandler(BaseHTTPRequestHandler):
         )
 
     def api_admin_create_invite(self) -> None:
-        if not self.require_invite_admin():
+        sess = self.require_invite_admin()
+        if not sess:
             return
         username = str(self.json_body().get("username") or "").upper()
         if not USER_RE.match(username):
             self.json(400, {"status": "failed", "message": "Invalid username."})
             return
         try:
-            token = marzban_admin_token()
-            user = marzban_user(token, username)
+            user = marzban_user(str(sess["token"]), username)
         except Exception:
             self.json(502, {"status": "failed", "message": "Marzban user could not be loaded."})
             return
@@ -1430,19 +1445,9 @@ document.addEventListener("click", function (event) {{
         except Exception:
             self.html(401, self.admin_login_form("Invalid Marzban admin credentials."))
             return
-        sid = b64url(secrets.token_bytes(32))
-        expires_ts = int(time.time()) + 3600 * 8
-        expires_at = dt.datetime.fromtimestamp(expires_ts, dt.timezone.utc).replace(microsecond=0).isoformat()
-        with db() as conn:
-            conn.execute("DELETE FROM admin_sessions WHERE expires_at < ?", (iso_now(),))
-            conn.execute(
-                "INSERT INTO admin_sessions(session_hash, token, created_at, expires_at) VALUES (?, ?, ?, ?)",
-                (session_hash(sid), token, iso_now(), expires_at),
-            )
-        payload = {"role": "admin", "sid": sid, "exp": expires_ts}
         self.send_response(303)
         self.send_header("Location", "/invites/")
-        self.send_cookie(ADMIN_COOKIE, sign_payload(payload), max_age=3600 * 8, path="/invites")
+        self.send_cookie(ADMIN_COOKIE, self.create_admin_session(token), max_age=3600 * 8, path="/invites")
         self.end_headers()
 
     def admin_logout(self) -> None:

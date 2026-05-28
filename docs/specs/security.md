@@ -28,7 +28,7 @@ Marzban may show a different token after console refresh. Tokens are opaque subs
 
 Invite codes bind to an existing Marzban user code. The code itself is random and does not contain the target username. The account service stores only an HMAC of the invite for validation after the invite is used or revoked.
 
-Admin access to invite generation is validated against Marzban admin login. The browser receives an opaque admin session cookie; the Marzban API token is stored server-side in `DATA_DIR/account/account.db`.
+Admin access to invite generation is validated against Marzban admin login. The invite console uses the same username and password as the Marzban dashboard. The browser receives an opaque admin session cookie; the Marzban API token is stored server-side in `DATA_DIR/account/account.db`.
 
 The account dashboard renders the stored subscription URL without changing account state. When a user clicks `Reset subscription URL`, or an admin clicks `Reset URL` in the invite console, the account service refreshes the current Marzban `subscription_url` server-side for the bound user code and updates the local cache. Marzban admin credentials are available only inside the account service container; the browser receives only the user's subscription URL and session cookie.
 

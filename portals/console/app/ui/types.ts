@@ -30,7 +30,6 @@ export interface SessionPayload {
   loginUrl?: string;
   ssoUrl?: string;
   user?: VxtureUser;
-  canManageInvites?: boolean;
   account?: AccountBinding | null;
 }
 
@@ -50,7 +49,7 @@ export interface AdminUserRow {
 }
 
 export interface AdminInvitesPayload {
-  status: string;
+  status: "ok" | "admin_login_required" | "marzban_unavailable" | "forbidden";
   users: AdminUserRow[];
   summary: {
     users: number;

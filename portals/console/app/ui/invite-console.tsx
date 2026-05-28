@@ -1,5 +1,6 @@
 "use client";
 
+import type { FormEvent } from "react";
 import { useEffect, useState } from "react";
 import { Metric, PageHeader, Shell } from "./shell";
 import type { AdminInvitesPayload, AdminUserRow } from "./types";
@@ -30,15 +31,50 @@ function bindingLabel(row: AdminUserRow) {
 export function InviteConsole() {
   const [data, setData] = useState<AdminInvitesPayload | null>(null);
   const [message, setMessage] = useState("");
+  const [error, setError] = useState("");
   const [busy, setBusy] = useState("");
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
 
   async function refresh() {
     setData(await api<AdminInvitesPayload>("/api/account/admin/invites"));
   }
 
   useEffect(() => {
-    refresh().catch(() => setData({ status: "forbidden", users: [], summary: { users: 0, bound: 0, invitePending: 0, pendingBinding: 0 } }));
+    refresh().catch((error) => {
+      const status = error?.payload?.status === "admin_login_required" ? "admin_login_required" : "marzban_unavailable";
+      setData({ status, users: [], summary: { users: 0, bound: 0, invitePending: 0, pendingBinding: 0 } });
+    });
   }, []);
+
+  async function login(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setBusy("login");
+    setError("");
+    try {
+      await api("/api/account/admin/login", {
+        method: "POST",
+        body: JSON.stringify({ username, password }),
+      });
+      setPassword("");
+      await refresh();
+    } catch {
+      setError("Invalid Marzban admin credentials.");
+    } finally {
+      setBusy("");
+    }
+  }
+
+  async function logout() {
+    setBusy("logout");
+    setError("");
+    try {
+      await api("/api/account/admin/logout", { method: "POST", body: "{}" });
+      setData({ status: "admin_login_required", users: [], summary: { users: 0, bound: 0, invitePending: 0, pendingBinding: 0 } });
+    } finally {
+      setBusy("");
+    }
+  }
 
   async function generate(username: string) {
     setBusy(username);
@@ -94,14 +130,54 @@ export function InviteConsole() {
     );
   }
 
-  if (data.status === "forbidden") {
+  if (data.status === "admin_login_required") {
     return (
       <Shell>
         <section className="section-card auth-card page-stack">
           <PageHeader
-            title="Invite access required"
-            description="Your Vxture account is signed in, but it does not have invite management permission."
+            title="Admin Sign In"
+            description="Use the same Marzban admin account to manage Ruyin invites."
           />
+          {error ? <div className="notice notice-danger">{error}</div> : null}
+          <form className="form" onSubmit={login}>
+            <label className="field">
+              Admin username
+              <input
+                className="input"
+                autoComplete="username"
+                value={username}
+                onChange={(event) => setUsername(event.target.value)}
+                required
+              />
+            </label>
+            <label className="field">
+              Admin password
+              <input
+                className="input"
+                type="password"
+                autoComplete="current-password"
+                value={password}
+                onChange={(event) => setPassword(event.target.value)}
+                required
+              />
+            </label>
+            <button className="btn btn-primary" type="submit" disabled={busy === "login"}>
+              Sign in
+            </button>
+          </form>
+        </section>
+      </Shell>
+    );
+  }
+
+  if (data.status !== "ok") {
+    return (
+      <Shell>
+        <section className="section-card auth-card page-stack">
+          <PageHeader title="Invite Console Unavailable" description="Marzban could not be reached. Try again after services recover." />
+          <button className="btn btn-secondary" onClick={refresh}>
+            Retry
+          </button>
         </section>
       </Shell>
     );
@@ -114,6 +190,14 @@ export function InviteConsole() {
           title="Invite Console"
           description="Generate one-time VPN invites for existing Marzban users and manage bound subscriptions."
         />
+        <div className="actions">
+          <a className="btn btn-secondary" href="/dashboard/">
+            Marzban Dashboard
+          </a>
+          <button className="btn btn-secondary" disabled={busy === "logout"} onClick={logout}>
+            Sign out
+          </button>
+        </div>
         {message ? <div className="notice">{message}</div> : null}
         <section className="grid">
           <Metric label="Users" value={data.summary.users} />

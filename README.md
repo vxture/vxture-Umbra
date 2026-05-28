@@ -173,7 +173,7 @@ Expected: `200`. `curl -I` sends HEAD and Marzban responds `405 Method Not Allow
 
 Clash subscription files and response headers are normalized to `Ruyin-USERNAME`, for example `Ruyin-USER01`, while the proxy node name remains `NODE_NAME`.
 
-User-facing subscription access is handled by `https://console.ruyin.ai`. The console shows the locally bound subscription URL, provides a copy-only field, and resets the stored URL from Marzban only when the user clicks `Reset subscription URL`. Admins open `https://admin.ruyin.ai/invites`, sign in with an authorized Ruyin account, and generate a one-time invite link for an existing Marzban user such as `USER08`. The invite console shows the same stored URL for bound users and uses the same reset action, so admin and user views stay aligned. The invite link binds only that user code; the registrant cannot choose another `USER**` value.
+User-facing subscription access is handled by `https://console.ruyin.ai`. The console shows the locally bound subscription URL, provides a copy-only field, and resets the stored URL from Marzban only when the user clicks `Reset subscription URL`. Admins open `https://admin.ruyin.ai/invites`, sign in with the Marzban admin account, and generate a one-time invite link for an existing Marzban user such as `USER08`. The invite console shows the same stored URL for bound users and uses the same reset action, so admin and user views stay aligned. The invite link binds only that user code; the registrant cannot choose another `USER**` value.
 
 ---
 

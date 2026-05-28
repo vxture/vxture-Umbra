@@ -97,7 +97,8 @@ Browser -> console.ruyin.ai
 
 Browser -> admin.ruyin.ai/invites
   Nginx -> umbra-account-web / umbra-account
-  Account service -> Marzban admin token check
+  Admin -> sign in with Marzban admin account
+  Account service -> stores Marzban admin token in a server-side admin session
   Admin -> generate one-time invite for an existing USER**
 
 Browser -> admin.ruyin.ai/dashboard/

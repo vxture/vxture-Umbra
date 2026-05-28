@@ -482,10 +482,11 @@ CHECKS: list[tuple[str, Path, list[str]]] = [
             "vxture_account_id",
             "def api_bind_invite",
             "def api_admin_invites",
+            "def api_admin_login",
+            "admin_login_required",
             "PUBLIC_ACCOUNT_URL",
             "def invite_url",
             "inviteUrl",
-            "UMBRA_INVITE_ADMIN_PERMISSION",
         ],
     ),
     (
