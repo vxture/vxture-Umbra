@@ -67,7 +67,7 @@ portals/
         brand/
         icons/
 
-  console/                 # vpn.ruyin.ai user home, default user portal
+  console/                 # console.ruyin.ai user home, default user portal
     app/
     public/
     package.json
@@ -86,12 +86,12 @@ Notes:
 
 - `portals/website` owns the public Ruyin website on `ruyin.ai` and
   `www.ruyin.ai`.
-- `portals/console` owns the default VPN user home on `vpn.ruyin.ai`.
+- `portals/console` owns the user self-service console on `console.ruyin.ai`.
 - `portals/admin` is the temporary management surface. It should include the
   invite console UI and links into Marzban, while Marzban itself remains the
   upstream admin application until it is replaced or embedded more cleanly.
-- Public routing should map `console.ruyin.ai/invites` to `portals/admin` and
-  keep `console.ruyin.ai/dashboard/` on the Marzban upstream during the
+- Public routing should map `admin.ruyin.ai/invites` to `portals/admin` and
+  keep `admin.ruyin.ai/dashboard/` on the Marzban upstream during the
   temporary phase.
 - The current legacy guide under `vpn.ruyin.ai/guide/` should be treated as a
   static compatibility surface. It can either move under
@@ -164,7 +164,8 @@ Before moving any source files:
 1. Add or update script contract checks for the new `portals/` layout.
 2. Ensure deploy verification checks:
    - `https://vpn.ruyin.ai/`
-   - `https://console.ruyin.ai/invites`
+   - `https://console.ruyin.ai/`
+   - `https://admin.ruyin.ai/invites`
    - saved subscription URL `GET`
    - `sub.ruyin.ai` root blocked
    - no `:8443` redirects
@@ -237,9 +238,10 @@ Manual post-checks:
 
 ```bash
 curl -skI https://vpn.ruyin.ai/ | head
-curl -skI https://console.ruyin.ai/invites | head
+curl -skI https://console.ruyin.ai/ | head
+curl -skI https://admin.ruyin.ai/invites | head
 curl -sk https://sub.ruyin.ai/sub/invalid-token -o /dev/null -w "%{http_code}\n"
-curl -skI https://console.ruyin.ai/ | grep -i '^location:' | grep ':8443' && echo BAD || echo OK
+curl -skI https://admin.ruyin.ai/ | grep -i '^location:' | grep ':8443' && echo BAD || echo OK
 ```
 
 Saved valid subscription URLs must also be tested through the existing
@@ -288,7 +290,6 @@ Avoid touching these unless there is a specific bug:
 configs/nginx/stream.conf.template
 configs/nginx/vhosts/04-sub.conf.template
 configs/marzban/clash-subscription.j2
-configs/marzban/must-direct-rules.txt
 configs/xray/config.json.template
 services/subproxy/subproxy.py
 ```
@@ -298,9 +299,10 @@ These files participate directly in VPN transport or subscription delivery.
 ## Acceptance Criteria
 
 - `bash scripts/deploy/06-verify.sh` passes with zero failures.
-- `https://vpn.ruyin.ai/` returns the Next account UI.
-- `https://console.ruyin.ai/invites` returns the Next invite UI.
-- `https://console.ruyin.ai/` redirects to `/dashboard/` without `:8443`.
+- `https://vpn.ruyin.ai/` returns the VPN display page.
+- `https://console.ruyin.ai/` returns the Next account UI.
+- `https://admin.ruyin.ai/invites` returns the Next invite UI.
+- `https://admin.ruyin.ai/` redirects to `/dashboard/` without `:8443`.
 - Saved Marzban subscription URLs still return `200` with `GET`.
 - Subscription profile title remains normalized.
 - No public URL changes are required for users.

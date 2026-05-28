@@ -34,13 +34,13 @@ sudo apt install -y python3 python3-pip
 | `vpn.ruyin.ai` | A | server public IP |
 | `sub.ruyin.ai` | A | server public IP |
 | `console.ruyin.ai` | A | server public IP |
+| `admin.ruyin.ai` | A | server public IP |
 | `pass.ruyin.ai` | A | server public IP |
-| `vault.ruyin.ai` | A | server public IP |
 
 Verify all resolve before running `deploy.sh all`:
 
 ```bash
-for d in ruyin.ai www.ruyin.ai vpn.ruyin.ai sub.ruyin.ai console.ruyin.ai pass.ruyin.ai vault.ruyin.ai; do
+for d in ruyin.ai www.ruyin.ai vpn.ruyin.ai sub.ruyin.ai console.ruyin.ai admin.ruyin.ai pass.ruyin.ai; do
   echo "$d -> $(dig +short $d)"
 done
 ```
@@ -71,8 +71,8 @@ WWW_DOMAIN=www.ruyin.ai
 EDGE_DOMAIN=vpn.ruyin.ai
 SUB_DOMAIN=sub.ruyin.ai
 CONSOLE_DOMAIN=console.ruyin.ai
+ADMIN_DOMAIN=admin.ruyin.ai
 PASS_DOMAIN=pass.ruyin.ai
-VAULT_DOMAIN=vault.ruyin.ai
 
 # -- Paths -----------------------------------------------
 ROOT_DIR=/srv/vxture
@@ -259,7 +259,7 @@ Expected: all containers in `running` state.
 ### HTTPS Check (all domains)
 
 ```bash
-for d in ruyin.ai www.ruyin.ai vpn.ruyin.ai sub.ruyin.ai pass.ruyin.ai vault.ruyin.ai; do
+for d in ruyin.ai www.ruyin.ai vpn.ruyin.ai sub.ruyin.ai console.ruyin.ai admin.ruyin.ai pass.ruyin.ai; do
   code=$(curl -sk -o /dev/null -w "%{http_code}" https://$d)
   echo "$d -> $code"
 done
@@ -270,7 +270,7 @@ Expected: all return 200 or 301/302 (no 502, no cert errors).
 ### Marzban Console Login
 
 ```bash
-curl -sk -o /dev/null -w "%{http_code}" https://console.ruyin.ai/dashboard/
+curl -sk -o /dev/null -w "%{http_code}" https://admin.ruyin.ai/dashboard/
 ```
 
 Expected: `200`, `301`, `302`, `307`, `308`, or `401`; not `403`.
@@ -287,7 +287,7 @@ Expected: `443 open`
 
 ```bash
 curl -sk -o /dev/null -w "%{http_code}" \
-  https://console.ruyin.ai/dashboard
+  https://admin.ruyin.ai/dashboard
 ```
 
 Expected: the Marzban login/dashboard route responds; nginx must not block it with `403`.

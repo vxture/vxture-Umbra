@@ -13,12 +13,12 @@ Production VPN edge node - SNI routing, VLESS+REALITY proxy, subscription delive
 | Domain | Service |
 |--------|---------|
 | `ruyin.ai` / `www.ruyin.ai` | Brand landing page |
-| `vpn.ruyin.ai` | Invite-bound user account portal |
+| `vpn.ruyin.ai` | VPN edge host and VPN display page |
 | `sub.ruyin.ai` | Marzban subscription endpoint with `Ruyin-USERNAME` display names |
-| `console.ruyin.ai` | Marzban console *(Marzban login)* |
-| `console.ruyin.ai/invites/` | Invite console for binding existing Marzban users |
+| `console.ruyin.ai` | User self-service console |
+| `admin.ruyin.ai` | Marzban console *(Marzban login)* |
+| `admin.ruyin.ai/invites` | Invite console for binding existing Marzban users |
 | `pass.ruyin.ai` | Vaultwarden password manager |
-| `vault.ruyin.ai` | Placeholder (future use) |
 
 ---
 
@@ -79,11 +79,11 @@ NODE_NAME=vx-tokyo                    # label shown in subscription config
 # -- Domains --------------------------------------------
 APEX_DOMAIN=ruyin.ai
 WWW_DOMAIN=www.ruyin.ai
-EDGE_DOMAIN=vpn.ruyin.ai             # account portal and VPN edge host
+EDGE_DOMAIN=vpn.ruyin.ai             # VPN edge host and display page
 SUB_DOMAIN=sub.ruyin.ai              # subscription endpoint
 CONSOLE_DOMAIN=console.ruyin.ai
+ADMIN_DOMAIN=admin.ruyin.ai
 PASS_DOMAIN=pass.ruyin.ai
-VAULT_DOMAIN=vault.ruyin.ai
 
 # -- Marzban admin credentials --------------------------
 MARZBAN_ADMIN_USER=admin
@@ -173,7 +173,7 @@ Expected: `200`. `curl -I` sends HEAD and Marzban responds `405 Method Not Allow
 
 Clash subscription files and response headers are normalized to `Ruyin-USERNAME`, for example `Ruyin-USER01`, while the proxy node name remains `NODE_NAME`.
 
-User-facing subscription access is handled by `https://vpn.ruyin.ai`. The portal shows the locally bound subscription URL, provides a copy-only field, and resets the stored URL from Marzban only when the user clicks `Reset subscription URL`. Admins open `https://console.ruyin.ai/invites/`, sign in with Marzban admin credentials, and generate a one-time invite for an existing Marzban user such as `USER08`. The invite console shows the same stored URL for bound users and uses the same reset action, so admin and user views stay aligned. The invite code binds only that user code; the registrant cannot choose another `USER**` value.
+User-facing subscription access is handled by `https://console.ruyin.ai`. The console shows the locally bound subscription URL, provides a copy-only field, and resets the stored URL from Marzban only when the user clicks `Reset subscription URL`. Admins open `https://admin.ruyin.ai/invites`, sign in with an authorized Ruyin account, and generate a one-time invite link for an existing Marzban user such as `USER08`. The invite console shows the same stored URL for bound users and uses the same reset action, so admin and user views stay aligned. The invite link binds only that user code; the registrant cannot choose another `USER**` value.
 
 ---
 
@@ -295,13 +295,13 @@ bash scripts/ops.sh certs --upgrade
 docker compose restart umbra-marzban
 ```
 
-### console.ruyin.ai returns 403
+### admin.ruyin.ai returns 403
 
-Not expected. The console vhost is public and Marzban handles login. Re-render nginx config and verify the rendered `05-console.conf` has no `allow` / `deny all` rules:
+Not expected. The admin vhost is public and Marzban handles login. Re-render nginx config and verify the rendered `07-admin.conf` has no `allow` / `deny all` rules:
 
 ```bash
 bash scripts/deploy.sh config
-curl -sk -o /dev/null -w "%{http_code}\n" https://console.ruyin.ai/dashboard/
+curl -sk -o /dev/null -w "%{http_code}\n" https://admin.ruyin.ai/dashboard/
 ```
 
 ---
@@ -332,11 +332,11 @@ Internet
                 |- SNI = www.microsoft.com -> Xray VLESS+REALITY (port 10443 internal)
                 `- SNI = anything else     -> nginx HTTP block (:8443)
                                                |- ruyin.ai          -> landing page
-                                               |- vpn.ruyin.ai      -> account portal
+                                               |- vpn.ruyin.ai      -> VPN display and guide
                                                |- sub.ruyin.ai      -> Marzban /sub/<token>
-                                               |- console.ruyin.ai  -> Marzban dashboard and /invites/
-                                               |- pass.ruyin.ai     -> Vaultwarden
-                                               `- vault.ruyin.ai    -> placeholder
+                                               |- console.ruyin.ai  -> user self-service console
+                                               |- admin.ruyin.ai    -> Marzban dashboard and /invites
+                                               `- pass.ruyin.ai     -> Vaultwarden
 ```
 
 See [`docs/agent.md`](docs/agent.md) for the AI-maintainer document map and [`docs/design/architecture.md`](docs/design/architecture.md) for the full architecture reference.

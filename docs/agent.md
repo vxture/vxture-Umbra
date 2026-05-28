@@ -32,10 +32,10 @@ Purpose:    Production overseas edge entry node
 | Service | Container | Domain | Purpose |
 |---------|-----------|--------|---------|
 | Nginx | `umbra-nginx` | gateway | SNI stream + HTTP virtual hosts |
-| Marzban + Xray | `umbra-marzban` | sub.ruyin.ai, console.ruyin.ai, REALITY ingress | VPN user management, subscription, bundled Xray subprocess |
+| Marzban + Xray | `umbra-marzban` | sub.ruyin.ai, admin.ruyin.ai, REALITY ingress | VPN user management, subscription, bundled Xray subprocess |
 | Subscription Proxy | `umbra-subproxy` | internal | Normalizes subscription response metadata only |
-| Account Portal | `umbra-account` | vpn.ruyin.ai, console.ruyin.ai/invites/ | Invite-bound user dashboard and invite management |
-| Static Guide | `umbra-portal` | vpn.ruyin.ai/guide/ | Legacy onboarding guide and docs |
+| Account Portal | `umbra-account` | console.ruyin.ai, admin.ruyin.ai/invites | Invite-bound user dashboard and invite management |
+| Static Guide | `umbra-portal` | vpn.ruyin.ai | VPN display, legacy onboarding guide and docs |
 | Vaultwarden | `umbra-vaultwarden` | pass.ruyin.ai | Password manager |
 | Certbot | one-shot Docker container | ACME webroot | Let's Encrypt issue/renew automation |
 
@@ -47,11 +47,11 @@ Purpose:    Production overseas edge entry node
 |--------|--------|-------|
 | `ruyin.ai` | Nginx -> static landing | Brand home, navigation to services |
 | `www.ruyin.ai` | Nginx -> static content | Independent content from apex |
-| `vpn.ruyin.ai` | Nginx -> umbra-account | User login, invite activation, subscription dashboard |
+| `vpn.ruyin.ai` | Nginx -> umbra-portal | VPN display and legacy guide |
 | `sub.ruyin.ai` | Nginx -> umbra-subproxy -> umbra-marzban | Marzban-native subscription endpoint with normalized metadata |
-| `console.ruyin.ai` | Nginx -> umbra-marzban; /invites/ -> umbra-account | Marzban console and invite generation |
+| `console.ruyin.ai` | Nginx -> umbra-account-web + umbra-account | User login, invite activation, subscription dashboard |
+| `admin.ruyin.ai` | Nginx -> umbra-marzban; /invites -> account web/API | Marzban console and invite generation |
 | `pass.ruyin.ai` | Nginx -> umbra-vaultwarden | Password manager |
-| `vault.ruyin.ai` | Nginx -> static placeholder | Reserved for future use |
 
 ---
 
@@ -114,7 +114,7 @@ Phase 4 - Hardening
 2. **All traffic enters on 443** - Nginx SNI stream routes to correct internal service.
 3. **SQLite** - Marzban, Account Portal, and Vaultwarden use SQLite for data storage. No PostgreSQL.
 4. **Secrets never in Git** - `.env`, keys, certs, DB passwords all stay in `DATA_DIR/private/`.
-5. **console.ruyin.ai is public at nginx and protected by Marzban login** - see `specs/security.md`.
+5. **admin.ruyin.ai is public at nginx and protected by Marzban login** - see `specs/security.md`.
 6. **All containers in one Docker network** - `umbra-net`, internal service discovery by container name.
 7. **Subscription B++ rules built into Marzban template** - no external URL dependencies.
 8. **Microsoft / Vultr / Umbra infrastructure must NOT be forced to PROXY** in B++ rules.
@@ -132,15 +132,15 @@ Phase 4 - Hardening
 [ ] All containers running: nginx, marzban, subproxy, account, vaultwarden, portal
 [ ] HTTPS working on active public domains
 [ ] Xray REALITY connection functional (test with Clash Verge)
-[ ] Marzban console accessible at console.ruyin.ai and protected by Marzban login
+[ ] Marzban console accessible at admin.ruyin.ai and protected by Marzban login
 [ ] Marzban subscription URL functional at sub.ruyin.ai
 [ ] Subscription imports correctly into Clash Verge
 [ ] Node name shows vx-tokyo
 [ ] B++ rules present and correct (openai.com and cloudflare.com PROXY; microsoft.com and vultr.com DIRECT)
 [ ] Vaultwarden login functional at pass.ruyin.ai
-[ ] Placeholder responding at vault.ruyin.ai
-[ ] Account Portal loading at vpn.ruyin.ai
-[ ] Invite Console loading at console.ruyin.ai/invites/
+[ ] VPN display loading at vpn.ruyin.ai
+[ ] User console loading at console.ruyin.ai
+[ ] Invite Console loading at admin.ruyin.ai/invites
 [ ] Backup archive created with correct permissions (600)
 [ ] Cert renewal cron configured
 [ ] Sensitive files not present in Git

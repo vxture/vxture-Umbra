@@ -202,8 +202,8 @@ Requires Cloudflare API token. Consider in v1.1.
 
 ### Access
 
-Marzban console: `https://console.ruyin.ai`
-The console is public at nginx and protected by Marzban's own login. A `403` from nginx means stale rendered config still contains an old network restriction.
+Marzban console: `https://admin.ruyin.ai`
+The admin console is public at nginx and protected by Marzban's own login. A `403` from nginx means stale rendered config still contains an old network restriction.
 
 ### Common Operations (via Marzban UI or API)
 

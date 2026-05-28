@@ -7,8 +7,8 @@ console.
 
 Umbra already has:
 
-- A Next.js account web app on `https://vpn.ruyin.ai`.
-- An invite console on `https://console.ruyin.ai/invites`.
+- A Next.js account web app on `https://console.ruyin.ai`.
+- An invite console on `https://admin.ruyin.ai/invites`.
 - A server callback route at `GET /auth/callback`.
 - Account APIs that can read the Vxture access cookie and bind it to an
   existing Marzban invite.
@@ -24,7 +24,7 @@ the old fallback login link behavior.
 
 ## Goals
 
-- Let a user start login from `vpn.ruyin.ai`.
+- Let a user start login from `console.ruyin.ai`.
 - Redirect the user to Vxture SSO with a structured `ctx` parameter.
 - Receive a cross-domain token from Vxture at the Umbra callback route.
 - Exchange the cross-domain token for normal Vxture auth cookies.
@@ -45,7 +45,7 @@ the old fallback login link behavior.
 Umbra should start SSO through a server route:
 
 ```text
-GET https://vpn.ruyin.ai/auth/start
+GET https://console.ruyin.ai/auth/start
 ```
 
 The route redirects to:
@@ -59,7 +59,7 @@ The `ctx` JSON object:
 ```json
 {
   "from": "ruyin",
-  "returnTo": "https://vpn.ruyin.ai/auth/callback",
+  "returnTo": "https://console.ruyin.ai/auth/callback",
   "caller": "Ruyin",
   "state": "<uuid>"
 }
@@ -77,7 +77,7 @@ Notes:
 Vxture redirects back to:
 
 ```text
-GET https://vpn.ruyin.ai/auth/callback?token=<token>&state=<state>
+GET https://console.ruyin.ai/auth/callback?token=<token>&state=<state>
 ```
 
 The callback route must:
@@ -111,7 +111,7 @@ The two source values are intentionally different:
 Production must not infer the public app URL from `Host`. Compose injects:
 
 ```env
-NEXT_PUBLIC_RUYIN_ACCOUNT_URL=https://${EDGE_DOMAIN}
+NEXT_PUBLIC_RUYIN_ACCOUNT_URL=https://${CONSOLE_DOMAIN}
 ```
 
 If this value is missing in production, `/auth/start` and `/auth/callback`
@@ -161,7 +161,7 @@ VXTURE_LOGIN_URL=https://console.vxture.com/zh-CN/signin
 it into `umbra-account-web` as:
 
 ```env
-NEXT_PUBLIC_RUYIN_ACCOUNT_URL=https://${EDGE_DOMAIN}
+NEXT_PUBLIC_RUYIN_ACCOUNT_URL=https://${CONSOLE_DOMAIN}
 ```
 
 Current deployment may keep `VXTURE_SSO_URL=` empty until the Vxture endpoint
@@ -171,7 +171,7 @@ is ready. In that mode the login button falls back to `VXTURE_LOGIN_URL`.
 
 ```text
 Browser
-  -> GET vpn.ruyin.ai/auth/start
+  -> GET console.ruyin.ai/auth/start
 
 Umbra account web
   -> generate state
@@ -184,7 +184,7 @@ Browser
 Vxture SSO
   -> authenticate user if needed
   -> issue cross-domain token
-  -> 302 https://vpn.ruyin.ai/auth/callback?token=<token>&state=<state>
+  -> 302 https://console.ruyin.ai/auth/callback?token=<token>&state=<state>
 
 Umbra account web
   -> validate state cookie
@@ -238,7 +238,7 @@ The simpler user experience should be an invite link, not a different security
 model:
 
 ```text
-https://vpn.ruyin.ai/register?invite=<code>
+https://console.ruyin.ai/register?invite=<code>
 ```
 
 Planned behavior:
@@ -253,7 +253,7 @@ Planned behavior:
 Invite admins should distribute invite links, not bare codes:
 
 ```text
-https://vpn.ruyin.ai/register?invite=<code>
+https://console.ruyin.ai/register?invite=<code>
 ```
 
 The invite console should show the link in the `Subscription / Invite link`

@@ -43,7 +43,7 @@ VXTURE_JWT_SECRET = os.environ.get("VXTURE_JWT_SECRET", os.environ.get("JWT_SECR
 VXTURE_COOKIE_ACCESS = os.environ.get("VXTURE_COOKIE_ACCESS", "ry_access_token")
 VXTURE_LOGIN_URL = os.environ.get("VXTURE_LOGIN_URL", "https://console.vxture.com/zh-CN/signin")
 VXTURE_SSO_URL = os.environ.get("VXTURE_SSO_URL", "")
-PUBLIC_ACCOUNT_URL = os.environ.get("PUBLIC_ACCOUNT_URL", f"https://{os.environ.get('EDGE_DOMAIN', 'vpn.ruyin.ai')}").rstrip("/")
+PUBLIC_ACCOUNT_URL = os.environ.get("PUBLIC_ACCOUNT_URL", f"https://{os.environ.get('CONSOLE_DOMAIN', 'console.ruyin.ai')}").rstrip("/")
 INVITE_ADMIN_PERMISSION = os.environ.get(
     "UMBRA_INVITE_ADMIN_PERMISSION",
     os.environ.get("UMRBA_INVITE_ADMIN_PERMISSION", "ruyin.vpn.invite.manage"),

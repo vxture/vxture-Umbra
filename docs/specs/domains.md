@@ -6,11 +6,11 @@ Domain ownership is explicit. Do not repurpose a domain without updating nginx v
 |---|---|---|
 | `APEX_DOMAIN` | `ruyin.ai` | Brand landing page |
 | `WWW_DOMAIN` | `www.ruyin.ai` | Landing page copy and REALITY camouflage target is separate via `REALITY_SNI` |
-| `EDGE_DOMAIN` | `vpn.ruyin.ai` | Invite-bound user account portal and user-facing edge host |
+| `EDGE_DOMAIN` | `vpn.ruyin.ai` | VPN edge host and VPN display page |
 | `SUB_DOMAIN` | `sub.ruyin.ai` | Marzban native subscription endpoint with normalized response metadata |
-| `CONSOLE_DOMAIN` | `console.ruyin.ai` | Marzban console and `/invites/` invite management page |
+| `CONSOLE_DOMAIN` | `console.ruyin.ai` | User self-service console: SSO, invite activation, subscription dashboard |
+| `ADMIN_DOMAIN` | `admin.ruyin.ai` | Platform management: Marzban console and invite management page |
 | `PASS_DOMAIN` | `pass.ruyin.ai` | Vaultwarden web app |
-| `VAULT_DOMAIN` | `vault.ruyin.ai` | Reserved placeholder |
 
 Subscription URL format is always:
 
@@ -22,4 +22,4 @@ Do not expose `/sub/<token>/clash-meta` publicly. nginx intentionally returns `4
 
 Do not publish a static page listing every user's subscription URL.
 
-Invite management lives at `https://console.ruyin.ai/invites/`. It lists existing Marzban users and shows each user's binding state: bound, invite pending, or pending binding. Admins generate one-time invite codes only for unbound users. The public account portal at `https://vpn.ruyin.ai` lets users choose a display name, activate the invite, set a password, and view only their own subscription data.
+Invite management lives at `https://admin.ruyin.ai/invites`. It lists existing Marzban users and shows each user's binding state: bound, invite pending, or pending binding. Admins generate one-time invite links only for unbound users. The user console at `https://console.ruyin.ai` lets users sign in, activate an invite, and view only their own subscription data.

@@ -222,7 +222,7 @@ rules:
   - DOMAIN-SUFFIX,<SUB_DOMAIN>,DIRECT
   - DOMAIN-SUFFIX,<CONSOLE_DOMAIN>,DIRECT
   - DOMAIN-SUFFIX,<PASS_DOMAIN>,DIRECT
-  - DOMAIN-SUFFIX,<VAULT_DOMAIN>,DIRECT
+  - DOMAIN-SUFFIX,<ADMIN_DOMAIN>,DIRECT
   - DOMAIN-SUFFIX,microsoft.com,DIRECT
   - DOMAIN-SUFFIX,vultr.com,DIRECT
   - DOMAIN-SUFFIX,vultrobjects.com,DIRECT
@@ -431,16 +431,16 @@ BACKUP_DIR/          chmod 700
 BACKUP_DIR/*         chmod 600
 ```
 
-### Layer 3: console.ruyin.ai - Login Boundary
+### Layer 3: admin.ruyin.ai - Login Boundary
 
-`console.ruyin.ai` is public at nginx and protected by Marzban's own login:
+`admin.ruyin.ai` is public at nginx and protected by Marzban's own login:
 
 | Layer | Mechanism | Bypass if missing |
 |-------|-----------|-------------------|
 | 1 | Nginx TLS termination and reverse proxy | no public service routing |
 | 2 | Marzban web login (username + password) | Marzban login form |
 
-Do not add nginx IP allow/deny or Basic Auth to this vhost. Users need to reach Marzban pages directly, and Marzban's frontend relies on Bearer-token API calls.
+Do not add nginx IP allow/deny or Basic Auth to this vhost. Operators need to reach Marzban pages directly, and Marzban's frontend relies on Bearer-token API calls.
 
 **Credentials storage:**
 - Marzban credentials -> `.env` (`MARZBAN_ADMIN_USER`, `MARZBAN_ADMIN_PASSWORD`)

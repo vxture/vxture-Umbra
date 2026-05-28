@@ -28,7 +28,7 @@ Key implementation paths:
 | `configs/xray/config.json.template` | Marzban-managed Xray config rendered to `DATA_DIR/marzban/xray_config.json` |
 | `configs/marzban/clash-subscription.j2` | Marzban Clash template rendered to `DATA_DIR/marzban/templates/clash/default.yml` |
 | `portals/website/static/` | Source for `ruyin.ai` and `www.ruyin.ai` static pages, including `assets/` |
-| `portals/console/` | Next.js user portal for `vpn.ruyin.ai` and temporary invite UI |
+| `portals/console/` | Next.js user portal for `console.ruyin.ai` and temporary invite UI |
 | `portals/console/static/guide/` | Source for the legacy static guide served under `vpn.ruyin.ai/guide/` |
 | `portals/admin/` | Temporary admin portal boundary; invite UI will move here after route split |
 | `services/account/account.py` | Account API plus legacy fallback HTML |

@@ -10,8 +10,8 @@ DOMAIN-SUFFIX,{{ WWW_DOMAIN }}
 DOMAIN-SUFFIX,{{ EDGE_DOMAIN }}
 DOMAIN-SUFFIX,{{ SUB_DOMAIN }}
 DOMAIN-SUFFIX,{{ CONSOLE_DOMAIN }}
+DOMAIN-SUFFIX,{{ ADMIN_DOMAIN }}
 DOMAIN-SUFFIX,{{ PASS_DOMAIN }}
-DOMAIN-SUFFIX,{{ VAULT_DOMAIN }}
 
 # Microsoft / Windows / Office / Azure. REALITY camouflage and auth endpoints
 # are sensitive to proxy forcing.

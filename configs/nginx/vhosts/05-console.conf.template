@@ -1,10 +1,4 @@
-# CONSOLE_DOMAIN - Marzban console
-# Authentication: Marzban JWT session only (handled by the app).
-# No nginx auth_basic - it intercepts API calls (Authorization: Bearer) and
-# causes a 401 loop: React app authenticates, sends Bearer token, nginx rejects
-# it expecting Basic credentials, Marzban JS redirects back to login.
-# proxy_redirect rewrites Marzban's Location headers from internal host to public host.
-
+# console.ruyin.ai - User self-service console
 server {
     listen 8443 ssl proxy_protocol;
     server_name {{ CONSOLE_DOMAIN }};
@@ -17,15 +11,13 @@ server {
     resolver 127.0.0.11 valid=30s ipv6=off;
     set $account_upstream "umbra-account:8081";
     set $account_web_upstream "umbra-account-web:3000";
-    set $marzban_upstream "umbra-marzban:8000";
-
-    location = / {
-        return 302 /dashboard/;
-    }
 
     location = /invites {
-        proxy_pass http://$account_web_upstream;
-        include /etc/nginx/snippets/proxy-headers.conf;
+        return 302 https://{{ ADMIN_DOMAIN }}/invites;
+    }
+
+    location ^~ /invites/ {
+        return 302 https://{{ ADMIN_DOMAIN }}$request_uri;
     }
 
     location ^~ /api/account/ {
@@ -33,21 +25,8 @@ server {
         include /etc/nginx/snippets/proxy-headers.conf;
     }
 
-    location ^~ /_next/ {
-        proxy_pass http://$account_web_upstream;
-        include /etc/nginx/snippets/proxy-headers.conf;
-    }
-
-    location ^~ /invites/ {
-        proxy_pass http://$account_web_upstream;
-        include /etc/nginx/snippets/proxy-headers.conf;
-    }
-
     location / {
-        proxy_pass https://$marzban_upstream;
-        proxy_ssl_verify off;
+        proxy_pass http://$account_web_upstream;
         include /etc/nginx/snippets/proxy-headers.conf;
-        proxy_redirect https://umbra-marzban:8000 https://{{ CONSOLE_DOMAIN }};
-        proxy_redirect http://umbra-marzban:8000 https://{{ CONSOLE_DOMAIN }};
     }
 }

@@ -16,11 +16,11 @@ Internet
            `-- other SNI values -> umbra-nginx internal HTTPS listener :8443
                                       |-- ruyin.ai         -> static landing
                                       |-- www.ruyin.ai     -> static landing copy
-                                      |-- EDGE_DOMAIN      -> umbra-account:8081
+                                      |-- EDGE_DOMAIN      -> static VPN display
                                       |-- sub.ruyin.ai           -> umbra-subproxy:8080 -> umbra-marzban:8000 /sub/<token>
-                                      |-- console.ruyin.ai -> umbra-marzban:8000 and /invites/ -> umbra-account:8081
-                                      |-- pass.ruyin.ai    -> umbra-vaultwarden:80
-                                      `-- vault.ruyin.ai   -> placeholder
+                                      |-- console.ruyin.ai -> umbra-account-web + umbra-account API
+                                      |-- admin.ruyin.ai   -> umbra-marzban:8000 and /invites -> account web/API
+                                      `-- pass.ruyin.ai    -> umbra-vaultwarden:80
 ```
 
 ### REALITY Proxy Path
@@ -129,7 +129,7 @@ Services:
 |       |   |       |-- 04-sub.conf.template
 |       |   |       |-- 05-console.conf.template
 |       |   |       |-- 06-pass.conf.template
-|       |   |       `-- 07-vault.conf.template
+|       |   |       `-- 07-admin.conf.template
 |       |   |-- xray/
 |       |   |   `-- config.json.template
 |       |   `-- marzban/

@@ -129,25 +129,25 @@ log_step "HTTPS endpoints..."
 check_http "$APEX_DOMAIN"        "https://$APEX_DOMAIN"
 check_http "$WWW_DOMAIN"         "https://$WWW_DOMAIN"
 check_http "$EDGE_DOMAIN"        "https://$EDGE_DOMAIN"
-check_http_body_contains "$EDGE_DOMAIN account home" "https://$EDGE_DOMAIN/" "Ruyin Account"
-check_http "$EDGE_DOMAIN account login" "https://$EDGE_DOMAIN/login"
-check_http "$EDGE_DOMAIN account registration" "https://$EDGE_DOMAIN/register"
+check_http_body_contains "$EDGE_DOMAIN VPN display" "https://$EDGE_DOMAIN/" "Proxy"
+check_http_body_contains "$CONSOLE_DOMAIN account home" "https://$CONSOLE_DOMAIN/" "Ruyin Account"
+check_http "$CONSOLE_DOMAIN account login" "https://$CONSOLE_DOMAIN/login"
+check_http "$CONSOLE_DOMAIN account registration" "https://$CONSOLE_DOMAIN/register"
 if [[ -n "${VXTURE_SSO_URL:-}" ]]; then
   sso_headers="$(mktemp)"
-  sso_code=$(curl -sk --max-time 10 -D "$sso_headers" -o /dev/null -w "%{http_code}" "https://$EDGE_DOMAIN/auth/start" || true)
+  sso_code=$(curl -sk --max-time 10 -D "$sso_headers" -o /dev/null -w "%{http_code}" "https://$CONSOLE_DOMAIN/auth/start" || true)
   if [[ "$sso_code" =~ ^(301|302|303|307|308)$ ]] \
      && grep -Fqi "location: $VXTURE_SSO_URL?ctx=" "$sso_headers"; then
-    log_ok "$EDGE_DOMAIN SSO start redirects to Vxture ($sso_code)"
+    log_ok "$CONSOLE_DOMAIN SSO start redirects to Vxture ($sso_code)"
     (( ++PASS ))
   else
-    log_fail "$EDGE_DOMAIN SSO start redirect invalid (got $sso_code)"
+    log_fail "$CONSOLE_DOMAIN SSO start redirect invalid (got $sso_code)"
     sed -n '1,20p' "$sso_headers" || true
     (( ++FAIL ))
   fi
   rm -f "$sso_headers"
 fi
 check_http "$PASS_DOMAIN"        "https://$PASS_DOMAIN"
-check_http "$VAULT_DOMAIN"       "https://$VAULT_DOMAIN"
 
 # SUB_DOMAIN only exposes Marzban native GET /sub/{token}.
 # Marzban returns 405 to HEAD (-I), so verification must use GET.
@@ -198,40 +198,40 @@ else
   log_warn "No saved subscription URL file found in $BACKUP_DIR; run deploy.sh post after first deploy"
 fi
 
-# -- CONSOLE_DOMAIN login -----------------------------------------------------
-# The console vhost must be publicly reachable. Marzban owns authentication.
-log_step "$CONSOLE_DOMAIN login..."
-check_http "$CONSOLE_DOMAIN invite console" "https://$CONSOLE_DOMAIN/invites"
+# -- ADMIN_DOMAIN login -------------------------------------------------------
+# The admin vhost must be publicly reachable. Marzban owns dashboard auth.
+log_step "$ADMIN_DOMAIN admin..."
+check_http "$ADMIN_DOMAIN invite console" "https://$ADMIN_DOMAIN/invites"
 
-console_root_headers="$(mktemp)"
-CONSOLE_ROOT_CODE=$(curl -sk --max-time 10 -D "$console_root_headers" -o /dev/null -w "%{http_code}" "https://$CONSOLE_DOMAIN/" || true)
-if grep -Eiq '^location: .*:8443(/|[[:space:]]|$)' "$console_root_headers"; then
-  log_fail "$CONSOLE_DOMAIN root redirect exposes internal port 8443"
+admin_root_headers="$(mktemp)"
+ADMIN_ROOT_CODE=$(curl -sk --max-time 10 -D "$admin_root_headers" -o /dev/null -w "%{http_code}" "https://$ADMIN_DOMAIN/" || true)
+if grep -Eiq '^location: .*:8443(/|[[:space:]]|$)' "$admin_root_headers"; then
+  log_fail "$ADMIN_DOMAIN root redirect exposes internal port 8443"
   (( ++FAIL ))
-elif [[ "$CONSOLE_ROOT_CODE" =~ ^(301|302|307|308)$ ]] && grep -Eiq '^location: (https://'"$CONSOLE_DOMAIN"')?/dashboard/?[[:space:]]*$' "$console_root_headers"; then
-  log_ok "$CONSOLE_DOMAIN root redirects to dashboard ($CONSOLE_ROOT_CODE)"
+elif [[ "$ADMIN_ROOT_CODE" =~ ^(301|302|307|308)$ ]] && grep -Eiq '^location: (https://'"$ADMIN_DOMAIN"')?/dashboard/?[[:space:]]*$' "$admin_root_headers"; then
+  log_ok "$ADMIN_DOMAIN root redirects to dashboard ($ADMIN_ROOT_CODE)"
   (( ++PASS ))
 else
-  log_fail "$CONSOLE_DOMAIN root does not redirect to dashboard (got $CONSOLE_ROOT_CODE)"
-  (( ++FAIL ))
-fi
-rm -f "$console_root_headers"
-
-CONSOLE_CODE=$(curl -sk --max-time 10 -o /dev/null -w "%{http_code}" "https://$CONSOLE_DOMAIN/dashboard/" || echo "000")
-if [[ "$CONSOLE_CODE" =~ ^(200|301|302|307|308|401)$ ]]; then
-  log_ok "$CONSOLE_DOMAIN login reachable ($CONSOLE_CODE)"
-  (( ++PASS ))
-else
-  log_fail "$CONSOLE_DOMAIN login not reachable (got $CONSOLE_CODE)"
+  log_fail "$ADMIN_DOMAIN root does not redirect to dashboard (got $ADMIN_ROOT_CODE)"
   (( ++FAIL ))
 fi
+rm -f "$admin_root_headers"
 
-CONSOLE_API_CODE=$(curl -sk --max-time 10 -o /dev/null -w "%{http_code}" "https://$CONSOLE_DOMAIN/api/admin" || echo "000")
-if [[ "$CONSOLE_API_CODE" =~ ^(401|403)$ ]]; then
-  log_ok "$CONSOLE_DOMAIN API reaches Marzban auth ($CONSOLE_API_CODE)"
+ADMIN_CODE=$(curl -sk --max-time 10 -o /dev/null -w "%{http_code}" "https://$ADMIN_DOMAIN/dashboard/" || echo "000")
+if [[ "$ADMIN_CODE" =~ ^(200|301|302|307|308|401)$ ]]; then
+  log_ok "$ADMIN_DOMAIN login reachable ($ADMIN_CODE)"
   (( ++PASS ))
 else
-  log_fail "$CONSOLE_DOMAIN API does not reach Marzban auth (got $CONSOLE_API_CODE)"
+  log_fail "$ADMIN_DOMAIN login not reachable (got $ADMIN_CODE)"
+  (( ++FAIL ))
+fi
+
+ADMIN_API_CODE=$(curl -sk --max-time 10 -o /dev/null -w "%{http_code}" "https://$ADMIN_DOMAIN/api/admin" || echo "000")
+if [[ "$ADMIN_API_CODE" =~ ^(401|403)$ ]]; then
+  log_ok "$ADMIN_DOMAIN API reaches Marzban auth ($ADMIN_API_CODE)"
+  (( ++PASS ))
+else
+  log_fail "$ADMIN_DOMAIN API does not reach Marzban auth (got $ADMIN_API_CODE)"
   (( ++FAIL ))
 fi
 
@@ -313,7 +313,7 @@ fi
 
 # -- TLS certificates ----------------------------------------------------------
 log_step "Certificate expiry check..."
-for domain in "$APEX_DOMAIN" "$WWW_DOMAIN" "$EDGE_DOMAIN" "$SUB_DOMAIN" "$CONSOLE_DOMAIN" "$PASS_DOMAIN" "$VAULT_DOMAIN"; do
+for domain in "$APEX_DOMAIN" "$WWW_DOMAIN" "$EDGE_DOMAIN" "$SUB_DOMAIN" "$CONSOLE_DOMAIN" "$ADMIN_DOMAIN" "$PASS_DOMAIN"; do
   expiry=$(echo | openssl s_client -connect "$domain:443" -servername "$domain" 2>/dev/null \
     | openssl x509 -noout -enddate 2>/dev/null | cut -d= -f2 || echo "")
   if [[ -n "$expiry" ]]; then

@@ -1,4 +1,4 @@
-# vpn.ruyin.ai - User account portal
+# vpn.ruyin.ai - VPN edge display and legacy guide
 server {
     listen 8443 ssl proxy_protocol;
     server_name {{ EDGE_DOMAIN }};
@@ -9,8 +9,6 @@ server {
     include /etc/nginx/snippets/security-headers.conf;
 
     resolver 127.0.0.11 valid=30s ipv6=off;
-    set $account_upstream "umbra-account:8081";
-    set $account_web_upstream "umbra-account-web:3000";
 
     location = /guide {
         return 301 /guide/;
@@ -21,13 +19,8 @@ server {
         include /etc/nginx/snippets/proxy-headers.conf;
     }
 
-    location ^~ /api/account/ {
-        proxy_pass http://$account_upstream;
-        include /etc/nginx/snippets/proxy-headers.conf;
-    }
-
     location / {
-        proxy_pass http://$account_web_upstream;
+        proxy_pass http://umbra-portal:80/;
         include /etc/nginx/snippets/proxy-headers.conf;
     }
 }

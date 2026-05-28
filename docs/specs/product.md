@@ -9,7 +9,7 @@ It provides:
 - Native Marzban subscription delivery at `/sub/<token>`.
 - Subscription metadata normalization so clients display `Ruyin-USERNAME`.
 - Marzban console protected by Marzban login.
-- Invite management at `console.ruyin.ai/invites/` for binding existing Marzban users to portal logins.
+- Invite management at `admin.ruyin.ai/invites` for binding existing Marzban users to console logins.
 - Vaultwarden password management at the password domain.
 - File-based deployment state under `DATA_DIR`, with SQLite for Marzban, Account Portal, and Vaultwarden.
 
