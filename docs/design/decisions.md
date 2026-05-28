@@ -148,20 +148,19 @@ This file is a Jinja2 template that Marzban renders per-subscription. No externa
 Priority  Rule Type                        Action
 ------------------------------------------------
 0         Node infra (APEX / EDGE domain)  DIRECT
-1         Loopback / LAN / fake-ip         DIRECT
-2         VPS hosting ASN/domain           DIRECT
-3         Microsoft / Vultr                DIRECT
-4         DeepSeek (domestic AI)           DIRECT
-5         Cloudflare login / edge services PROXY (forced)
-6         AI providers (per-vendor)        PROXY (forced)
-7         Model platforms / aggregators    PROXY (forced)
-8         Design tools (Figma/Notion)      PROXY (forced)
-9         Dev toolchain (GitHub/Docker/npm)PROXY (forced)
-10        Streaming (Netflix/YouTube/etc)  PROXY (forced)
-11        Social / comms                   PROXY (forced)
-12        Google ecosystem                 PROXY (forced)
-13        China IP (GEOIP,CN)              DIRECT
-14        Everything else                  PROXY (fallback)
+1         Microsoft / Vultr / edge IP      DIRECT
+2         Loopback / LAN / fake-ip         DIRECT
+3         DeepSeek (domestic AI)           DIRECT
+4         Cloudflare login / edge services PROXY (forced)
+5         AI providers (per-vendor)        PROXY (forced)
+6         Model platforms / aggregators    PROXY (forced)
+7         Design tools (Figma/Notion)      PROXY (forced)
+8         Dev toolchain (GitHub/Docker/npm)PROXY (forced)
+9         Streaming (Netflix/YouTube/etc)  PROXY (forced)
+10        Social / comms                   PROXY (forced)
+11        Google ecosystem                 PROXY (forced)
+12        China IP (GEOIP,CN)              DIRECT
+13        Everything else                  PROXY (fallback)
 ```
 
 ### Hard Constraint: Must-PROXY (AI providers, per-vendor)
@@ -195,7 +194,7 @@ Microsoft:   microsoft.com, microsoftonline.com, windows.com, windowsupdate.com
              azure.com, azurewebsites.net, azureedge.net, trafficmanager.net
              visualstudio.com, vscode.dev, xbox.com, xboxlive.com
 
-Vultr:       vultr.com, vultrobjects.com, 108.61.182.248/32, AS20473
+Vultr:       vultr.com, vultrobjects.com, 108.61.182.248/32
 
 DeepSeek:    deepseek.com, deepseek.ai, api.deepseek.com
 ```
@@ -203,7 +202,7 @@ DeepSeek:    deepseek.com, deepseek.ai, api.deepseek.com
 **Reason:** Microsoft services are accessible from most networks without proxy; forcing them causes latency and auth degradation. DeepSeek is a Chinese domestic service; direct connection is faster and more stable.
 
 Cloudflare login, dashboard, challenge, and edge service domains are forced to `PROXY` because direct routing can leave the Cloudflare account login flow stalled. Vultr hosts the VPS control plane and provider storage domains; proxying them through the same node can create management loops.
-The exact VPN/VPS endpoint IP is pinned as `IP-CIDR,108.61.182.248/32,DIRECT,no-resolve` because ASN matching depends on the local Clash core and database.
+The exact VPN/VPS endpoint IP is pinned as `IP-CIDR,108.61.182.248/32,DIRECT,no-resolve` to avoid proxy loops without requiring ASN databases during client startup.
 
 ### Full Rules Block
 
@@ -237,10 +236,7 @@ rules:
   - IP-CIDR,169.254.0.0/16,DIRECT,no-resolve
   - IP-CIDR,198.18.0.0/15,DIRECT,no-resolve
 
-  # 2. VPS provider ASN direct, avoid routing back to this node
-  - IP-ASN,20473,DIRECT,no-resolve
-
-  # 3. Microsoft ecosystem direct
+  # 2. Microsoft ecosystem direct
   - DOMAIN-SUFFIX,microsoft.com,DIRECT
   - DOMAIN-SUFFIX,microsoftonline.com,DIRECT
   - DOMAIN-SUFFIX,windows.com,DIRECT

@@ -469,7 +469,7 @@ CHECKS: list[tuple[str, Path, list[str]]] = [
         "cloudflare routes through proxy or final match",
         Path("configs/marzban/clash-subscription.j2"),
         [
-            "# 4. Cloudflare account, dashboard, challenge, and edge services proxy",
+            "# 3. Cloudflare account, dashboard, challenge, and edge services proxy",
             "DOMAIN-SUFFIX,cloudflare.com,PROXY",
             "DOMAIN-SUFFIX,cloudflareinsights.com,PROXY",
         ],
@@ -542,6 +542,11 @@ FORBIDDEN: list[tuple[str, Path, str]] = [
         "account portal dashboard GET must not auto-update subscription URL",
         Path("services/account/account.py"),
         "if fresh_sub_url and fresh_sub_url != sub_url:",
+    ),
+    (
+        "clash subscription must not require ASN database",
+        Path("."),
+        "IP-" + "ASN,",
     ),
     (
         "cloudflare.com must not be must-direct",

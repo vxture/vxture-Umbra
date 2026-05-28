@@ -52,11 +52,10 @@ DOMAIN-SUFFIX,teams.microsoft.com
 DOMAIN-SUFFIX,xbox.com
 DOMAIN-SUFFIX,xboxlive.com
 
-# Vultr provider control plane and object storage. VPS address ranges are also
-# protected later by IP-ASN,20473,DIRECT,no-resolve.
+# Vultr provider control plane and object storage.
 DOMAIN-SUFFIX,vultr.com
 DOMAIN-SUFFIX,vultrobjects.com
 
 # Current VPN/VPS public endpoint. Keep an exact IP direct rule because some
-# Clash cores or local databases may not match IP-ASN reliably.
+# clients may resolve the edge host before applying domain rules.
 IP-CIDR,108.61.182.248/32

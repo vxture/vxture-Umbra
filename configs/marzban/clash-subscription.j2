@@ -55,15 +55,12 @@ rules:
   - IP-CIDR,169.254.0.0/16,DIRECT,no-resolve
   - IP-CIDR,198.18.0.0/15,DIRECT,no-resolve
 
-  # 2. VPS provider ASN direct, avoid routing back to this node
-  - IP-ASN,20473,DIRECT,no-resolve
-
-  # 3. Domestic AI services direct
+  # 2. Domestic AI services direct
   - DOMAIN-SUFFIX,deepseek.com,DIRECT
   - DOMAIN-SUFFIX,deepseek.ai,DIRECT
   - DOMAIN-SUFFIX,api.deepseek.com,DIRECT
 
-  # 4. Cloudflare account, dashboard, challenge, and edge services proxy
+  # 3. Cloudflare account, dashboard, challenge, and edge services proxy
   - DOMAIN-SUFFIX,cloudflare.com,PROXY
   - DOMAIN-SUFFIX,cloudflare-dns.com,PROXY
   - DOMAIN-SUFFIX,cloudflareaccess.com,PROXY
@@ -81,7 +78,7 @@ rules:
   - DOMAIN-SUFFIX,warp.dev,PROXY
   - DOMAIN,one.one.one.one,PROXY
 
-  # 5. AI model providers proxy
+  # 4. AI model providers proxy
   - DOMAIN-SUFFIX,openai.com,PROXY
   - DOMAIN-SUFFIX,chatgpt.com,PROXY
   - DOMAIN-SUFFIX,oaistatic.com,PROXY
@@ -103,7 +100,7 @@ rules:
   - DOMAIN-SUFFIX,cohere.com,PROXY
   - DOMAIN-SUFFIX,cohere.ai,PROXY
 
-  # 6. Model aggregators and free model platforms proxy
+  # 5. Model aggregators and free model platforms proxy
   - DOMAIN-SUFFIX,openrouter.ai,PROXY
   - DOMAIN-SUFFIX,huggingface.co,PROXY
   - DOMAIN-SUFFIX,hf.co,PROXY
@@ -112,7 +109,7 @@ rules:
   - DOMAIN-SUFFIX,fireworks.ai,PROXY
   - DOMAIN-SUFFIX,poe.com,PROXY
 
-  # 7. Figma, design tools, and workspace apps proxy
+  # 6. Figma, design tools, and workspace apps proxy
   - DOMAIN-SUFFIX,figma.com,PROXY
   - DOMAIN-SUFFIX,figma.site,PROXY
   - DOMAIN-SUFFIX,figma.app,PROXY
@@ -121,7 +118,7 @@ rules:
   - DOMAIN-SUFFIX,notion.so,PROXY
   - DOMAIN-SUFFIX,notion.com,PROXY
 
-  # 8. Developer toolchain proxy: GitHub / Docker / npm
+  # 7. Developer toolchain proxy: GitHub / Docker / npm
   - DOMAIN-SUFFIX,github.com,PROXY
   - DOMAIN-SUFFIX,githubusercontent.com,PROXY
   - DOMAIN-SUFFIX,githubassets.com,PROXY
@@ -138,7 +135,7 @@ rules:
   - DOMAIN-SUFFIX,jsdelivr.net,PROXY
   - DOMAIN-SUFFIX,unpkg.com,PROXY
 
-  # 9. Streaming media proxy
+  # 8. Streaming media proxy
   - DOMAIN-SUFFIX,netflix.com,PROXY
   - DOMAIN-SUFFIX,netflix.net,PROXY
   - DOMAIN-SUFFIX,nflxext.com,PROXY
@@ -155,7 +152,7 @@ rules:
   - DOMAIN-SUFFIX,max.com,PROXY
   - DOMAIN-SUFFIX,twitch.tv,PROXY
 
-  # 10. Social and communication proxy
+  # 9. Social and communication proxy
   - DOMAIN-SUFFIX,x.com,PROXY
   - DOMAIN-SUFFIX,twitter.com,PROXY
   - DOMAIN-SUFFIX,twimg.com,PROXY
@@ -174,15 +171,15 @@ rules:
   - DOMAIN-SUFFIX,medium.com,PROXY
   - DOMAIN-SUFFIX,linkedin.com,PROXY
 
-  # 11. Google ecosystem proxy
+  # 10. Google ecosystem proxy
   - DOMAIN-SUFFIX,google.com,PROXY
   - DOMAIN-SUFFIX,googleapis.com,PROXY
   - DOMAIN-SUFFIX,googleusercontent.com,PROXY
   - DOMAIN-SUFFIX,gstatic.com,PROXY
   - DOMAIN-SUFFIX,g.co,PROXY
 
-  # 12. China IP direct
+  # 11. China IP direct
   - GEOIP,CN,DIRECT
 
-  # 13. Fallback proxy
+  # 12. Fallback proxy
   - MATCH,PROXY

@@ -107,8 +107,9 @@ a must-direct domain is missing, appears after the first proxy boundary, or
 overlaps any `PROXY` rule.
 
 The current VPN/VPS public endpoint is also pinned as an exact `IP-CIDR` direct
-rule. Do not rely only on `IP-ASN,20473,DIRECT`; local Clash cores can miss ASN
-matches when the ASN database is unavailable, stale, or unsupported.
+rule. Do not use ASN routing rules in the subscription template; Clash cores may
+try to download ASN databases before enabling the profile, and startup must not
+depend on external database downloads.
 
 For immediate local testing, mirror rule changes into the current Clash Verge
 profile YAML and keep an updated-profile backup next to it. Clash Verge can
