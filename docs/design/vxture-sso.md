@@ -13,17 +13,14 @@ Umbra already has:
 - Account APIs that can read the Vxture access cookie and bind it to an
   existing Marzban invite.
 
-Until the Vxture SSO endpoint is available, keep:
-
-```env
-VXTURE_SSO_URL=
-```
-
-After Vxture publishes the endpoint, set:
+Use the shared Vxture SSO start endpoint:
 
 ```env
 VXTURE_SSO_URL=https://console.vxture.com/zh-CN/sso/start
 ```
+
+If the endpoint is unavailable in an environment, set `VXTURE_SSO_URL=` to keep
+the old fallback login link behavior.
 
 ## Goals
 
@@ -85,11 +82,20 @@ GET https://vpn.ruyin.ai/auth/callback?token=<token>&state=<state>
 
 The callback route must:
 
-1. Validate `state` if Umbra SSO state protection is enabled.
-2. Call `AUTH_BFF_URL/auth/crossdomain/verify` with the received token.
-3. Call `AUTH_BFF_URL/auth/internal/sign` after token verification.
+1. Validate `state` against the HttpOnly state cookie before token exchange.
+2. Call `AUTH_BFF_URL/auth/crossdomain/verify` with the received token and
+   `source: "ruyin.ai"`.
+3. Call `AUTH_BFF_URL/auth/internal/sign` with `source: "ruyin"` after token
+   verification.
 4. Forward every returned `Set-Cookie` header to the browser.
 5. Redirect to `/dashboard`.
+
+The two source values are intentionally different:
+
+- `crossdomain/verify.source = "ruyin.ai"` identifies the target domain and
+  must match the token's allowed `targetDomain`.
+- `internal/sign.source = "ruyin"` selects the Ruyin cookie namespace such as
+  `ry_access_token` and `ry_refresh_token`.
 
 ## Server-Side State Design
 
@@ -122,7 +128,7 @@ Max-Age: 300
 Failure response:
 
 ```text
-HTTP 302 Location: /login?error=sso_state
+HTTP 302 Location: /login?sso=state
 ```
 
 ## Environment Variables
@@ -168,8 +174,8 @@ Vxture SSO
 
 Umbra account web
   -> validate state cookie
-  -> POST AUTH_BFF_URL/auth/crossdomain/verify
-  -> POST AUTH_BFF_URL/auth/internal/sign
+  -> POST AUTH_BFF_URL/auth/crossdomain/verify { token, source: "ruyin.ai" }
+  -> POST AUTH_BFF_URL/auth/internal/sign { source: "ruyin", ...verifiedPayload }
   -> forward Set-Cookie
   -> 302 /dashboard
 ```
@@ -188,17 +194,21 @@ Umbra account web
 - With `VXTURE_SSO_URL=` empty, existing login behavior remains unchanged.
 - With `VXTURE_SSO_URL` configured, the login button sends users through
   `/auth/start`, not directly to Vxture from client code.
-- `/auth/start` redirects to Vxture with exactly one `ctx` parameter.
+- `/auth/start` redirects to Vxture with exactly one raw JSON `ctx` query
+  parameter encoded by `URLSearchParams`.
 - `/auth/callback` rejects missing or mismatched `state`.
-- `/auth/callback` verifies the cross-domain token before signing cookies.
+- `/auth/callback` verifies the cross-domain token with `source: "ruyin.ai"`
+  before signing cookies with `source: "ruyin"`.
 - The browser receives Vxture auth cookies and lands on `/dashboard`.
 - `AUTH_INTERNAL_TOKEN` is never exposed to client JavaScript.
 
-## Open Questions
+## Confirmed Vxture Contract
 
-- Confirm whether Vxture expects `ctx` as raw JSON URL-encoded by
-  `URLSearchParams`, or base64url-encoded JSON.
-- Confirm whether Vxture returns `state` as a top-level query parameter exactly
-  named `state`.
-- Confirm whether Vxture requires any fixed allowed origin or caller registry
-  for `from: "ruyin"`.
+- Vxture expects `ctx` as raw JSON URL-encoded by `URLSearchParams`.
+- Vxture returns `state` as a top-level query parameter named `state`.
+- Vxture routes `from: "ruyin"` through the Ruyin policy.
+- Vxture redirects back to `returnTo` with:
+
+```text
+?token=<one-time-token>&state=<same-state>
+```
