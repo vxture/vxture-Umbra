@@ -445,11 +445,36 @@ CHECKS: list[tuple[str, Path, list[str]]] = [
         ],
     ),
     (
+        "nginx redirects do not expose internal 8443 listener",
+        Path("configs/nginx/nginx.conf"),
+        [
+            "absolute_redirect off;",
+            "port_in_redirect off;",
+        ],
+    ),
+    (
+        "proxy headers describe the public HTTPS endpoint",
+        Path("configs/nginx/snippets/proxy-headers.conf"),
+        [
+            "proxy_set_header X-Forwarded-Host  $host;",
+            "proxy_set_header X-Forwarded-Port  443;",
+        ],
+    ),
+    (
+        "console vhost rewrites Marzban redirects to public domain",
+        Path("configs/nginx/vhosts/05-console.conf.template"),
+        [
+            "proxy_redirect https://umbra-marzban:8000 https://{{ CONSOLE_DOMAIN }};",
+            "proxy_redirect http://umbra-marzban:8000 https://{{ CONSOLE_DOMAIN }};",
+        ],
+    ),
+    (
         "deploy verify treats console as public Marzban login",
         Path("scripts/deploy/06-verify.sh"),
         [
             "$CONSOLE_DOMAIN/",
             "$CONSOLE_DOMAIN root redirects to dashboard",
+            "root redirect exposes internal port 8443",
             "$CONSOLE_DOMAIN/dashboard/",
             "$CONSOLE_DOMAIN API reaches Marzban auth",
             "$CONSOLE_DOMAIN login reachable",
@@ -528,6 +553,11 @@ FORBIDDEN: list[tuple[str, Path, str]] = [
         "console vhost must not require docker-source IP",
         Path("configs/nginx/vhosts/05-console.conf.template"),
         "allow 172.16.0.0/12;",
+    ),
+    (
+        "console vhost must not rewrite redirects to raw request host",
+        Path("configs/nginx/vhosts/05-console.conf.template"),
+        "proxy_redirect https://umbra-marzban:8000 https://$http_host;",
     ),
     (
         "deploy verify must not treat console 403 as expected",

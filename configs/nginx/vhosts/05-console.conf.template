@@ -35,6 +35,7 @@ server {
         proxy_pass https://$marzban_upstream;
         proxy_ssl_verify off;
         include /etc/nginx/snippets/proxy-headers.conf;
-        proxy_redirect https://umbra-marzban:8000 https://$http_host;
+        proxy_redirect https://umbra-marzban:8000 https://{{ CONSOLE_DOMAIN }};
+        proxy_redirect http://umbra-marzban:8000 https://{{ CONSOLE_DOMAIN }};
     }
 }
