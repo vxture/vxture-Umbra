@@ -105,6 +105,17 @@ The two source values are intentionally different:
 2. Store the state in a short-lived HttpOnly cookie.
 3. Build the `ctx` object.
 4. Redirect to `VXTURE_SSO_URL` with `ctx`.
+5. Reject invalid `VXTURE_SSO_URL` values by redirecting to
+   `/?sso=bad_config` before sending the user to Vxture.
+
+Production must not infer the public app URL from `Host`. Compose injects:
+
+```env
+NEXT_PUBLIC_RUYIN_ACCOUNT_URL=https://${EDGE_DOMAIN}
+```
+
+If this value is missing in production, `/auth/start` and `/auth/callback`
+return `500` instead of constructing redirects from the request host.
 
 Recommended cookie:
 
@@ -124,6 +135,9 @@ Max-Age: 300
 3. Compare both values with a constant-time comparison.
 4. Clear `umbra_sso_state` after validation, including failure cases.
 5. Reject the request before token exchange if state validation fails.
+6. Accept Vxture error callbacks such as
+   `/auth/callback?error=sso_token_failed&state=<state>` and redirect to
+   `/login?sso=sso_token_failed`.
 
 Failure response:
 
@@ -194,13 +208,50 @@ Umbra account web
 - With `VXTURE_SSO_URL=` empty, existing login behavior remains unchanged.
 - With `VXTURE_SSO_URL` configured, the login button sends users through
   `/auth/start`, not directly to Vxture from client code.
+- `/auth/start` rejects invalid SSO URL configuration before redirecting.
 - `/auth/start` redirects to Vxture with exactly one raw JSON `ctx` query
   parameter encoded by `URLSearchParams`.
 - `/auth/callback` rejects missing or mismatched `state`.
+- `/auth/callback` handles Vxture `error` callbacks after state validation.
 - `/auth/callback` verifies the cross-domain token with `source: "ruyin.ai"`
   before signing cookies with `source: "ruyin"`.
 - The browser receives Vxture auth cookies and lands on `/dashboard`.
 - `AUTH_INTERNAL_TOKEN` is never exposed to client JavaScript.
+
+## Invite Activation Flow
+
+Ruyin intentionally uses a two-step activation model:
+
+1. The user signs in with Vxture SSO.
+2. Inside Ruyin, the signed-in user enters a one-time invite code.
+3. Ruyin binds the Vxture account id to the target Marzban user and reveals the
+   subscription URL.
+
+This is safer than embedding invite data into SSO because identity and VPN
+entitlement remain separate:
+
+- Vxture proves who the user is.
+- Ruyin invite codes decide whether that identity can activate a VPN
+  subscription.
+
+The simpler user experience should be an invite link, not a different security
+model:
+
+```text
+https://vpn.ruyin.ai/register?invite=<code>
+```
+
+Planned behavior:
+
+- If anonymous, store the invite code in a short-lived pending activation cookie
+  and send the user through `/auth/start`.
+- After callback, land on `/register` with the code prefilled.
+- If already signed in, show the bind form with the code prefilled.
+- The final binding still happens only through `POST /api/account/bind-invite`
+  after Vxture identity is present.
+
+For the first SSO rollout, the existing manual two-step flow remains acceptable:
+sign in first, then paste the invite code in Ruyin.
 
 ## Confirmed Vxture Contract
 

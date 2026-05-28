@@ -17,6 +17,7 @@ function internalToken() {
 function appUrl(request: NextRequest) {
   const configured = process.env.NEXT_PUBLIC_RUYIN_ACCOUNT_URL;
   if (configured) return configured.replace(/\/+$/, "");
+  if (process.env.NODE_ENV === "production") return "";
   return `${request.nextUrl.protocol}//${request.nextUrl.host}`;
 }
 
@@ -38,6 +39,10 @@ function stateMatches(received: string | null, expected: string | undefined) {
 
 function redirectClearingState(path: string, target: string) {
   const response = NextResponse.redirect(new URL(path, target));
+  response.cookies.delete({
+    name: STATE_COOKIE,
+    path: "/auth",
+  });
   response.cookies.set(STATE_COOKIE, "", {
     httpOnly: true,
     secure: true,
@@ -51,13 +56,25 @@ function redirectClearingState(path: string, target: string) {
 export async function GET(request: NextRequest) {
   const token = request.nextUrl.searchParams.get("token");
   const state = request.nextUrl.searchParams.get("state");
+  const error = request.nextUrl.searchParams.get("error");
   const expectedState = request.cookies.get(STATE_COOKIE)?.value;
   const authUrl = authBffUrl();
   const authSecret = internalToken();
   const target = appUrl(request);
 
+  if (!target) {
+    return new NextResponse("Ruyin account URL is not configured", {
+      status: 500,
+      headers: { "Content-Type": "text/plain; charset=utf-8" },
+    });
+  }
+
   if (!stateMatches(state, expectedState)) {
     return redirectClearingState("/login?sso=state", target);
+  }
+
+  if (error) {
+    return redirectClearingState(`/login?sso=${encodeURIComponent(error)}`, target);
   }
 
   if (!token || !authUrl || !authSecret) {

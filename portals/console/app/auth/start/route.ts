@@ -8,6 +8,7 @@ const STATE_COOKIE = "umbra_sso_state";
 function appUrl(request: NextRequest) {
   const configured = process.env.NEXT_PUBLIC_RUYIN_ACCOUNT_URL;
   if (configured) return configured.replace(/\/+$/, "");
+  if (process.env.NODE_ENV === "production") return "";
   return `${request.nextUrl.protocol}//${request.nextUrl.host}`;
 }
 
@@ -19,8 +20,22 @@ export async function GET(request: NextRequest) {
   const configured = ssoUrl();
   const target = appUrl(request);
 
+  if (!target) {
+    return new NextResponse("Ruyin account URL is not configured", {
+      status: 500,
+      headers: { "Content-Type": "text/plain; charset=utf-8" },
+    });
+  }
+
   if (!configured) {
     return NextResponse.redirect(new URL("/?sso=disabled", target));
+  }
+
+  let url: URL;
+  try {
+    url = new URL(configured);
+  } catch {
+    return NextResponse.redirect(new URL("/?sso=bad_config", target));
   }
 
   const state = crypto.randomUUID();
@@ -31,7 +46,6 @@ export async function GET(request: NextRequest) {
     state,
   };
 
-  const url = new URL(configured);
   url.searchParams.set("ctx", JSON.stringify(ctx));
 
   const response = NextResponse.redirect(url);

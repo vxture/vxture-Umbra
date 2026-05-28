@@ -412,8 +412,12 @@ CHECKS: list[tuple[str, Path, list[str]]] = [
         [
             "umbra_sso_state",
             "timingSafeEqual",
+            "process.env.NODE_ENV === \"production\"",
+            "request.nextUrl.searchParams.get(\"error\")",
+            "response.cookies.delete",
             "/auth/crossdomain/verify",
             "/auth/internal/sign",
+            "source: \"ruyin.ai\"",
             "source: \"ruyin\"",
             "set-cookie",
         ],
@@ -424,6 +428,8 @@ CHECKS: list[tuple[str, Path, list[str]]] = [
         [
             "VXTURE_SSO_URL",
             "umbra_sso_state",
+            "process.env.NODE_ENV === \"production\"",
+            "bad_config",
             "from: \"ruyin\"",
             "caller: \"Ruyin\"",
             "returnTo",
