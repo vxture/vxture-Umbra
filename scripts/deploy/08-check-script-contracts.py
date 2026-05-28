@@ -94,6 +94,8 @@ CHECKS: list[tuple[str, Path, list[str]]] = [
             "JWT_SECRET must be at least 32 characters and match Vxture auth-bff",
             "AUTH_INTERNAL_TOKEN must be at least 32 characters and match Vxture auth-bff",
             "AUTH_BFF_URL must be an http(s) URL",
+            "VXTURE_LOGIN_URL must be an http(s) URL",
+            "VXTURE_SSO_URL must be empty or an http(s) URL",
             "require_bool CERTBOT_SKIP",
             "must be true or false",
             "REALITY_DEST must be host:port with port in range 1-65535",

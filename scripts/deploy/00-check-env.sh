@@ -146,6 +146,14 @@ else
   fail "VXTURE_LOGIN_URL must be an http(s) URL"
 fi
 
+if [[ -z "${VXTURE_SSO_URL:-}" ]]; then
+  log_ok "VXTURE_SSO_URL is empty; fallback login remains enabled"
+elif [[ "${VXTURE_SSO_URL:-}" =~ ^https?://[^[:space:]]+$ ]]; then
+  log_ok "VXTURE_SSO_URL is valid"
+else
+  fail "VXTURE_SSO_URL must be empty or an http(s) URL"
+fi
+
 if [[ "${REALITY_DEST:-}" =~ ^([^[:space:]:]+):([0-9]+)$ ]] && (( 10#${BASH_REMATCH[2]} >= 1 && 10#${BASH_REMATCH[2]} <= 65535 )); then
   log_ok "REALITY_DEST has host:port format"
 else

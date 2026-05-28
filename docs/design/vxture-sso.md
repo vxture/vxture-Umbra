@@ -133,25 +133,25 @@ HTTP 302 Location: /login?sso=state
 
 ## Environment Variables
 
-Umbra console portal:
+Required in the server `.env` for SSO:
 
 ```env
 VXTURE_SSO_URL=https://console.vxture.com/zh-CN/sso/start
 AUTH_BFF_URL=<vxture-auth-bff-origin>
 AUTH_INTERNAL_TOKEN=<internal-sign-token>
-NEXT_PUBLIC_RUYIN_ACCOUNT_URL=https://vpn.ruyin.ai
-```
-
-Umbra account API:
-
-```env
 JWT_SECRET=<same-secret-used-for-ry_access_token>
 VXTURE_LOGIN_URL=https://console.vxture.com/zh-CN/signin
-VXTURE_SSO_URL=https://console.vxture.com/zh-CN/sso/start
 ```
 
-Current deployment may keep `VXTURE_SSO_URL` empty until the Vxture endpoint is
-ready.
+`NEXT_PUBLIC_RUYIN_ACCOUNT_URL` is not a server `.env` value. Compose injects
+it into `umbra-account-web` as:
+
+```env
+NEXT_PUBLIC_RUYIN_ACCOUNT_URL=https://${EDGE_DOMAIN}
+```
+
+Current deployment may keep `VXTURE_SSO_URL=` empty until the Vxture endpoint
+is ready. In that mode the login button falls back to `VXTURE_LOGIN_URL`.
 
 ## Sequence
 
