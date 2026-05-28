@@ -34,7 +34,7 @@ venv/
 # Node (if any tooling added later)
 node_modules/
 .next/
-account-web/.next/
+portals/console/.next/
 *.tsbuildinfo
 
 # OS / editor

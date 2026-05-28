@@ -128,7 +128,7 @@ HTTP 302 Location: /login?error=sso_state
 
 ## Environment Variables
 
-Umbra account web:
+Umbra console portal:
 
 ```env
 VXTURE_SSO_URL=https://console.vxture.com/zh-CN/sso/ruyin
@@ -177,7 +177,7 @@ Umbra account web
 
 ## Required Umbra Changes After Confirmation
 
-1. Add `GET /auth/start` as a server route in `account-web`.
+1. Add `GET /auth/start` as a server route in `portals/console`.
 2. Change the login button to link to `/auth/start` when `VXTURE_SSO_URL` is
    configured.
 3. Keep the fallback login link to `VXTURE_LOGIN_URL` while `VXTURE_SSO_URL` is

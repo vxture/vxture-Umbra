@@ -134,10 +134,14 @@ Services:
 |       |   |   `-- config.json.template
 |       |   `-- marzban/
 |       |       `-- clash-subscription.j2
-|       |-- landing/
-|       |   `-- html/
-|       |-- portal/
-|       |   `-- html/
+|       |-- portals/
+|       |   |-- website/
+|       |   |   `-- static/
+|       |   |-- console/
+|       |   |   |-- app/
+|       |   |   `-- static/
+|       |   |       `-- guide/
+|       |   `-- admin/
 |       |-- scripts/
 |       |   |-- server.sh
 |       |   |-- deploy.sh
@@ -222,7 +226,10 @@ umbra/
 |-- docker-compose.yml
 |-- configs/
 |-- docs/
-|-- landing/
-|-- portal/
+|-- portals/
+|   |-- website/
+|   |-- console/
+|   `-- admin/
+|-- services/
 `-- scripts/
 ```

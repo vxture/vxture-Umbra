@@ -227,8 +227,8 @@ Do not run it with `bash scripts/deploy/04-render-configs.py`; it is a Python sc
 | `configs/nginx/snippets/*.conf` | `DATA_DIR/nginx/snippets/*.conf` |
 | `configs/marzban/clash-subscription.j2` | `DATA_DIR/marzban/templates/clash/default.yml` |
 | `configs/xray/config.json.template` | `DATA_DIR/marzban/xray_config.json` |
-| `landing/html/**` | `DATA_DIR/nginx/html/ruyin-landing/` and `DATA_DIR/nginx/html/www-ruyin/` |
-| `portal/html/**` | `DATA_DIR/portal/html/` |
+| `portals/website/static/**` | `DATA_DIR/nginx/html/ruyin-landing/` and `DATA_DIR/nginx/html/www-ruyin/` |
+| `portals/console/static/guide/**` | `DATA_DIR/portal/html/` |
 
 Also injects REALITY keys into Xray/Marzban config and renders the Clash subscription template.
 

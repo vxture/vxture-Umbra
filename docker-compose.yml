@@ -117,7 +117,7 @@ services:
   # -- Account Web: Vxture SSO + invite-bound subscription UI -----------------
   umbra-account-web:
     build:
-      context: ./account-web
+      context: ./portals/console
     container_name: umbra-account-web
     restart: always
     depends_on:

@@ -19,7 +19,7 @@ The migration must not change these production runtime contracts:
 
 ## Current Layout
 
-Website-related source code currently lives in several top-level directories:
+Before this migration, website-related source code lived in several top-level directories:
 
 ```text
 account-web/              # Next.js account and invite UI
@@ -129,14 +129,14 @@ Rationale:
 
 The first migration must be backward compatible.
 
-`scripts/deploy/04-render-configs.py` and `docker-compose.yml` should read from
-the new paths first and fall back to old paths if needed:
+`scripts/deploy/04-render-configs.py` reads from the new paths first and falls
+back to old paths if needed:
 
 ```text
 portals/website/static/             -> fallback landing/html/
 portals/console/static/guide/        -> fallback portal/html/
-portals/console/                    -> fallback account-web/
-portals/admin/                      -> fallback account-web invite route during transition
+portals/console/                    -> legacy fallback account-web/
+portals/admin/                      -> legacy fallback account-web invite route during transition
 ```
 
 Runtime output remains unchanged:
@@ -210,7 +210,7 @@ account-web/app/ui/invite-console.tsx
 Update references:
 
 - `docker-compose.yml` build context.
-- `account-web` references in deploy contract checks.
+- legacy `account-web` references in deploy contract checks.
 - docs repository layout.
 - any script references to old source paths.
 
@@ -249,9 +249,8 @@ Saved valid subscription URLs must also be tested through the existing
 
 Only after one successful deploy:
 
-1. Remove `landing/`, `portal/`, and root `account-web/`.
-2. Remove fallback lookup from render scripts.
-3. Update docs to show only `portals/`.
+1. Remove fallback lookup from render scripts after one successful deploy.
+2. Update docs to show only `portals/`.
 
 This phase should be a separate commit from the file move.
 

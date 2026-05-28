@@ -129,6 +129,13 @@ def render_static_tree(src_dir: Path, dst_dir: Path, variables: dict):
             copy_file(src, dst)
 
 
+def first_existing_path(*candidates: Path) -> Path | None:
+    for candidate in candidates:
+        if candidate.exists():
+            return candidate
+    return None
+
+
 # -- Load variables -------------------------------------------------------------
 env_file = PROJECT_ROOT / ".env"
 if not env_file.exists():
@@ -218,21 +225,27 @@ subprocess.run(
 )
 
 print("\n-- Rendering static VPN guide ------------------------------------------")
-portal_src = REPO_DIR / "portal" / "html"
+portal_src = first_existing_path(
+    REPO_DIR / "portals" / "console" / "static" / "guide",
+    REPO_DIR / "portal" / "html",
+)
 portal_dst = DATA_DIR / "portal" / "html"
-if portal_src.exists():
+if portal_src:
     render_static_tree(portal_src, portal_dst, variables)
 else:
-    print(f"[WARN] portal/html/ not found in repo - skipping")
+    print("[WARN] VPN guide source not found in repo - skipping")
 
 print("\n-- Rendering landing page -----------------------------------------------")
-landing_src = REPO_DIR / "landing" / "html"
-if landing_src.exists():
+landing_src = first_existing_path(
+    REPO_DIR / "portals" / "website" / "static",
+    REPO_DIR / "landing" / "html",
+)
+if landing_src:
     for dst_dir in [DATA_DIR / "nginx" / "html" / "ruyin-landing",
                     DATA_DIR / "nginx" / "html" / "www-ruyin"]:
         render_static_tree(landing_src, dst_dir, variables)
 else:
-    print(f"[WARN] landing/html/ not found in repo - skipping")
+    print("[WARN] landing source not found in repo - skipping")
 
 print("\n-- Copying docs placeholder ---------------------------------------------")
 docs_src = REPO_DIR / "docs-site" / "html"

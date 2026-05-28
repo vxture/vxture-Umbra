@@ -9,8 +9,11 @@ umbra/
 |-- README.md
 |-- configs/
 |-- docs/
-|-- landing/
-|-- portal/
+|-- portals/
+|   |-- website/
+|   |-- console/
+|   `-- admin/
+|-- services/
 `-- scripts/
 ```
 
@@ -24,9 +27,11 @@ Key implementation paths:
 | `configs/nginx/snippets/*.conf` | Shared nginx snippets copied to `DATA_DIR/nginx/snippets/` |
 | `configs/xray/config.json.template` | Marzban-managed Xray config rendered to `DATA_DIR/marzban/xray_config.json` |
 | `configs/marzban/clash-subscription.j2` | Marzban Clash template rendered to `DATA_DIR/marzban/templates/clash/default.yml` |
-| `landing/html/` | Source for `ruyin.ai` and `www.ruyin.ai` static pages, including `assets/` |
-| `portal/html/` | Source for the legacy static guide served under `vpn.ruyin.ai/guide/` |
-| `services/account/account.py` | Invite-bound account portal and invite console |
+| `portals/website/static/` | Source for `ruyin.ai` and `www.ruyin.ai` static pages, including `assets/` |
+| `portals/console/` | Next.js user portal for `vpn.ruyin.ai` and temporary invite UI |
+| `portals/console/static/guide/` | Source for the legacy static guide served under `vpn.ruyin.ai/guide/` |
+| `portals/admin/` | Temporary admin portal boundary; invite UI will move here after route split |
+| `services/account/account.py` | Account API plus legacy fallback HTML |
 | `services/subproxy/subproxy.py` | Subscription response metadata normalizer |
 | `scripts/server/` | Server lifecycle implementation |
 | `scripts/deploy/` | Deploy pipeline implementation |

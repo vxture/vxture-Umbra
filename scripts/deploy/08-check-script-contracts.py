@@ -23,7 +23,7 @@ SOURCE_SCAN_PATHS: tuple[Path, ...] = (
     Path("README.md"),
     Path("docker-compose.yml"),
     Path("configs"),
-    Path("account-web"),
+    Path("portals"),
     Path("docs"),
     Path("services"),
     Path("scripts"),
@@ -59,6 +59,10 @@ SKIP_SUFFIXES = {
     ".log",
 }
 SKIP_NAME_SUFFIXES = (".bak", ".backup", ".old", ".tmp", ".swp", ".swo")
+LOCALIZED_STATIC_PREFIXES = (
+    Path("portals/website/static"),
+    Path("portals/console/static"),
+)
 
 
 CHECKS: list[tuple[str, Path, list[str]]] = [
@@ -349,6 +353,7 @@ CHECKS: list[tuple[str, Path, list[str]]] = [
         [
             "umbra-account:",
             "umbra-account-web:",
+            "context: ./portals/console",
             "ACCOUNT_SESSION_SECRET",
             "ACCOUNT_INVITE_SECRET",
             "MARZBAN_ADMIN_USER",
@@ -398,7 +403,7 @@ CHECKS: list[tuple[str, Path, list[str]]] = [
     ),
     (
         "account web implements Vxture SSO callback and invite UI",
-        Path("account-web/app/auth/callback/route.ts"),
+        Path("portals/console/app/auth/callback/route.ts"),
         [
             "/auth/crossdomain/verify",
             "/auth/internal/sign",
@@ -723,7 +728,11 @@ def read(path: Path) -> str:
 
 
 def should_skip(path: Path) -> bool:
-    rel_parts = path.relative_to(PROJECT_ROOT).parts
+    rel_path = path.relative_to(PROJECT_ROOT)
+    if any(rel_path == prefix or rel_path.is_relative_to(prefix) for prefix in LOCALIZED_STATIC_PREFIXES):
+        return True
+
+    rel_parts = rel_path.parts
     if any(part in SKIP_DIR_NAMES for part in rel_parts):
         return True
 
