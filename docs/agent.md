@@ -107,6 +107,7 @@ Phase 4 - Hardening
 | [`deployment/checklists.md`](deployment/checklists.md) | Scenario matrix, preservation contracts, and deployment safety checklists |
 | [`operations/operations.md`](operations/operations.md) | Backup, rollback, cert renewal, user management, monitoring |
 | [`operations/certificate-incident.md`](operations/certificate-incident.md) | Certificate incident ledger and non-regression guardrails |
+| [`operations/local-dev-environment.md`](operations/local-dev-environment.md) | Operator workstation notes for TUN, DeepSeek API, and Roo Code |
 
 ---
 
