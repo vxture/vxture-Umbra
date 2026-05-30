@@ -160,7 +160,7 @@ Priority  Rule Type                        Action
 10        Social / comms                   PROXY (forced)
 11        Google ecosystem                 PROXY (forced)
 12        China IP (GEOIP,CN)              DIRECT
-13        Everything else                  PROXY (fallback)
+13        Everything else                  DIRECT (fallback)
 ```
 
 ### Hard Constraint: Must-PROXY (AI providers, per-vendor)
@@ -393,8 +393,8 @@ rules:
   # 13. China IP direct
   - GEOIP,CN,DIRECT
 
-  # 14. Fallback proxy
-  - MATCH,PROXY
+  # 14. Fallback direct
+  - MATCH,DIRECT
 ```
 
 ---
