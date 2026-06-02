@@ -1,10 +1,20 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ruyinBrand } from "@/lib/brand";
+import { ruyinBrand, markSrc } from "@/lib/brand";
+import { useTheme } from "@vxture/design-system";
+import { useLocale } from "@/lib/locale-provider";
+
+const LOCALE_LABELS: Record<string, string> = {
+  "en-US": "EN",
+  "zh-CN": "中文",
+};
 
 export function SiteHeader() {
   const [isScrolled, setIsScrolled] = useState(false);
+  const { theme, toggle: toggleTheme } = useTheme();
+  const src = markSrc(theme);
+  const { locale, toggle: toggleLocale } = useLocale();
 
   useEffect(() => {
     const update = () => setIsScrolled(window.scrollY > 50);
@@ -24,7 +34,7 @@ export function SiteHeader() {
           href="/"
           aria-label={`${ruyinBrand.productName} home`}
         >
-          <img className="vx-brand-mark" src={ruyinBrand.markSrc} alt="" />
+          <img className="vx-brand-mark" src={src} alt="" />
           <span className="vx-brand-name">{ruyinBrand.productName}</span>
           <span className="vx-brand-separator" aria-hidden="true">
             |
@@ -36,32 +46,36 @@ export function SiteHeader() {
           <button
             className="site-tool-button"
             type="button"
-            aria-label="Switch language"
-            title="Switch language"
+            aria-label={`Switch language (current: ${locale})`}
+            title={`Language: ${locale}`}
+            onClick={toggleLocale}
           >
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <circle cx="12" cy="12" r="10" />
-              <path d="M2 12h20" />
-              <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
-            </svg>
+            <span className="tool-label">{LOCALE_LABELS[locale]}</span>
           </button>
           <button
             className="site-tool-button"
             type="button"
-            aria-label="Switch theme"
-            title="Switch theme"
+            aria-label={`Switch theme (current: ${theme})`}
+            title={`Theme: ${theme}`}
+            onClick={toggleTheme}
           >
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <circle cx="12" cy="12" r="4" />
-              <path d="M12 2v2" />
-              <path d="M12 20v2" />
-              <path d="m4.93 4.93 1.41 1.41" />
-              <path d="m17.66 17.66 1.41 1.41" />
-              <path d="M2 12h2" />
-              <path d="M20 12h2" />
-              <path d="m6.34 17.66-1.41 1.41" />
-              <path d="m19.07 4.93-1.41 1.41" />
-            </svg>
+            {theme === "dark" ? (
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+              </svg>
+            ) : (
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <circle cx="12" cy="12" r="5" />
+                <path d="M12 1v2" />
+                <path d="M12 21v2" />
+                <path d="M4.22 4.22l1.42 1.42" />
+                <path d="M18.36 18.36l1.42 1.42" />
+                <path d="M1 12h2" />
+                <path d="M21 12h2" />
+                <path d="M4.22 19.78l1.42-1.42" />
+                <path d="M18.36 5.64l1.42-1.42" />
+              </svg>
+            )}
           </button>
         </div>
       </div>

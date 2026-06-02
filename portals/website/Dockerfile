@@ -1,5 +1,5 @@
-# syntax=docker/dockerfile:1.6
-FROM node:22-alpine AS deps
+ARG NODE_BASE_IMAGE=node:22-alpine
+FROM ${NODE_BASE_IMAGE} AS deps
 WORKDIR /app
 ARG VXTURE_NPM_REGISTRY=https://npm.pkg.github.com
 COPY package.json package-lock.json* ./
@@ -12,14 +12,16 @@ RUN --mount=type=secret,id=npm_token \
     && if [ -f package-lock.json ]; then npm ci; else npm install; fi \
     && rm -f .npmrc
 
-FROM node:22-alpine AS builder
+FROM ${NODE_BASE_IMAGE} AS builder
 WORKDIR /app
 ENV NEXT_TELEMETRY_DISABLED=1
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
+# Brand identity SVGs from repo-level canonical source
+COPY --from=brand_context / ./public/assets/brand/
 RUN npm run build
 
-FROM node:22-alpine AS runner
+FROM ${NODE_BASE_IMAGE} AS runner
 WORKDIR /app
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1

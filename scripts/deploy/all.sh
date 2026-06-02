@@ -94,29 +94,40 @@ run_staged_cert_upgrade() {
   echo ""
 }
 
-run_step "00-check-env.sh"        "Environment check"
-run_step "01-init-dirs.sh"        "Initialize directories"
-run_step "02-generate-reality.sh" "Generate REALITY keys"
+run_step "00-check-environment.sh"        "Environment check"
+run_step "01-init-data-directories.sh"    "Initialize directories"
+run_step "02-generate-reality-keys.sh"    "Generate REALITY keys"
 
 # -- Certificate step: real or self-signed -------------------------------------
 # Set CERTBOT_SKIP=true in .env to use self-signed certs (no DNS required).
 # Upgrade later: bash scripts/ops.sh certs --upgrade
 if [[ "${CERTBOT_SKIP:-false}" == "true" ]]; then
-  run_step "03-self-signed.sh"    "Generate self-signed certificates (debug)"
+  run_step "03-self-signed.sh"            "Generate self-signed certificates (debug)"
 elif needs_staged_cert_upgrade; then
   run_staged_cert_upgrade
 else
-  run_step "03-issue-certs.sh"    "Issue TLS certificates"
+  run_step "03-issue-tls-certificates.sh" "Issue TLS certificates"
 fi
 
 log_step "[04] Render configuration templates"
-python3 "$SCRIPT_DIR/04-render-configs.py" || {
+python3 "$SCRIPT_DIR/04-render-configuration-templates.py" || {
   log_error "Config rendering failed. Deployment aborted."
   exit 1
 }
 echo ""
 
-run_step "05-up.sh"              "Start Docker services"
+# -- Pre-deployment backup: create a snapshot before containers restart ----------
+if [[ "$SKIP_BACKUP" == "true" ]]; then
+  log_info "Skipping pre-deployment backup (--skip-backup)"
+else
+  log_step "[pre-backup] Creating pre-deployment backup snapshot..."
+  bash "$SCRIPT_DIR/../ops/backup.sh" || {
+    log_warn "Pre-deployment backup reported warnings - proceeding anyway"
+  }
+  echo ""
+fi
+
+run_step "05-start-docker-services.sh"    "Build images and start services"
 
 # -- Configure cert renewal and backup cron ------------------------------------
 log_step "Configuring cron jobs..."
@@ -148,11 +159,12 @@ add_cron "$CRON_LINE"
 add_cron "$BACKUP_CRON_LINE"
 echo ""
 
+# -- Post-deployment backup (if not already done) --------------------------------
 if [[ "$SKIP_BACKUP" == "true" ]]; then
-  log_info "Skipping backup (--skip-backup)"
+  log_info "Skipping post-deployment backup (--skip-backup)"
 else
   bash "$SCRIPT_DIR/../ops/backup.sh" || {
-    log_warn "Backup reported failures - services may still be running."
+    log_warn "Post-deployment backup reported warnings - services may still be running."
     log_warn "Check manually: bash scripts/ops.sh backup"
   }
   echo ""
@@ -161,7 +173,7 @@ fi
 if [[ "$SKIP_VERIFY" == "true" ]]; then
   log_info "Skipping verification (--skip-verify)"
 else
-  run_step_warn "06-verify.sh"   "Verify deployment"
+  run_step_warn "06-verify-deployment.sh" "Verify deployment"
 fi
 
 # -- Done ----------------------------------------------------------------------
@@ -178,7 +190,7 @@ echo "  Marzban:       https://$ADMIN_DOMAIN/dashboard/"
 echo "  Password Mgr:  https://$PASS_DOMAIN"
 echo ""
 echo "  Next steps:"
-echo "  1. Run post-deploy wizard: bash scripts/deploy.sh post"
+echo "  1. Run post-deploy wizard: bash scripts/deploy.sh wizard"
 echo "  2. Open https://$ADMIN_DOMAIN/invites to generate user invites"
 echo "  3. (Optional) set up external uptime monitoring - BetterStack or UptimeRobot"
 echo ""

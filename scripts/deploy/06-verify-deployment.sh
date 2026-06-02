@@ -6,6 +6,20 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/../lib/env.sh"
 source "$SCRIPT_DIR/../lib/log.sh"
 
+if [[ "$1" == "--help" ]] || [[ "$1" == "-h" ]]; then
+  echo ""
+  echo "  Usage: bash scripts/deploy.sh verify"
+  echo ""
+  echo "  Runs post-deployment verification: container health, HTTPS"
+  echo "  endpoints, SQLite databases, Marzban API, cron jobs, and"
+  echo "  TLS certificate expiry. All checks are read-only."
+  echo ""
+  echo "  Called automatically by: bash scripts/deploy.sh all"
+  echo "  Run standalone:          bash scripts/deploy.sh verify"
+  echo ""
+  exit 0
+fi
+
 log_banner "Umbra - Verification"
 
 PASS=0
@@ -108,7 +122,7 @@ log_step "Container health..."
 CONTAINERS=(
   umbra-nginx umbra-marzban
   umbra-subproxy umbra-account umbra-account-web
-  umbra-vaultwarden umbra-portal umbra-website
+  umbra-vaultwarden umbra-website
 )
 
 cd "$REPO_DIR"
@@ -196,7 +210,7 @@ if [[ -n "$latest_sub_file" ]]; then
     log_warn "No subscription URL found in $latest_sub_file"
   fi
 else
-  log_warn "No saved subscription URL file found in $BACKUP_DIR; run deploy.sh post after first deploy"
+  log_warn "No saved subscription URL file found in $BACKUP_DIR; run deploy.sh wizard after first deploy"
 fi
 
 # -- ADMIN_DOMAIN login -------------------------------------------------------

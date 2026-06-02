@@ -424,7 +424,7 @@ if [[ "$MODE" == "--upgrade" ]]; then
   prepare_staged_certs "$STAGED_NAME"
   umbra_clean_empty_renewal_configs "$DATA_DIR/$STAGED_NAME"
 
-  if ! CERTBOT_STAGING=false CERTBOT_REPLACE_UNTRUSTED=true CERTBOT_CERT_DIR="$DATA_DIR/$STAGED_NAME" bash "$SCRIPT_DIR/../deploy/03-issue-certs.sh"; then
+  if ! CERTBOT_STAGING=false CERTBOT_REPLACE_UNTRUSTED=true CERTBOT_CERT_DIR="$DATA_DIR/$STAGED_NAME" bash "$SCRIPT_DIR/../deploy/03-issue-tls-certificates.sh"; then
     log_error "Certificate issuance failed; existing production certificates were not touched."
     log_info "Partial staged certs, if any, were kept at: $DATA_DIR/$STAGED_NAME"
     log_info "If Let's Encrypt rate-limited this host, wait until the retry-after time and run again."

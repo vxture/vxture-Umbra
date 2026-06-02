@@ -10,6 +10,21 @@ source "$SCRIPT_DIR/../lib/env.sh"
 source "$SCRIPT_DIR/../lib/log.sh"
 source "$SCRIPT_DIR/../lib/certs.sh"
 
+if [[ "$1" == "--help" ]] || [[ "$1" == "-h" ]]; then
+  echo ""
+  echo "  Usage: bash scripts/deploy.sh certificates  (preferred)"
+  echo "         bash scripts/deploy/03-self-signed.sh"
+  echo ""
+  echo "  Generates self-signed certificates for all domains."
+  echo "  Use when DNS is not yet pointed to this server."
+  echo "  Set MARZBAN_SSL_CA_TYPE=private in .env."
+  echo ""
+  echo "  Replace with real certs later:"
+  echo "    bash scripts/ops.sh certs --upgrade"
+  echo ""
+  exit 0
+fi
+
 log_banner "Umbra - Self-Signed Certificates (debug mode)"
 log_warn "These certs are NOT trusted by browsers."
 log_warn "Run ops.sh certs --upgrade once DNS is pointed to this server."

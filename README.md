@@ -1,8 +1,8 @@
 # Vxture Umbra
 
-Production VPN edge node - SNI routing, VLESS+REALITY proxy, subscription delivery, password management.
+Production VPN edge node - SNI routing, VLESS+REALITY proxy, subscription delivery, password management, public website.
 
-**Stack:** Nginx / Xray REALITY / Marzban / Vaultwarden
+**Stack:** Nginx / Xray REALITY / Marzban / umbra-website (Next.js) / Vaultwarden
 
 **AI coding entry:** start with [docs/agent.md](docs/agent.md). For deploy/reset/cert changes, use [docs/deployment/checklists.md](docs/deployment/checklists.md) before editing scripts.
 
@@ -12,8 +12,8 @@ Production VPN edge node - SNI routing, VLESS+REALITY proxy, subscription delive
 
 | Domain | Service |
 |--------|---------|
-| `ruyin.ai` / `www.ruyin.ai` | Brand landing page |
-| `vpn.ruyin.ai` | VPN edge host and VPN display page |
+| `ruyin.ai` / `www.ruyin.ai` | Brand landing page (Next.js) |
+| `vpn.ruyin.ai` | VPN edge host and VPN guide display |
 | `sub.ruyin.ai` | Marzban subscription endpoint with `Ruyin-USERNAME` display names |
 | `console.ruyin.ai` | User self-service console |
 | `admin.ruyin.ai` | Marzban console *(Marzban login)* |
@@ -121,7 +121,7 @@ ACCOUNT_INVITE_TTL_DAYS=30
 # -- Let's Encrypt ---------------------------------------
 CERTBOT_EMAIL=your@email.com
 
-# -- VPN Users (created by deploy.sh post) ---------------
+# -- VPN Users (created by deploy.sh wizard) ---------------
 USER_COUNT=10
 USER_PREFIX=user
 ```
@@ -130,7 +130,7 @@ USER_PREFIX=user
 
 ```bash
 bash scripts/deploy.sh all
-bash scripts/deploy.sh post
+bash scripts/deploy.sh wizard
 bash scripts/deploy.sh verify
 docker exec umbra-nginx nginx -t
 ```
@@ -145,7 +145,7 @@ git pull origin main
 
 bash scripts/ops.sh backup
 bash scripts/deploy.sh all
-bash scripts/deploy.sh post
+bash scripts/deploy.sh wizard
 bash scripts/deploy.sh verify
 docker exec umbra-nginx nginx -t
 ```
@@ -161,12 +161,12 @@ git pull origin main
 bash scripts/ops.sh backup
 bash scripts/server.sh reset --full
 bash scripts/deploy.sh all
-bash scripts/deploy.sh post
+bash scripts/deploy.sh wizard
 bash scripts/deploy.sh verify
 docker exec umbra-nginx nginx -t
 ```
 
-`deploy.sh all` runs checks, initializes directories, creates or reuses REALITY keys, issues certificates, renders configs, starts containers, verifies, and backs up. `deploy.sh post` configures Marzban hosts, creates users if missing, and saves subscription URLs.
+`deploy.sh all` runs checks, initializes directories, creates or reuses REALITY keys, issues certificates, renders configs, starts containers, verifies, and backs up. `deploy.sh wizard` configures Marzban hosts, creates users if missing, and saves subscription URLs.
 
 For normal production deploys, keep:
 
@@ -257,13 +257,13 @@ git pull origin main
 bash scripts/ops.sh backup
 bash scripts/server.sh reset
 bash scripts/deploy.sh all
-bash scripts/deploy.sh post
+bash scripts/deploy.sh wizard
 
 # Full reset, destroys runtime data after confirmation
 bash scripts/ops.sh backup
 bash scripts/server.sh reset --full
 bash scripts/deploy.sh all
-bash scripts/deploy.sh post
+bash scripts/deploy.sh wizard
 ```
 
 > `--full` uses Docker internally to remove root-owned certbot files.
@@ -280,12 +280,12 @@ bash scripts/ops.sh backup
 ### Re-render config only
 
 ```bash
-python3 scripts/deploy/04-render-configs.py
+python3 scripts/deploy/04-render-configuration-templates.py
 # or
 bash scripts/deploy.sh config
 ```
 
-`04-render-configs.py` is a Python script; do not run it with `bash`.
+`04-render-configuration-templates.py` is a Python script; do not run it with `bash`.
 
 ---
 
@@ -336,8 +336,8 @@ curl -sk -o /dev/null -w "%{http_code}\n" https://admin.ruyin.ai/dashboard/
 | `deploy.sh` | Unified dispatcher - run any step or operation by name |
 | `deploy.sh all` | Full deployment orchestrator (steps 00-07 + cron setup) |
 | `ops.sh certs` | Certificate lifecycle: renew / upgrade / status |
-| `deploy.sh post` | Post-deploy wizard: host config, user creation, sub URLs |
-| `deploy/06-verify.sh` | Verify all services and endpoints |
+| `deploy.sh wizard` | Post-deploy wizard: host config, user creation, sub URLs |
+| `deploy/06-verify-deployment.sh` | Verify all services and endpoints |
 | `ops/backup.sh` | Backup databases and config files |
 
 ---
@@ -350,14 +350,14 @@ Internet
    |- :80  -> nginx HTTP -> ACME challenge / 301 redirect to HTTPS
    |
    `- :443 -> nginx stream (SNI preread)
-                |- SNI = www.microsoft.com -> Xray VLESS+REALITY (port 10443 internal)
-                `- SNI = anything else     -> nginx HTTP block (:8443)
-                                               |- ruyin.ai          -> landing page
-                                               |- vpn.ruyin.ai      -> VPN display and guide
-                                               |- sub.ruyin.ai      -> Marzban /sub/<token>
-                                               |- console.ruyin.ai  -> user self-service console
-                                               |- admin.ruyin.ai    -> Marzban dashboard and /invites
-                                               `- pass.ruyin.ai     -> Vaultwarden
+                 |- SNI = www.microsoft.com -> Xray VLESS+REALITY (port 10443 internal)
+                 `- SNI = anything else     -> nginx HTTP block (:8443)
+                                                |- ruyin.ai          -> umbra-website (Next.js landing)
+                                                |- vpn.ruyin.ai      -> umbra-website (VPN guide)
+                                                |- sub.ruyin.ai      -> Marzban /sub/<token>
+                                                |- console.ruyin.ai  -> umbra-account-web (Next.js console)
+                                                |- admin.ruyin.ai    -> Marzban dashboard + umbra-account-web /invites
+                                                `- pass.ruyin.ai     -> Vaultwarden
 ```
 
 See [`docs/agent.md`](docs/agent.md) for the AI-maintainer document map and [`docs/design/architecture.md`](docs/design/architecture.md) for the full architecture reference.

@@ -37,15 +37,15 @@ Scripts are organized by lifecycle boundary.
 | Command | Purpose |
 |---|---|
 | `bash scripts/deploy.sh all` | Run the full deploy pipeline and install cron jobs |
-| `bash scripts/deploy.sh check` | Validate env, Docker, DNS, ports |
-| `bash scripts/deploy.sh dirs` | Create runtime directories |
-| `bash scripts/deploy.sh keys` | Generate or reuse REALITY keys |
-| `bash scripts/deploy.sh certs` | Issue initial Let's Encrypt certificates |
+| `bash scripts/deploy.sh environment` | Validate env, Docker, DNS, ports |
+| `bash scripts/deploy.sh directories` | Create runtime directories |
+| `bash scripts/deploy.sh reality-keys` | Generate or reuse REALITY keys |
+| `bash scripts/deploy.sh certificates` | Issue initial Let's Encrypt certificates |
 | `bash scripts/deploy.sh config` | Render configs and reload nginx if running |
 | `python3 scripts/deploy/07-validate-clash-rules.py --config <default.yml>` | Validate generated Clash must-direct rules |
-| `bash scripts/deploy.sh up` | Start containers and restart repo-mounted Python services |
+| `bash scripts/deploy.sh start` | Start containers and restart repo-mounted Python services |
 | `bash scripts/deploy.sh verify` | Verify runtime behavior |
-| `bash scripts/deploy.sh post` | Configure Marzban hosts, users, and subscription URLs |
+| `bash scripts/deploy.sh wizard` | Configure Marzban hosts, users, and subscription URLs |
 | `python3 scripts/deploy/08-check-script-contracts.py` | Static guardrails for high-risk script contracts |
 
 ## Ops Commands

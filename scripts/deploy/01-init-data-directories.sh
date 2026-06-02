@@ -6,6 +6,19 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/../lib/env.sh"
 source "$SCRIPT_DIR/../lib/log.sh"
 
+if [[ "$1" == "--help" ]] || [[ "$1" == "-h" ]]; then
+  echo ""
+  echo "  Usage: bash scripts/deploy.sh directories"
+  echo ""
+  echo "  Creates DATA_DIR and BACKUP_DIR directory structure"
+  echo "  with correct permissions. Copies nginx.conf and snippets."
+  echo ""
+  echo "  Called automatically by: bash scripts/deploy.sh all"
+  echo "  Run standalone:          bash scripts/deploy.sh directories"
+  echo ""
+  exit 0
+fi
+
 log_banner "Umbra - Init Directories"
 
 mk() {
@@ -25,8 +38,6 @@ mk "$DATA_DIR/marzban/templates/v2ray"
 mk "$DATA_DIR/marzban/logs"
 mk "$DATA_DIR/account"
 mk "$DATA_DIR/vaultwarden/data"
-mk "$DATA_DIR/portal/html"
-
 mk "$DATA_DIR/letsencrypt"
 mk "$DATA_DIR/certbot/www/.well-known/acme-challenge"
 mk "$DATA_DIR/certbot/config"

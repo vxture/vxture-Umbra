@@ -34,10 +34,7 @@ Deployment renders configs and starts containers:
 ```text
 umbra-website              # serves ruyin.ai
 www.ruyin.ai               # redirects to ruyin.ai
-DATA_DIR/portal/html/
 ```
-
-The legacy guide output path remains mounted by `umbra-portal`.
 
 ## Problems
 
@@ -63,7 +60,7 @@ portals/
     public/
       favicon.ico
       assets/
-        brand/
+        brand/               # Brand identity SVGs, paired with lib/brand.ts
         icons/
 
   console/                 # console.ruyin.ai user home, default user portal
@@ -86,12 +83,12 @@ Notes:
 - `portals/website` owns the public Ruyin website on `ruyin.ai`.
 - `www.ruyin.ai` is a canonical redirect to `ruyin.ai`.
 - `portals/console` owns the user self-service console on `console.ruyin.ai`.
-- `portals/admin` is the temporary management surface. It should include the
-  invite console UI and links into Marzban, while Marzban itself remains the
-  upstream admin application until it is replaced or embedded more cleanly.
-- Public routing should map `admin.ruyin.ai/invites` to `portals/admin` and
-  keep `admin.ruyin.ai/dashboard/` on the Marzban upstream during the
-  temporary phase.
+- `portals/admin` is the future dedicated management surface. It is currently
+  scaffolded but not wired into production routing.
+- During the transition, public routing keeps `admin.ruyin.ai/invites` on the
+  existing console Next app (`umbra-account-web`) and keeps
+  `admin.ruyin.ai/dashboard/` on the Marzban upstream. After the route split,
+  `admin.ruyin.ai/invites` should move to `portals/admin`.
 - The current legacy guide under `vpn.ruyin.ai/guide/` should be treated as a
   public guide surface. It can either stay under
   `portals/console/public/guide/` or be retired after the new console covers the
@@ -121,28 +118,23 @@ Rationale:
 - `packages/` is reserved for reusable libraries and future backend package
   extraction.
 - `configs/` contains runtime infrastructure templates.
-- Public guide source uses `public/guide`, while rendered runtime output stays
-  under `DATA_DIR/portal/html`.
+- VPN display is served by `umbra-website`.
 
 ## Compatibility Strategy
 
 The first migration must be backward compatible.
 
-`scripts/deploy/04-render-configs.py` renders infrastructure configs. The
+`scripts/deploy/04-render-configuration-templates.py` renders infrastructure configs. The
 Ruyin website is built and served by the `umbra-website` Next container:
 
 ```text
-portals/console/public/guide/        -> fallback portal/html/
 portals/console/                    -> legacy fallback account-web/
-portals/admin/                      -> legacy fallback account-web invite route during transition
+portals/admin/                      -> scaffolded only, not production-routed yet
 ```
 
-Runtime output for the public guide remains unchanged:
+VPN display is served by `umbra-website`.
 
 ```text
-portals/console/public/guide/
-  -> DATA_DIR/portal/html/
-
 portals/console/
   -> Docker image umbra-umbra-account-web
 
@@ -166,7 +158,7 @@ Before moving any source files:
    - saved subscription URL `GET`
    - `sub.ruyin.ai` root blocked
    - no `:8443` redirects
-3. Keep `04-render-configs.py` output paths unchanged for VPN and guide surfaces.
+3. Keep `04-render-configuration-templates.py` output paths unchanged for VPN and guide surfaces.
 
 No production behavior changes in this phase.
 
@@ -185,7 +177,6 @@ Move source files:
 
 ```text
 landing/html/**     -> portals/website/public/** or Next components
-portal/html/**      -> portals/console/public/guide/**
 account-web/**      -> portals/console/**
 ```
 
@@ -214,7 +205,6 @@ Update references:
 
 Do not change:
 
-- `DATA_DIR/portal/html`
 - Nginx public route behavior
 - Marzban/Xray/subproxy configs
 
@@ -225,9 +215,9 @@ Server execution should use:
 ```bash
 cd /srv/vxture/repo/umbra
 git pull --ff-only origin main
-python3 scripts/deploy/04-render-configs.py
-bash scripts/deploy/05-up.sh
-bash scripts/deploy/06-verify.sh
+python3 scripts/deploy/04-render-configuration-templates.py
+bash scripts/deploy/05-start-docker-services.sh
+bash scripts/deploy/06-verify-deployment.sh
 ```
 
 Manual post-checks:
@@ -241,7 +231,7 @@ curl -skI https://admin.ruyin.ai/ | grep -i '^location:' | grep ':8443' && echo 
 ```
 
 Saved valid subscription URLs must also be tested through the existing
-`06-verify.sh` database-derived check.
+`06-verify-deployment.sh` database-derived check.
 
 ### Phase 4: Remove Old Paths
 
@@ -294,7 +284,7 @@ These files participate directly in VPN transport or subscription delivery.
 
 ## Acceptance Criteria
 
-- `bash scripts/deploy/06-verify.sh` passes with zero failures.
+- `bash scripts/deploy/06-verify-deployment.sh` passes with zero failures.
 - `https://vpn.ruyin.ai/` returns the VPN display page.
 - `https://console.ruyin.ai/` returns the Next account UI.
 - `https://admin.ruyin.ai/invites` returns the Next invite UI.

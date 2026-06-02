@@ -1,11 +1,11 @@
 # Config Rendering
 
-`scripts/deploy/04-render-configs.py` is the only config renderer.
+`scripts/deploy/04-render-configuration-templates.py` is the only config renderer.
 
 Run it with Python:
 
 ```bash
-python3 scripts/deploy/04-render-configs.py
+python3 scripts/deploy/04-render-configuration-templates.py
 ```
 
 Do not run it with `bash`.
@@ -19,7 +19,7 @@ Do not run it with `bash`.
 
 ## Template Syntax
 
-Only `{{ SCREAMING_SNAKE_CASE }}` variables are rendered by `04-render-configs.py`.
+Only `{{ SCREAMING_SNAKE_CASE }}` variables are rendered by `04-render-configuration-templates.py`.
 
 Lowercase or mixed-case Jinja variables are intentionally left for Marzban's second-stage template rendering. Example:
 
@@ -40,7 +40,6 @@ Do not use `user.username` in the Clash subscription template; Marzban does not 
 | `configs/nginx/snippets/*.conf` | `DATA_DIR/nginx/snippets/*.conf` |
 | `configs/xray/config.json.template` | `DATA_DIR/marzban/xray_config.json` |
 | `configs/marzban/clash-subscription.j2` | `DATA_DIR/marzban/templates/clash/default.yml` |
-| `portals/console/public/guide/**` | `DATA_DIR/portal/html/` |
 
 ## Website Assets
 
@@ -54,5 +53,5 @@ The site favicon lives at `portals/website/public/favicon.ico`.
 Use root-relative public URLs from Next components, for example:
 
 ```html
-<img src="/assets/brand/ruyin-dark.png" alt="">
+<img src="/assets/brand/ruyin-symbol-dark.svg" alt="">
 ```

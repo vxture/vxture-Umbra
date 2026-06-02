@@ -3,7 +3,7 @@
 # Interactive: guides through Marzban user creation, DNS check, and account setup.
 #
 # Usage:
-#   bash scripts/deploy.sh post
+#   bash scripts/deploy.sh wizard
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -62,7 +62,7 @@ echo ""
 # SUDO_USERNAME/SUDO_PASSWORD env vars create the admin on first startup with an
 # empty DB, but this is unreliable across Marzban versions. We explicitly check
 # and create the admin via Python+passlib (available inside the container) so
-# that deploy.sh post is idempotent regardless of Marzban startup behaviour.
+# that deploy.sh wizard is idempotent regardless of Marzban startup behaviour.
 log_info "Ensuring Marzban admin user exists..."
 docker exec -i umbra-marzban python3 - <<PYEOF
 import os, sys, sqlite3

@@ -8,6 +8,25 @@ source "$SCRIPT_DIR/../lib/env.sh"
 source "$SCRIPT_DIR/../lib/log.sh"
 source "$SCRIPT_DIR/../lib/certs.sh"
 
+if [[ "$1" == "--help" ]] || [[ "$1" == "-h" ]]; then
+  echo ""
+  echo "  Usage: bash scripts/deploy.sh certificates"
+  echo ""
+  echo "  Issues Let's Encrypt certificates for all configured domains"
+  echo "  via Certbot webroot method. Reuses existing valid certs"
+  echo "  (>30d remaining). Refuses in-place replacement of bad certs"
+  echo "  (use: bash scripts/ops.sh certs --upgrade)."
+  echo ""
+  echo "  Requires port 80 and DNS resolution to this server."
+  echo "  Set CERTBOT_STAGING=true for test certs."
+  echo "  Set CERTBOT_SKIP=true to skip issuance (self-signed mode)."
+  echo ""
+  echo "  Called automatically by: bash scripts/deploy.sh all"
+  echo "  Run standalone:          bash scripts/deploy.sh certificates"
+  echo ""
+  exit 0
+fi
+
 log_banner "Umbra - Issue TLS Certificates"
 
 WEBROOT="${CERTBOT_WEBROOT:-$DATA_DIR/certbot/www}"

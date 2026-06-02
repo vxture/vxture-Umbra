@@ -6,6 +6,26 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/../lib/env.sh"
 source "$SCRIPT_DIR/../lib/log.sh"
 
+if [[ "$1" == "--help" ]] || [[ "$1" == "-h" ]]; then
+  echo ""
+  echo "  Usage: bash scripts/ops.sh backup"
+  echo ""
+  echo "  Creates timestamped backup archives of all runtime data:"
+  echo "    - .env file"
+  echo "    - SQLite databases (Marzban)"
+  echo "    - Vaultwarden data (DB + attachments)"
+  echo "    - Account portal data"
+  echo "    - Let's Encrypt certificate state"
+  echo "    - Nginx configs, Xray config, REALITY keys"
+  echo "    - Crontab"
+  echo ""
+  echo "  Archives older than 30 days are automatically pruned."
+  echo ""
+  echo "  Run: bash scripts/ops.sh backup"
+  echo ""
+  exit 0
+fi
+
 log_banner "Umbra - Backup"
 
 TIMESTAMP=$(date +%Y%m%d-%H%M%S)

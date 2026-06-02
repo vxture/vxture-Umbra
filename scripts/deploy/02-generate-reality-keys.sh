@@ -7,6 +7,20 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/../lib/env.sh"
 source "$SCRIPT_DIR/../lib/log.sh"
 
+if [[ "$1" == "--help" ]] || [[ "$1" == "-h" ]]; then
+  echo ""
+  echo "  Usage: bash scripts/deploy.sh reality-keys"
+  echo ""
+  echo "  Generates REALITY x25519 keypair and shortIds, saves to"
+  echo "  DATA_DIR/private/reality.json. Skips if file already exists"
+  echo "  to preserve existing client configurations."
+  echo ""
+  echo "  Called automatically by: bash scripts/deploy.sh all"
+  echo "  Run standalone:          bash scripts/deploy.sh reality-keys"
+  echo ""
+  exit 0
+fi
+
 log_banner "Umbra - Generate REALITY Keys"
 
 REALITY_FILE="$DATA_DIR/private/reality.json"
