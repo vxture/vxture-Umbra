@@ -185,9 +185,10 @@ git push origin HEAD:main
 
 Authentication:
 
-- Preferred: dedicated `PROMOTION_TOKEN` with permission to update protected
+- Required: dedicated `PROMOTION_TOKEN` with permission to update protected
   branches according to the repository ruleset.
-- Avoid relying on `GITHUB_TOKEN` if branch protection blocks it.
+- Do not rely on `GITHUB_TOKEN` for promotion. Pushes made with `GITHUB_TOKEN`
+  do not trigger the downstream `ci -> docker-build -> deploy-worker-03` chain.
 
 Audit output:
 
@@ -384,7 +385,7 @@ Promotion:
 
 | Secret | Purpose |
 |---|---|
-| `PROMOTION_TOKEN` | Optional dedicated token for protected branch promotion |
+| `PROMOTION_TOKEN` | Dedicated token for protected branch promotion and downstream workflow triggering |
 
 Docker build:
 

@@ -16,7 +16,7 @@ the protected branches.
 | `ALIYUN_ACR_NAMESPACE` | Actions secret | yes | Current value: `vxture` |
 | `ALIYUN_ACR_USERNAME` | Actions secret | yes | ACR push account for CI; also used by worker-03 if needed |
 | `ALIYUN_ACR_PASSWORD` | Actions secret | yes | ACR password or access token |
-| `PROMOTION_TOKEN` | Actions secret | recommended | Token allowed to fast-forward `main` if `GITHUB_TOKEN` is blocked |
+| `PROMOTION_TOKEN` | Actions secret | yes | PAT used by promotion so the resulting `main` push triggers CI/CD |
 | `WORKER_03_HOST` | Environment secret: `worker-03` | yes | Public hostname or IP |
 | `WORKER_03_USER` | Environment secret: `worker-03` | yes | Non-root deploy user |
 | `WORKER_03_SSH_KEY` | Environment secret: `worker-03` | yes | Private key for the deploy user |
@@ -74,7 +74,8 @@ exact image set built by `docker-build`.
 
 ## First Enablement Sequence
 
-1. Add repository and `worker-03` environment secrets.
+1. Add repository and `worker-03` environment secrets, including
+   `PROMOTION_TOKEN`.
 2. Configure branch rulesets for `develop` and `main`.
 3. Merge the CI/CD workflow files to `develop`.
 4. Confirm `ci` passes on `develop`.
@@ -83,6 +84,9 @@ exact image set built by `docker-build`.
 6. Confirm `ci` passes on `main`.
 7. Confirm `docker-build` pushes all six images to GHCR and Aliyun ACR.
 8. Confirm `deploy-worker-03` pulls the `sha-<short-sha>` images and verifies.
+
+`PROMOTION_TOKEN` is required because GitHub does not trigger downstream
+workflows from pushes made with the default `GITHUB_TOKEN`.
 
 ## Temporary Docker Desktop Gap
 
