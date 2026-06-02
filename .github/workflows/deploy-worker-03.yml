@@ -15,6 +15,7 @@ concurrency:
 
 permissions:
   contents: read
+  packages: read
 
 jobs:
   deploy:
@@ -80,6 +81,10 @@ jobs:
           ALIYUN_ACR_NAMESPACE: ${{ secrets.ALIYUN_ACR_NAMESPACE }}
           ALIYUN_ACR_USERNAME: ${{ secrets.ALIYUN_ACR_USERNAME }}
           ALIYUN_ACR_PASSWORD: ${{ secrets.ALIYUN_ACR_PASSWORD }}
+          GHCR_USERNAME: ${{ github.actor }}
+          GHCR_TOKEN: ${{ github.token }}
+          GHCR_REGISTRY: ghcr.io
+          GHCR_NAMESPACE: vxture
         run: |
           set -euo pipefail
           port="${WORKER_03_PORT:-22}"
@@ -117,6 +122,14 @@ jobs:
             docker_login_with_retry
           fi
 
+          if [ -n "${GHCR_USERNAME:-}" ] && [ -n "${GHCR_TOKEN:-}" ]; then
+            printf '%s' "$GHCR_TOKEN" \
+              | docker login "$GHCR_REGISTRY" -u "$GHCR_USERNAME" --password-stdin
+          fi
+
+          export FALLBACK_IMAGE_REGISTRY="$GHCR_REGISTRY"
+          export FALLBACK_IMAGE_NAMESPACE="$GHCR_NAMESPACE"
+
           bash scripts/deploy.sh all
           bash scripts/deploy.sh verify
           REMOTE_SCRIPT
@@ -132,6 +145,10 @@ jobs:
             "ALIYUN_ACR_NAMESPACE=$ALIYUN_ACR_NAMESPACE"
             "ALIYUN_ACR_USERNAME=$ALIYUN_ACR_USERNAME"
             "ALIYUN_ACR_PASSWORD=$ALIYUN_ACR_PASSWORD"
+            "GHCR_USERNAME=$GHCR_USERNAME"
+            "GHCR_TOKEN=$GHCR_TOKEN"
+            "GHCR_REGISTRY=$GHCR_REGISTRY"
+            "GHCR_NAMESPACE=$GHCR_NAMESPACE"
           )
           remote_cmd=""
           for item in "${remote_env[@]}"; do

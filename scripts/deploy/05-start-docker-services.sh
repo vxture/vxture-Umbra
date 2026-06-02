@@ -24,7 +24,7 @@ log_banner "Umbra - Start Services"
 
 cd "$REPO_DIR"
 
-compose_pull_with_retry() {
+pull_images_for_current_registry() {
   local image attempt
   local -a images
   mapfile -t images < <(docker compose config --images | sed '/^[[:space:]]*$/d')
@@ -45,6 +45,27 @@ compose_pull_with_retry() {
       sleep $((attempt * 5))
     done
   done
+}
+
+compose_pull_with_retry() {
+  local primary_registry="${IMAGE_REGISTRY:-}"
+  local primary_namespace="${IMAGE_NAMESPACE:-}"
+
+  if pull_images_for_current_registry; then
+    return 0
+  fi
+
+  if [[ -n "${FALLBACK_IMAGE_REGISTRY:-}" && -n "${FALLBACK_IMAGE_NAMESPACE:-}" ]]; then
+    if [[ "${FALLBACK_IMAGE_REGISTRY}" != "$primary_registry" || "${FALLBACK_IMAGE_NAMESPACE}" != "$primary_namespace" ]]; then
+      log_warn "Primary image registry failed; retrying with fallback ${FALLBACK_IMAGE_REGISTRY}/${FALLBACK_IMAGE_NAMESPACE}"
+      export IMAGE_REGISTRY="$FALLBACK_IMAGE_REGISTRY"
+      export IMAGE_NAMESPACE="$FALLBACK_IMAGE_NAMESPACE"
+      pull_images_for_current_registry
+      return $?
+    fi
+  fi
+
+  return 1
 }
 
 # -- Marzban TLS cert ----------------------------------------------------------
