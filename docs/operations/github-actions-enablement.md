@@ -65,8 +65,11 @@ Before the first automated deploy:
 - The deploy user can run Docker and Docker Compose.
 - The deploy user is not root; `deploy/worker-03/deploy.sh all` rejects root.
 - `.env` exists on worker-03 and contains production runtime secrets.
-- `.env` should set `IMAGE_REGISTRY` to Aliyun ACR for normal production pulls.
-- `.env` should set `IMAGE_NAMESPACE=vxture`.
+- `.env` may keep local registry defaults for manual operations.
+- `.env` should keep `IMAGE_NAMESPACE=vxture` when manual pulls use the Umbra
+  owned repositories.
+- The GitHub deploy workflow overrides worker-03 image pulls to GHCR first and
+  Aliyun ACR fallback.
 - Runtime state remains under `DATA_DIR` and `BACKUP_DIR`.
 
 The GitHub deploy workflow overrides `IMAGE_TAG` with `sha-<short-sha>` for the

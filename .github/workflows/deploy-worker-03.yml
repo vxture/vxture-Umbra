@@ -101,16 +101,16 @@ jobs:
           git merge --ff-only origin/main
           test "$(git rev-parse HEAD)" = "$PASSED_SHA"
 
-          export IMAGE_REGISTRY="$ALIYUN_ACR_REGISTRY"
-          export IMAGE_NAMESPACE="$ALIYUN_ACR_NAMESPACE"
+          export IMAGE_REGISTRY="$GHCR_REGISTRY"
+          export IMAGE_NAMESPACE="$GHCR_NAMESPACE"
           export IMAGE_TAG="$IMAGE_TAG"
 
           docker_login_with_retry() {
             local attempt
             for attempt in 1 2 3 4 5 6; do
-              curl -fsSI "https://${IMAGE_REGISTRY}/v2/" >/dev/null 2>&1 || true
+              curl -fsSI "https://${ALIYUN_ACR_REGISTRY}/v2/" >/dev/null 2>&1 || true
               if printf '%s' "$ALIYUN_ACR_PASSWORD" \
-                | timeout 45 docker login "$IMAGE_REGISTRY" -u "$ALIYUN_ACR_USERNAME" --password-stdin; then
+                | timeout 45 docker login "$ALIYUN_ACR_REGISTRY" -u "$ALIYUN_ACR_USERNAME" --password-stdin; then
                 return 0
               fi
               sleep $((attempt * 5))
@@ -127,8 +127,8 @@ jobs:
               | docker login "$GHCR_REGISTRY" -u "$GHCR_USERNAME" --password-stdin
           fi
 
-          export FALLBACK_IMAGE_REGISTRY="$GHCR_REGISTRY"
-          export FALLBACK_IMAGE_NAMESPACE="$GHCR_NAMESPACE"
+          export FALLBACK_IMAGE_REGISTRY="$ALIYUN_ACR_REGISTRY"
+          export FALLBACK_IMAGE_NAMESPACE="$ALIYUN_ACR_NAMESPACE"
 
           bash deploy/worker-03/deploy.sh all
           bash deploy/worker-03/deploy.sh verify
