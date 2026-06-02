@@ -53,7 +53,7 @@ Umbra deployment. They may only be edited when explicitly requested, and only th
 | `server.sh reset --full` | Keep | Keep | Remove | Remove | Remove | Remove | Stop/remove | Free 80/443 |
 | `deploy.sh all` | Keep | Keep | Keep/re-render | Keep/issue missing | Keep | Create backup | Start/update | Use 80/443 |
 | `deploy.sh config` | Keep | Keep | Re-render configs | Keep | Keep | Keep | Reload nginx only | Keep |
-| `deploy.sh up` | Keep | Keep | Keep | Keep | Keep | Keep | Start/update | Use 80/443 |
+| `deploy.sh start` | Keep | Keep | Keep | Keep | Keep | Keep | Start/update | Use 80/443 |
 | `ops.sh backup` | Keep | Keep | Read only | Read only | Read only | Add/prune old | Keep | Keep |
 | `ops.sh certs --upgrade` | Keep | Keep | Keep | Stage then activate | Keep | Keep | Restart nginx/marzban after success | Use 80 |
 | `ops.sh certs --renew` | Keep | Keep | Keep | Renew only due certs | Keep | Keep | Reload/restart only if renewed | Use 80 |
@@ -104,7 +104,7 @@ cd /srv/vxture/repo/umbra
 cp .env.example .env
 nano .env
 bash scripts/deploy.sh all
-bash scripts/deploy.sh post
+bash scripts/deploy.sh wizard
 bash scripts/deploy.sh verify
 ```
 
@@ -127,7 +127,7 @@ Success criteria:
 [ ] `docker exec umbra-nginx nginx -t` succeeds
 [ ] `bash scripts/ops.sh certs --status` shows trusted LE certs, unless in self-signed mode
 [ ] `bash scripts/deploy.sh verify` completes or reports only documented auth-protected endpoints
-[ ] `bash scripts/deploy.sh post` creates or skips expected users
+[ ] `bash scripts/deploy.sh wizard` creates or skips expected users
 [ ] Subscription URL uses `https://sub.ruyin.ai/sub/<token>`
 ```
 
@@ -320,7 +320,7 @@ cd /srv/vxture/repo/umbra
 bash scripts/ops.sh backup
 bash scripts/server.sh reset --full
 bash scripts/deploy.sh all
-bash scripts/deploy.sh post
+bash scripts/deploy.sh wizard
 ```
 
 Destructive contract:
@@ -417,7 +417,7 @@ Use after services and certs are healthy.
 Commands:
 
 ```bash
-bash scripts/deploy.sh post
+bash scripts/deploy.sh wizard
 ```
 
 Checklist:
@@ -457,7 +457,7 @@ Validation commands:
 python3 scripts/deploy/08-check-script-contracts.py
 bash -n scripts/deploy.sh scripts/ops.sh scripts/server.sh
 bash -n scripts/deploy/*.sh scripts/ops/*.sh scripts/server/*.sh scripts/lib/*.sh
-python3 -m py_compile scripts/deploy/04-render-configs.py scripts/deploy/07-validate-clash-rules.py scripts/deploy/08-check-script-contracts.py
+python3 -m py_compile scripts/deploy/04-render-configuration-templates.py scripts/deploy/07-validate-clash-rules.py scripts/deploy/08-check-script-contracts.py
 git diff --check
 ```
 

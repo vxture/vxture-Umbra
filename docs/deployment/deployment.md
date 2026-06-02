@@ -113,7 +113,7 @@ CERTBOT_EMAIL=<your-email>
 
 ### Step 3: Secrets
 
-No database passwords needed - SQLite requires no credentials. The account portal secrets sign sessions and hash invite codes; generate them separately. The REALITY secret file is `DATA_DIR/private/reality.json`, which is generated automatically by `02-generate-reality.sh`.
+No database passwords needed - SQLite requires no credentials. The account portal secrets sign sessions and hash invite codes; generate them separately. The REALITY secret file is `DATA_DIR/private/reality.json`, which is generated automatically by [`02-generate-reality-keys.sh`](../../scripts/deploy/02-generate-reality-keys.sh).
 
 ---
 
@@ -128,13 +128,14 @@ bash scripts/deploy.sh all
 ### Step-by-step
 
 ```
-00-check-env.sh        Validate environment, DNS, Docker
-01-init-dirs.sh        Create DATA_DIR structure with correct permissions
-02-generate-reality.sh Generate REALITY keypair -> private/reality.json
-03-issue-certs.sh      Issue Let's Encrypt certs for active domains
-04-render-configs.py   Render all templates -> DATA_DIR
-05-up.sh               docker compose up -d
-06-verify.sh           Full verification suite
+00-check-environment.sh                Validate environment, DNS, Docker
+01-init-data-directories.sh            Create DATA_DIR structure with correct permissions
+02-generate-reality-keys.sh            Generate REALITY keypair -> private/reality.json
+03-issue-tls-certificates.sh           Issue Let's Encrypt certs for active domains
+04-render-configuration-templates.py   Render all templates -> DATA_DIR
+05-start-docker-services.sh            docker compose up -d
+06-verify-deployment.sh                Full verification suite
+07-post-deploy-wizard.sh               Interactive wizard (host config, user creation, sub URLs)
 ```
 
 `deploy.sh all` also calls `ops.sh backup` at the end unless `--skip-backup` is passed.
@@ -143,7 +144,7 @@ bash scripts/deploy.sh all
 
 ## Script Specifications
 
-### `00-check-env.sh`
+### `00-check-environment.sh`
 
 ```
 Checks:
@@ -156,7 +157,7 @@ Checks:
   [ ] Ports 80 and 443 are not in use
 ```
 
-### `01-init-dirs.sh`
+### `01-init-data-directories.sh`
 
 Creates:
 
@@ -170,7 +171,6 @@ DATA_DIR/marzban/templates/clash
 DATA_DIR/marzban/templates/v2ray
 DATA_DIR/marzban/logs
 DATA_DIR/vaultwarden/data
-DATA_DIR/portal/html
 DATA_DIR/letsencrypt
 DATA_DIR/certbot/www/.well-known/acme-challenge
 DATA_DIR/certbot/config
@@ -187,14 +187,14 @@ chmod 711 DATA_DIR/nginx/private
 chmod 700 BACKUP_DIR
 ```
 
-### `02-generate-reality.sh`
+### `02-generate-reality-keys.sh`
 
 - Runs `xray x25519` via a temporary Docker container (`teddysun/xray`)
 - Generates private key, public key, shortId
 - Writes `DATA_DIR/private/reality.json` (chmod 600)
 - **Skips if file already exists**
 
-### `03-issue-certs.sh`
+### `03-issue-tls-certificates.sh`
 
 - Starts a temporary Nginx container serving ACME challenge on port 80
 - Issues cert for each domain sequentially
@@ -207,19 +207,19 @@ chmod 700 BACKUP_DIR
 - When used by `certs --upgrade`, partial staged successes are kept for the next retry
 - Activation is blocked unless every staged domain verifies as trusted, unexpired, name-matched LE
 
-### `04-render-configs.py`
+### `04-render-configuration-templates.py`
 
 Renders all templates with variables from `.env` and `private/`:
 
 Run this step with Python, or via the deployment dispatcher:
 
 ```bash
-python3 scripts/deploy/04-render-configs.py
+python3 scripts/deploy/04-render-configuration-templates.py
 # or
 bash scripts/deploy.sh config
 ```
 
-Do not run it with `bash scripts/deploy/04-render-configs.py`; it is a Python script.
+Do not run it with `bash scripts/deploy/04-render-configuration-templates.py`; it is a Python script.
 
 | Source | Output |
 |--------|--------|
@@ -229,21 +229,20 @@ Do not run it with `bash scripts/deploy/04-render-configs.py`; it is a Python sc
 | `configs/nginx/snippets/*.conf` | `DATA_DIR/nginx/snippets/*.conf` |
 | `configs/marzban/clash-subscription.j2` | `DATA_DIR/marzban/templates/clash/default.yml` |
 | `configs/xray/config.json.template` | `DATA_DIR/marzban/xray_config.json` |
-| `portals/console/public/guide/**` | `DATA_DIR/portal/html/` |
 
 Also injects REALITY keys into Xray/Marzban config and renders the Clash subscription template.
 The Ruyin public website is built as the `umbra-website` Next.js service and
 served through `01-ruyin.conf.template`; it is not copied into `DATA_DIR`.
 
-### `05-up.sh`
+### `05-start-docker-services.sh`
 
 ```bash
 docker compose up -d
 ```
 
-Waits for each service to report healthy before proceeding.
+Polls each service for healthy status before proceeding (replaces a hard sleep with health check retries).
 
-### `06-verify.sh`
+### `06-verify-deployment.sh`
 
 See Verification Checklist below.
 

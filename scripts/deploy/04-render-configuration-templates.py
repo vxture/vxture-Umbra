@@ -14,6 +14,20 @@ import subprocess
 import sys
 from pathlib import Path
 
+if "--help" in sys.argv or "-h" in sys.argv:
+    print(__doc__)
+    print("""
+Usage: python3 scripts/deploy/04-render-configuration-templates.py
+
+Renders all configuration templates from configs/ into DATA_DIR.
+Template syntax: {{ VARIABLE_NAME }}
+Variables sourced from: .env + DATA_DIR/private/reality.json
+
+Called automatically by: bash scripts/deploy.sh config
+Run standalone:          bash scripts/deploy.sh config
+""")
+    sys.exit(0)
+
 TEXT_ASSET_SUFFIXES = {
     ".conf",
     ".css",
@@ -52,7 +66,7 @@ def load_env(env_path: Path) -> dict:
 def load_reality(reality_path: Path) -> dict:
     if not reality_path.exists():
         print(f"[ERROR] reality.json not found: {reality_path}", file=sys.stderr)
-        print("        Run 02-generate-reality.sh first.", file=sys.stderr)
+        print("        Run 02-generate-reality-keys.sh first.", file=sys.stderr)
         sys.exit(1)
     with open(reality_path) as f:
         return json.load(f)
@@ -230,16 +244,8 @@ subprocess.run(
     check=True,
 )
 
-print("\n-- Rendering public VPN guide ------------------------------------------")
-portal_src = first_existing_path(
-    REPO_DIR / "portals" / "console" / "public" / "guide",
-    REPO_DIR / "portal" / "html",
-)
-portal_dst = DATA_DIR / "portal" / "html"
-if portal_src:
-    render_public_tree(portal_src, portal_dst, variables)
-else:
-    print("[WARN] VPN guide source not found in repo - skipping")
+print("\n-- [REMOVED] Public VPN guide -------------------------------------------")
+print("[SKIP] Portal container removed; VPN display merged into umbra-website")
 
 print("\n-- Website app -----------------------------------------------------------")
 print("[SKIP] Ruyin website is served by umbra-website Next app")

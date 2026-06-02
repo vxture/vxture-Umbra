@@ -17,7 +17,7 @@ source "$SCRIPT_DIR/../lib/env.sh"
 source "$SCRIPT_DIR/../lib/log.sh"
 
 MODE="${1:-}"
-CONTAINERS=(umbra-nginx umbra-marzban umbra-subproxy umbra-account umbra-account-web umbra-vaultwarden umbra-portal certbot-nginx-tmp)
+CONTAINERS=(umbra-nginx umbra-marzban umbra-subproxy umbra-account umbra-account-web umbra-vaultwarden certbot-nginx-tmp)
 PORTS=(80 443)
 
 container_state() {

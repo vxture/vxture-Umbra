@@ -7,6 +7,19 @@ source "$SCRIPT_DIR/../lib/env.sh"
 source "$SCRIPT_DIR/../lib/log.sh"
 source "$SCRIPT_DIR/../lib/certs.sh"
 
+if [[ "$1" == "--help" ]] || [[ "$1" == "-h" ]]; then
+  echo ""
+  echo "  Usage: bash scripts/deploy.sh environment"
+  echo ""
+  echo "  Validates all environment variables, Docker availability, DNS"
+  echo "  resolution, and port availability before deployment."
+  echo ""
+  echo "  Called automatically by: bash scripts/deploy.sh all"
+  echo "  Run standalone:          bash scripts/deploy.sh environment"
+  echo ""
+  exit 0
+fi
+
 log_banner "Umbra - Environment Check"
 
 ERRORS=0

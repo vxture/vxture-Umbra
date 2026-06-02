@@ -34,7 +34,7 @@ source. Umbra must not define its own DS.
 - Repo-root package checks use `.npmrc` for the same `@vxture` scope.
 - `NODE_AUTH_TOKEN` is injected as a Docker BuildKit secret for package read
   access and must remain in `.env` or CI secrets only.
-- `00-check-env.sh` requires `NODE_AUTH_TOKEN` when
+- `00-check-environment.sh` requires `NODE_AUTH_TOKEN` when
   `VXTURE_NPM_REGISTRY` points to GitHub Packages.
 - Do not vendor-copy DS CSS into Umbra as a workaround.
 - If DS package publishing is not ready, keep this migration branch un-deployed

@@ -10,12 +10,13 @@ deployment scripts, and Ruyin-specific content stay in this repository.
 
 ```text
 umbra/
+|-- brand/                   # Canonical brand identity SVGs (single source)
 |-- configs/                 # Runtime templates: nginx, marzban, xray
 |-- docs/                    # Product, design, implementation, deployment docs
 |-- portals/                 # Browser-facing apps and compatibility pages
 |   |-- website/             # ruyin.ai public website, now migrating to Next
 |   |-- console/             # console.ruyin.ai account UI and legacy guide
-|   `-- admin/               # Reserved admin surface boundary
+|   `-- admin/               # Scaffolded admin surface with dashboard cards
 |-- scripts/                 # Server, deploy, and ops entrypoints
 |-- services/                # Internal Python services
 |-- docker-compose.yml
@@ -30,6 +31,7 @@ internals, assets, and clear ownership boundaries.
 
 ```text
 umbra/
+|-- brand/                   # Canonical brand identity SVGs (single source)
 |-- configs/
 |   |-- nginx/
 |   |-- marzban/
@@ -138,7 +140,7 @@ portals/website/
 |-- public/
 |   |-- favicon.ico
 |   `-- assets/
-|       |-- brand/
+|       |-- brand/            # Brand identity SVGs, paired with lib/brand.ts
 |       |-- icons/
 |       `-- social/
 |-- Dockerfile
@@ -153,6 +155,7 @@ Rules:
 - Brand content belongs in `lib/brand.ts`, not inside DS packages.
 - DS styling must come from `@vxture/design-system`.
 - Cross-product helpers must come from `@vxture/shared` when needed.
+- Brand image assets live under `assets/brand/`, paired with the `lib/brand.ts` module.
 
 ### `portals/console`
 
@@ -166,9 +169,14 @@ portals/console/
 |   |-- auth/
 |   |-- dashboard/
 |   |-- login/
+|   |-- providers.tsx        # ThemeProvider wrapper
 |   |-- register/
 |   `-- ui/
+|       `-- shell.tsx
 |-- public/
+|   |-- assets/
+|   |   |-- brand/           # Brand identity SVGs
+|   |   `-- icons/
 |   `-- guide/               # Public guide under vpn.ruyin.ai/guide/
 |-- Dockerfile
 |-- next.config.mjs
@@ -181,117 +189,150 @@ Rules:
 - Console should also use Ruyin brand resources, not Vxture logo assets.
 - `public/guide/` is standalone guide content and should be retired or rebuilt
   after the console covers onboarding.
+- DS is imported via `@vxture/design-system/styles/globals.css` in layout.tsx.
+- Theme provider wraps the app shell with `defaultMode="system"`.
 - Admin invite UI currently lives here; split to `portals/admin` only when the
   route boundary is ready.
 
 ### `portals/admin`
 
-Reserved for the future dedicated admin surface.
+Scaffolded Next.js app serving `admin.ruyin.ai` with a dashboard card UI
+linking to VPN Management (Marzban) and Password Management (Vaultwarden).
+
+Current structure:
+
+```text
+portals/admin/
+|-- app/
+|   |-- ui/
+|   |   `-- admin-home.tsx
+|   |-- globals.css
+|   |-- layout.tsx
+|   `-- page.tsx
+|-- public/
+|   `-- assets/
+|       |-- brand/
+|       |   `-- ruyin-symbol-dark.svg
+|       `-- icons/
+|           `-- ruyin-icon-64.svg
+|-- Dockerfile
+|-- next.config.mjs
+|-- package.json
+`-- tsconfig.json
+```
 
 Near-term rule:
 
-- Keep only boundary docs here until admin routes are moved from console.
+- Add DS integration (`ThemeProvider`, `globals.css`) when the admin UI
+  grows beyond static cards.
+- Move invite admin UI from `portals/console/app/invites` to `portals/admin`
+  only after nginx routing and deploy checks are ready.
 
 ## Brand Resource Source Of Truth
 
-Active Ruyin brand resources should live in portal `public/assets/` paths.
+Brand identity SVGs are stored in a single canonical directory at repo root:
+
+```text
+umbra/brand/
+|-- ruyin-symbol-dark.svg
+|-- ruyin-symbol-light.svg
+|-- ruyin-lockup-dark.svg
+|-- ruyin-lockup-light.svg
+|-- ruyin-wordmark-dark.svg
+`-- ruyin-wordmark-light.svg
+```
+
+This directory is the **single source of truth** - all edits to brand SVGs must
+be made here, then the files are propagated to each portal's
+`public/assets/brand/` for local development.
+
+During Docker build, `docker compose` injects
+[`additional_contexts`](https://docs.docker.com/compose/compose-file/build/#additional_contexts)
+named `brand_context`, and each
+[`Dockerfile`](portals/website/Dockerfile) copies the SVGs into
+`public/assets/brand/` via:
+
+```dockerfile
+COPY --from=brand_context / ./public/assets/brand/
+```
+
+This eliminates duplication across three portals while keeping the SVGs
+accessible at `/assets/brand/...` at runtime.
+
+### Per-portal copies for local dev
+
+Each portal keeps its own copy of the subset of SVGs it needs, committed to
+git. These are kept in sync manually from the canonical `brand/` directory.
+They are not the source of truth - they are local dev copies.
+
+```text
+portals/website/public/assets/brand/   # All 6 SVGs (symbol, lockup, wordmark)
+portals/console/public/assets/brand/   # symbol dark/light + lockup dark
+portals/admin/public/assets/brand/     # symbol dark only
+```
+
 Standalone `public/guide/` content should keep only the assets it directly uses
 until the guide is rebuilt or retired.
 
-Target active website assets:
-
-```text
-portals/website/public/assets/
-|-- brand/
-|   |-- ruyin-lockup-dark.png
-|   |-- ruyin-lockup-light.png
-|   |-- ruyin-wordmark-dark.png
-|   |-- ruyin-wordmark-light.png
-|   |-- ruyin-symbol-dark.svg
-|   `-- ruyin-symbol-light.svg
-|-- icons/
-|   |-- ruyin-icon-32.png
-|   |-- ruyin-icon-64.png
-|   |-- ruyin-icon-180.png
-|   `-- ruyin-icon-512.png
-`-- social/
-    |-- ruyin-og-image.png
-    `-- ruyin-twitter-card.png
-```
-
-Target console assets:
-
-```text
-portals/console/public/assets/
-|-- brand/
-|   |-- ruyin-lockup-dark.png
-|   `-- ruyin-lockup-light.png
-`-- icons/
-    |-- ruyin-icon-64.png
-    `-- ruyin-icon-180.png
-```
-
 ## Brand Assets To Provide
-
-Please provide these replacement assets for Ruyin:
 
 | Asset | Required | Target path | Notes |
 |---|---:|---|---|
 | Ruyin symbol dark | Yes | `portals/website/public/assets/brand/ruyin-symbol-dark.svg` | Small header mark on dark backgrounds |
 | Ruyin symbol light | Yes | `portals/website/public/assets/brand/ruyin-symbol-light.svg` | Small header mark on light backgrounds |
-| Ruyin lockup dark | Yes | `portals/website/public/assets/brand/ruyin-lockup-dark.png` | Logo + Ruyin + CN name or full lockup |
-| Ruyin lockup light | Yes | `portals/website/public/assets/brand/ruyin-lockup-light.png` | Light-theme equivalent |
-| Ruyin wordmark dark | Recommended | `portals/website/public/assets/brand/ruyin-wordmark-dark.png` | Large hero/signature image |
-| Ruyin wordmark light | Recommended | `portals/website/public/assets/brand/ruyin-wordmark-light.png` | Large hero/signature image |
+| Ruyin lockup dark | Yes | `portals/website/public/assets/brand/ruyin-lockup-dark.svg` | Logo + Ruyin + CN name or full lockup |
+| Ruyin lockup light | Yes | `portals/website/public/assets/brand/ruyin-lockup-light.svg` | Light-theme equivalent |
+| Ruyin wordmark dark | Recommended | `portals/website/public/assets/brand/ruyin-wordmark-dark.svg` | Large hero/signature image |
+| Ruyin wordmark light | Recommended | `portals/website/public/assets/brand/ruyin-wordmark-light.svg` | Large hero/signature image |
 | Favicon ico | Yes | `portals/website/public/favicon.ico` | Browser favicon |
-| App icon 32 | Recommended | `portals/website/public/assets/icons/ruyin-icon-32.png` | Small browser/UI icon |
-| App icon 64 | Yes | `portals/website/public/assets/icons/ruyin-icon-64.png` | Header fallback and general UI |
-| App icon 180 | Recommended | `portals/website/public/assets/icons/ruyin-icon-180.png` | Apple touch icon |
-| App icon 512 | Recommended | `portals/website/public/assets/icons/ruyin-icon-512.png` | PWA/social reuse |
-| Open Graph image | Recommended | `portals/website/public/assets/social/ruyin-og-image.png` | 1200x630 |
+| App icon 32 | Recommended | `portals/website/public/assets/icons/ruyin-icon-32.svg` | Small browser/UI icon |
+| App icon 64 | Yes | `portals/website/public/assets/icons/ruyin-icon-64.svg` | Header fallback and general UI |
+| App icon 180 | Recommended | `portals/website/public/assets/icons/ruyin-icon-180.svg` | Apple touch icon |
+| App icon 512 | Recommended | `portals/website/public/assets/icons/ruyin-icon-512.svg` | PWA/social reuse |
+| Open Graph image | Recommended | `portals/website/public/assets/social/ruyin-og-image.svg` | 1200x630 |
 | Twitter card image | Optional | `portals/website/public/assets/social/ruyin-twitter-card.png` | 1200x630 or 1200x600 |
 
-If a single SVG source exists, prefer providing SVG for symbol/lockup plus PNG
-exports for favicon/app/social surfaces.
-
-## Current Brand Assets
-
-```text
-portals/website/public/assets/brand/ruyin-dark.png
-portals/website/public/assets/brand/ruyin-light.png
-portals/website/public/assets/icons/agent-icon-64.gif
-portals/website/public/favicon.ico
-portals/console/public/guide/favicon.ico
-```
-
-The duplicate old website source has been removed. The console guide is
-standalone public content and currently uses its local favicon as the header
+The duplicate old website source has been removed. Brand identity SVGs live
+in `assets/brand/` alongside the `lib/brand.ts` code module. The console guide
+is standalone public content and currently uses its local favicon as the header
 mark until the new Ruyin brand pack is provided.
 
 ## Cleanup Phases
 
-### Phase 1: Brand Pack Intake
+### Phase 1: Brand Pack Intake [done]
 
-- Add new Ruyin assets under `portals/website/public/assets/`.
-- Add console assets under `portals/console/public/assets/` when the console UI
-  starts consuming public brand assets.
-- Update `portals/website/lib/brand.ts` to point to the new active asset names.
+- Created canonical [`brand/`](brand/) directory at repo root as single source of truth
+  for all brand identity SVGs (symbol, lockup, wordmark in dark/light variants).
+- Each portal keeps a local dev copy in `public/assets/brand/`, synced from canonical
+  source.
+- [`portals/website/lib/brand.ts`](portals/website/lib/brand.ts) provides theme-aware
+  `markSrc(theme)` and `signatureSrc(theme)` functions.
+- Docker builds use `additional_contexts` in
+  [`docker-compose.yml`](docker-compose.yml) and `COPY --from=brand_context` in each
+  [`Dockerfile`](portals/website/Dockerfile) to inject brand SVGs at build time.
 
 ### Phase 2: Guide Retirement
 
 - Keep `portals/console/public/guide/` until the guide is rebuilt or retired.
 
-### Phase 3: Console DS Alignment
+### Phase 3: Console DS Alignment [done]
 
-- Import `@vxture/design-system/styles/globals.css` into console.
-- Replace local duplicated UI tokens with DS semantic tokens.
-- Move Ruyin brand constants for console into a console-owned brand module or a
-  shared Umbra-local config only if both website and console genuinely need it.
+- Added `@vxture/design-system` and `@vxture/shared` to console dependencies.
+- Imported `@vxture/design-system/styles/globals.css` in console `layout.tsx`.
+- Removed duplicated `:root` / `.dark` CSS token blocks from [`portals/console/app/globals.css`](portals/console/app/globals.css).
+- Added `ThemeProvider` with `defaultMode="system"` wrapping the console app shell.
+- Added `themeBootstrapScript` for FOUC prevention.
+- Console now uses DS-provided semantic `--vx-*` tokens.
 
-### Phase 4: Admin Boundary
+### Phase 4: Admin Boundary [done]
 
+- Scaffolded `portals/admin` as a standalone Next.js app with Marzban and
+  Vaultwarden dashboard cards.
+- Admin app scaffold and Dockerfile are in place; production routing still
+  points `/` and `/dashboard/` to Marzban, with `/invites` served by
+  `umbra-account-web`.
 - Move invite admin UI from `portals/console/app/invites` to `portals/admin`
-  only after nginx routing and deploy checks are ready.
+  only after nginx routing and deploy checks are ready (still pending).
 
 ## Non-Goals
 

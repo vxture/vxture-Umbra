@@ -22,6 +22,7 @@ SOURCE_SCAN_PATHS: tuple[Path, ...] = (
     Path(".gitattributes"),
     Path("README.md"),
     Path("docker-compose.yml"),
+    Path(".github"),
     Path("configs"),
     Path("portals"),
     Path("docs"),
@@ -88,7 +89,7 @@ CHECKS: list[tuple[str, Path, list[str]]] = [
     ),
     (
         "config renderer prunes retired vhosts",
-        Path("scripts/deploy/04-render-configs.py"),
+        Path("scripts/deploy/04-render-configuration-templates.py"),
         [
             "rendered_vhosts",
             "stale vhost",
@@ -97,7 +98,7 @@ CHECKS: list[tuple[str, Path, list[str]]] = [
     ),
     (
         "deploy check validates environment formats",
-        Path("scripts/deploy/00-check-env.sh"),
+        Path("scripts/deploy/00-check-environment.sh"),
         [
             "Checking environment value formats",
             "CONSOLE_DOMAIN ADMIN_DOMAIN PASS_DOMAIN",
@@ -235,12 +236,12 @@ CHECKS: list[tuple[str, Path, list[str]]] = [
             "Configuring cron jobs",
             'CRON_LINE="17 3 * * * $REPO_DIR/scripts/ops.sh certs --renew',
             'BACKUP_CRON_LINE="0 2 * * * $REPO_DIR/scripts/ops.sh backup',
-            'run_step_warn "06-verify.sh"',
+            'run_step_warn "06-verify-deployment.sh"',
         ],
     ),
     (
         "deploy verify checks cron installation",
-        Path("scripts/deploy/06-verify.sh"),
+        Path("scripts/deploy/06-verify-deployment.sh"),
         [
             "Certificate renewal cron installed",
             "Backup cron installed",
@@ -250,7 +251,7 @@ CHECKS: list[tuple[str, Path, list[str]]] = [
     ),
     (
         "deploy verify checks account portal",
-        Path("scripts/deploy/06-verify.sh"),
+        Path("scripts/deploy/06-verify-deployment.sh"),
         [
             "umbra-account",
             "umbra-account-web",
@@ -268,15 +269,15 @@ CHECKS: list[tuple[str, Path, list[str]]] = [
     ),
     (
         "deploy verify checks every active certificate domain",
-        Path("scripts/deploy/06-verify.sh"),
+        Path("scripts/deploy/06-verify-deployment.sh"),
         [
             'for domain in "$APEX_DOMAIN" "$WWW_DOMAIN" "$EDGE_DOMAIN" "$SUB_DOMAIN" "$CONSOLE_DOMAIN" "$ADMIN_DOMAIN" "$PASS_DOMAIN"; do',
             "cert valid until",
         ],
     ),
     (
-        "post deploy rejects root",
-        Path("scripts/deploy/post.sh"),
+        "wizard rejects root",
+        Path("scripts/deploy/07-post-deploy-wizard.sh"),
         [
             'if [[ "$EUID" -eq 0 ]]',
             "Do not run as root",
@@ -307,7 +308,7 @@ CHECKS: list[tuple[str, Path, list[str]]] = [
     ),
     (
         "certificate scripts use collected active domains",
-        Path("scripts/deploy/03-issue-certs.sh"),
+        Path("scripts/deploy/03-issue-tls-certificates.sh"),
         [
             "umbra_collect_cert_domains",
         ],
@@ -362,8 +363,8 @@ CHECKS: list[tuple[str, Path, list[str]]] = [
         Path("docker-compose.yml"),
         [
             "umbra-subproxy:",
+            "ruyin-subproxy",
             "SUB_PROFILE_PREFIX",
-            "./services/subproxy/subproxy.py:/app/subproxy.py:ro",
         ],
     ),
     (
@@ -371,8 +372,9 @@ CHECKS: list[tuple[str, Path, list[str]]] = [
         Path("docker-compose.yml"),
         [
             "umbra-account:",
+            "ruyin-account-api",
             "umbra-account-web:",
-            "context: ./portals/console",
+            "ruyin-console",
             "ACCOUNT_SESSION_SECRET",
             "ACCOUNT_INVITE_SECRET",
             "MARZBAN_ADMIN_USER",
@@ -382,8 +384,240 @@ CHECKS: list[tuple[str, Path, list[str]]] = [
             "AUTH_INTERNAL_TOKEN",
             "VXTURE_SSO_URL",
             "PUBLIC_ACCOUNT_URL",
-            "./services/account/account.py:/app/account.py:ro",
             "${DATA_DIR}/account:/var/lib/umbra-account",
+        ],
+    ),
+    (
+        "compose includes six Umbra-owned ACR image repositories",
+        Path("docker-compose.yml"),
+        [
+            "${IMAGE_REGISTRY}/${IMAGE_NAMESPACE}/ruyin-nginx:${IMAGE_TAG:-latest}",
+            "${IMAGE_REGISTRY}/${IMAGE_NAMESPACE}/ruyin-subproxy:${IMAGE_TAG:-latest}",
+            "${IMAGE_REGISTRY}/${IMAGE_NAMESPACE}/ruyin-account-api:${IMAGE_TAG:-latest}",
+            "${IMAGE_REGISTRY}/${IMAGE_NAMESPACE}/ruyin-console:${IMAGE_TAG:-latest}",
+            "${IMAGE_REGISTRY}/${IMAGE_NAMESPACE}/ruyin-website:${IMAGE_TAG:-latest}",
+            "${IMAGE_REGISTRY}/${IMAGE_NAMESPACE}/ruyin-admin:${IMAGE_TAG:-latest}",
+            "umbra-admin:",
+            'PORT: "3230"',
+        ],
+    ),
+    (
+        "runtime Dockerfiles support local base image overrides",
+        Path("docker/ruyin-nginx.Dockerfile"),
+        [
+            "ARG NGINX_BASE_IMAGE=nginx:alpine",
+            "FROM ${NGINX_BASE_IMAGE}",
+        ],
+    ),
+    (
+        "account api Dockerfile supports local base image override",
+        Path("docker/ruyin-account-api.Dockerfile"),
+        [
+            "ARG PYTHON_BASE_IMAGE=python:3.12-alpine",
+            "FROM ${PYTHON_BASE_IMAGE}",
+        ],
+    ),
+    (
+        "subproxy Dockerfile supports local base image override",
+        Path("docker/ruyin-subproxy.Dockerfile"),
+        [
+            "ARG PYTHON_BASE_IMAGE=python:3.12-alpine",
+            "FROM ${PYTHON_BASE_IMAGE}",
+        ],
+    ),
+    (
+        "console docker build can access private Vxture packages",
+        Path("portals/console/Dockerfile"),
+        [
+            "ARG NODE_BASE_IMAGE=node:22-alpine",
+            "ARG VXTURE_NPM_REGISTRY",
+            "--mount=type=secret,id=npm_token",
+            "@vxture:registry=%s",
+            "_authToken=",
+            "npm ci",
+            "rm -f .npmrc",
+        ],
+    ),
+    (
+        "console docker build excludes local build artifacts",
+        Path("portals/console/.dockerignore"),
+        [
+            "node_modules",
+            ".next",
+            "*.tsbuildinfo",
+        ],
+    ),
+    (
+        "website docker build can access private Vxture packages",
+        Path("portals/website/Dockerfile"),
+        [
+            "ARG NODE_BASE_IMAGE=node:22-alpine",
+            "ARG VXTURE_NPM_REGISTRY",
+            "--mount=type=secret,id=npm_token",
+            "@vxture:registry=%s",
+            "_authToken=",
+            "npm ci",
+            "rm -f .npmrc",
+        ],
+    ),
+    (
+        "admin docker build excludes local build artifacts",
+        Path("portals/admin/.dockerignore"),
+        [
+            "node_modules",
+            ".next",
+            "*.tsbuildinfo",
+        ],
+    ),
+    (
+        "github actions design documents controlled promotion",
+        Path("docs/operations/github-actions.md"),
+        [
+            "GitHub Actions CI/CD Design",
+            "plans/ci-cd-acr-rollout-checklist.md",
+            "docs/operations/github-actions-enablement.md",
+            "Production meaning:",
+            "main updated == release approved for production",
+            "develop CI success must not automatically push main.",
+            "Promotion must be a controlled entry point",
+            ".github/workflows/ci.yml",
+            ".github/workflows/promote.yml",
+            ".github/workflows/docker-build.yml",
+            ".github/workflows/deploy-worker-03.yml",
+            "docker-build",
+            "ruyin-website",
+            "ruyin-console",
+            "ruyin-admin",
+            "umbra-admin",
+            "ruyin-nginx",
+            "ruyin-account-api",
+            "ruyin-subproxy",
+            "ALIYUN_ACR_REGISTRY",
+            "ALIYUN_ACR_NAMESPACE",
+            "Required validations before push:",
+            "release_confirmed",
+            "expected_sha",
+            "git merge --ff-only origin/develop",
+            "develop CI success must not automatically push main.",
+            "deploy-worker-03.yml` runs only after `docker-build` completes successfully",
+            "No automatic develop-to-main promotion without release confirmation.",
+        ],
+    ),
+    (
+        "github actions enablement checklist documents activation steps",
+        Path("docs/operations/github-actions-enablement.md"),
+        [
+            "GitHub Actions Enablement Checklist",
+            "Required Repository Secrets",
+            "Repository Rulesets",
+            "worker-03 Runtime Prerequisites",
+            "First Enablement Sequence",
+            "Temporary Docker Desktop Gap",
+            "NGINX_BASE_IMAGE",
+            "PYTHON_BASE_IMAGE",
+            "NODE_BASE_IMAGE",
+            "docker build --check",
+            "NODE_AUTH_TOKEN",
+            "ALIYUN_ACR_REGISTRY",
+            "ALIYUN_ACR_NAMESPACE",
+            "ALIYUN_ACR_USERNAME",
+            "ALIYUN_ACR_PASSWORD",
+            "PROMOTION_TOKEN",
+            "WORKER_03_HOST",
+            "WORKER_03_USER",
+            "WORKER_03_SSH_KEY",
+            "develop` CI success must not automatically update `main`",
+            "IMAGE_NAMESPACE=vxture",
+            "sha-<short-sha>",
+        ],
+    ),
+    (
+        "github secret sync script writes repo and worker secrets",
+        Path("scripts/github/set-github-secrets.ps1"),
+        [
+            'param(',
+            '$Repo = "vxture/umbra"',
+            '$EnvFile = "private/github-actions.local.env"',
+            '$EnvironmentName = "worker-03"',
+            "Read-LocalEnvFile",
+            "Ensure-GitHubEnvironment",
+            'gh api --method PUT "repos/$Repo/environments/$EnvironmentName"',
+            "Set-RepoSecret",
+            "Set-EnvironmentSecret",
+            "WORKER_03_SSH_KEY_FILE",
+            "WORKER_03_KNOWN_HOSTS_FILE",
+            "NODE_AUTH_TOKEN",
+            "ALIYUN_ACR_REGISTRY",
+            "ALIYUN_ACR_NAMESPACE",
+            "ALIYUN_ACR_USERNAME",
+            "ALIYUN_ACR_PASSWORD",
+        ],
+    ),
+    (
+        "docker build workflow publishes six images to GHCR and Aliyun ACR",
+        Path(".github/workflows/docker-build.yml"),
+        [
+            "name: docker-build",
+            "workflow_run:",
+            "- ci",
+            "github.event.workflow_run.conclusion == 'success'",
+            "github.event.workflow_run.event == 'push'",
+            "github.event.workflow_run.head_branch == 'main'",
+            "ghcr.io/${{ env.GHCR_NAMESPACE }}/${{ matrix.image }}:latest",
+            "${{ env.ACR_REGISTRY }}/${{ env.ACR_NAMESPACE }}/${{ matrix.image }}:latest",
+            "ruyin-website",
+            "ruyin-console",
+            "ruyin-admin",
+            "ruyin-nginx",
+            "ruyin-account-api",
+            "ruyin-subproxy",
+            "brand_context=./brand",
+            "npm_token=${{ secrets.NODE_AUTH_TOKEN }}",
+            "ALIYUN_ACR_REGISTRY",
+            "ALIYUN_ACR_NAMESPACE",
+            "ALIYUN_ACR_USERNAME",
+            "ALIYUN_ACR_PASSWORD",
+        ],
+    ),
+    (
+        "worker-03 deploy consumes docker-build output and ACR images",
+        Path(".github/workflows/deploy-worker-03.yml"),
+        [
+            "name: deploy-worker-03",
+            "- docker-build",
+            "PASSED_SHA: ${{ github.event.workflow_run.head_sha }}",
+            'image_tag="sha-$short_sha"',
+            "ALIYUN_ACR_REGISTRY",
+            "ALIYUN_ACR_NAMESPACE",
+            "docker login \"$IMAGE_REGISTRY\"",
+            "export IMAGE_REGISTRY=\"$ALIYUN_ACR_REGISTRY\"",
+            "export IMAGE_NAMESPACE=\"$ALIYUN_ACR_NAMESPACE\"",
+            "export IMAGE_TAG=\"$IMAGE_TAG\"",
+            "bash scripts/deploy.sh all",
+            "bash scripts/deploy.sh verify",
+        ],
+    ),
+    (
+        "ci cd acr rollout checklist tracks implementation phases",
+        Path("plans/ci-cd-acr-rollout-checklist.md"),
+        [
+            "CI/CD + ACR Rollout Checklist",
+            "Current Audit",
+            "Phase 1 - Workflow Contract Cleanup",
+            "Phase 2 - Runtime Image Packaging",
+            "Phase 3 - Compose Image Contract",
+            "Phase 4 - Docker Build Workflow",
+            "Phase 5 - worker-03 Deploy Workflow",
+            "Phase 6 - Contract Checks",
+            "Phase 7 - End-to-End Verification",
+            "Phase 8 - Enablement Checklist",
+            "ruyin-website",
+            "ruyin-console",
+            "ruyin-admin",
+            "ruyin-nginx",
+            "ruyin-account-api",
+            "ruyin-subproxy",
+            "Known Risks",
         ],
     ),
     (
@@ -398,22 +632,33 @@ CHECKS: list[tuple[str, Path, list[str]]] = [
         ],
     ),
     (
-        "deploy up restarts code-mounted Python services",
-        Path("scripts/deploy/05-up.sh"),
+        "deploy start pulls images and checks managed containers",
+        Path("scripts/deploy/05-start-docker-services.sh"),
         [
-            "Restarting code-mounted Python services",
-            "docker compose restart umbra-subproxy umbra-account",
+            "docker compose pull --quiet",
+            "docker compose up -d",
             "umbra-subproxy",
             "umbra-account",
+            "umbra-admin",
         ],
     ),
     (
-        "vpn vhost serves edge display",
+        "image registry variables are documented in env example",
+        Path(".env.example"),
+        [
+            "IMAGE_REGISTRY=ghcr.io",
+            "IMAGE_NAMESPACE=vxture",
+            "IMAGE_TAG=latest",
+        ],
+    ),
+    (
+        "vpn vhost serves edge display via website",
         Path("configs/nginx/vhosts/03-vpn-portal.conf.template"),
         [
             "resolver 127.0.0.11 valid=30s ipv6=off",
             "location /guide/",
-            "proxy_pass http://umbra-portal:80/",
+            "return 301 /",
+            "proxy_pass http://umbra-website:3210/",
         ],
     ),
     (
@@ -589,7 +834,7 @@ CHECKS: list[tuple[str, Path, list[str]]] = [
     ),
     (
         "deploy verify treats admin as public Marzban login",
-        Path("scripts/deploy/06-verify.sh"),
+        Path("scripts/deploy/06-verify-deployment.sh"),
         [
             "$ADMIN_DOMAIN/",
             "$ADMIN_DOMAIN root redirects to dashboard",
@@ -602,7 +847,7 @@ CHECKS: list[tuple[str, Path, list[str]]] = [
     ),
     (
         "deploy verify checks Marzban internal API over HTTPS",
-        Path("scripts/deploy/06-verify.sh"),
+        Path("scripts/deploy/06-verify-deployment.sh"),
         [
             "ssl._create_unverified_context()",
             "https://localhost:8000/api/inbounds",
@@ -611,7 +856,7 @@ CHECKS: list[tuple[str, Path, list[str]]] = [
     ),
     (
         "deploy verify checks subscription display name",
-        Path("scripts/deploy/06-verify.sh"),
+        Path("scripts/deploy/06-verify-deployment.sh"),
         [
             "curl_saved_subscription",
             "for attempt in 1 2 3 4 5",
@@ -700,12 +945,12 @@ FORBIDDEN: list[tuple[str, Path, str]] = [
     ),
     (
         "deploy verify must not treat console 403 as expected",
-        Path("scripts/deploy/06-verify.sh"),
+        Path("scripts/deploy/06-verify-deployment.sh"),
         "403=public blocked",
     ),
     (
         "deploy verify must not call console access controlled",
-        Path("scripts/deploy/06-verify.sh"),
+        Path("scripts/deploy/06-verify-deployment.sh"),
         "$CONSOLE_DOMAIN access control",
     ),
     (
@@ -905,6 +1150,17 @@ def main() -> int:
         else:
             print(f"[ OK ] {label}")
 
+    absent_paths = [
+        Path(".github/workflows/quality-gate.yml"),
+        Path(".github/workflows/promote-develop-to-main.yml"),
+    ]
+    for rel_path in absent_paths:
+        if (PROJECT_ROOT / rel_path).exists():
+            print(f"[FAIL] retired workflow must not reappear: {rel_path}")
+            failed += 1
+        else:
+            print(f"[ OK ] retired workflow absent: {rel_path}")
+
     ascii_failures: list[str] = []
     for path in iter_source_files():
         text = read(path)
@@ -942,4 +1198,10 @@ def main() -> int:
 
 
 if __name__ == "__main__":
+    import argparse
+    parser = argparse.ArgumentParser(
+        description="Static checks for high-risk deployment script contracts.",
+        epilog="Run from repo root: python3 scripts/deploy/08-check-script-contracts.py",
+    )
+    parser.parse_args()
     sys.exit(main())

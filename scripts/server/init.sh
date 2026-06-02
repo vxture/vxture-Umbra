@@ -8,6 +8,22 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/../lib/log.sh"
 
+if [[ "$1" == "--help" ]] || [[ "$1" == "-h" ]]; then
+  echo ""
+  echo "  Usage: bash scripts/server.sh init"
+  echo ""
+  echo "  Bootstraps a new server: installs Docker and docker compose,"
+  echo "  creates admin user (default: stone), copies SSH keys from"
+  echo "  root, configures UFW firewall (22, 80, 443), and sets up"
+  echo "  /srv/vxture directory structure."
+  echo ""
+  echo "  Must run as root. Safe to re-run."
+  echo ""
+  echo "  Run: sudo bash scripts/server.sh init"
+  echo ""
+  exit 0
+fi
+
 log_banner "Umbra - Server Init"
 
 if [[ "$EUID" -ne 0 ]]; then
@@ -144,7 +160,7 @@ log_info "  git clone https://github.com/vxture/umbra.git /srv/vxture/repo/umbra
 log_info "  cd /srv/vxture/repo/umbra"
 log_info "  cp .env.example .env && nano .env"
 log_info "  bash scripts/deploy.sh all"
-log_info "  bash scripts/deploy.sh post"
+log_info "  bash scripts/deploy.sh wizard"
 echo ""
 log_info "After confirming $ADMIN_USER SSH login works, optionally harden SSH:"
 log_info "  sed -i 's/^#\\?PermitRootLogin.*/PermitRootLogin no/' /etc/ssh/sshd_config && systemctl reload sshd"

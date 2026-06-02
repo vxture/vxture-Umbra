@@ -3,6 +3,7 @@
 *.env
 .env.*
 !.env.example
+.npmrc
 
 # Runtime data and generated configs
 data/
@@ -45,9 +46,7 @@ portals/console/.next/
 *.swp
 *.swo
 
-# Claude Code memory (local only)
 .claude/
 
-# Portal / docs build artifacts (source stays in repo, built output goes to DATA_DIR)
-portal/build/
+# docs-site build artifacts (source stays in repo, built output goes to DATA_DIR)
 docs-site/build/

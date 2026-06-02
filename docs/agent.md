@@ -36,7 +36,7 @@ Purpose:    Production overseas edge entry node
 | Marzban + Xray | `umbra-marzban` | sub.ruyin.ai, admin.ruyin.ai, REALITY ingress | VPN user management, subscription, bundled Xray subprocess |
 | Subscription Proxy | `umbra-subproxy` | internal | Normalizes subscription response metadata only |
 | Account Portal | `umbra-account` | console.ruyin.ai, admin.ruyin.ai/invites | Invite-bound user dashboard and invite management |
-| Public Guide | `umbra-portal` | vpn.ruyin.ai | VPN display, onboarding guide and docs |
+| Public Guide | *removed* | vpn.ruyin.ai -> umbra-website | VPN display merged into umbra-website |
 | Vaultwarden | `umbra-vaultwarden` | pass.ruyin.ai | Password manager |
 | Certbot | one-shot Docker container | ACME webroot | Let's Encrypt issue/renew automation |
 
@@ -48,7 +48,7 @@ Purpose:    Production overseas edge entry node
 |--------|--------|-------|
 | `ruyin.ai` | Nginx -> umbra-website | Brand home and Hermes entry |
 | `www.ruyin.ai` | Nginx -> ruyin.ai | Canonical redirect |
-| `vpn.ruyin.ai` | Nginx -> umbra-portal | VPN display and legacy guide |
+| `vpn.ruyin.ai` | Nginx -> umbra-website | VPN display via website (/guide/ redirects to /) |
 | `sub.ruyin.ai` | Nginx -> umbra-subproxy -> umbra-marzban | Marzban-native subscription endpoint with normalized metadata |
 | `console.ruyin.ai` | Nginx -> umbra-account-web + umbra-account | User login, invite activation, subscription dashboard |
 | `admin.ruyin.ai` | Nginx -> umbra-marzban; /invites -> account web/API | Marzban console and invite generation |
@@ -106,6 +106,8 @@ Phase 4 - Hardening
 | [`deployment/deployment.md`](deployment/deployment.md) | Deploy steps, .env reference, verification checklist, migration |
 | [`deployment/checklists.md`](deployment/checklists.md) | Scenario matrix, preservation contracts, and deployment safety checklists |
 | [`operations/operations.md`](operations/operations.md) | Backup, rollback, cert renewal, user management, monitoring |
+| [`operations/github-actions.md`](operations/github-actions.md) | CI/CD branch flow, promotion contract, and worker-03 deployment design |
+| [`operations/github-actions-enablement.md`](operations/github-actions-enablement.md) | Secrets, rulesets, and first-run checklist for enabling CI/CD |
 | [`operations/certificate-incident.md`](operations/certificate-incident.md) | Certificate incident ledger and non-regression guardrails |
 | [`operations/local-dev-environment.md`](operations/local-dev-environment.md) | Operator workstation notes for TUN, DeepSeek API, and Roo Code |
 

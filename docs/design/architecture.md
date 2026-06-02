@@ -105,9 +105,6 @@ Services:
     - stores account and invite state in DATA_DIR/account/account.db
     - talks to Marzban API and native subscription info endpoints
 
-  umbra-portal
-    - public guide on :80, exposed under EDGE_DOMAIN /guide/
-
   umbra-vaultwarden
     - Vaultwarden on :80
 ```
@@ -164,16 +161,16 @@ Services:
 |       |   |   |-- init.sh
 |       |   |   `-- reset.sh
 |       |   |-- deploy/
-|       |   |   |-- 00-check-env.sh
-|       |   |   |-- 01-init-dirs.sh
-|       |   |   |-- 02-generate-reality.sh
-|       |   |   |-- 03-issue-certs.sh
+|       |   |   |-- 00-check-environment.sh
+|       |   |   |-- 01-init-data-directories.sh
+|       |   |   |-- 02-generate-reality-keys.sh
+|       |   |   |-- 03-issue-tls-certificates.sh
 |       |   |   |-- 03-self-signed.sh
-|       |   |   |-- 04-render-configs.py
-|       |   |   |-- 05-up.sh
-|       |   |   |-- 06-verify.sh
+|       |   |   |-- 04-render-configuration-templates.py
+|       |   |   |-- 05-start-docker-services.sh
+|       |   |   |-- 06-verify-deployment.sh
 |       |   |   |-- all.sh
-|       |   |   `-- post.sh
+|       |   |   `-- 07-post-deploy-wizard.sh
 |       |   `-- ops/
 |       |       |-- backup.sh
 |       |       `-- certs.sh
@@ -221,7 +218,6 @@ Services:
 | 3210 | Internal | umbra-website | Ruyin public Next website |
 | 3220 | Internal | umbra-account-web | User console and invite UI |
 | 80 | Internal | umbra-vaultwarden | Vaultwarden HTTP |
-| 80 | Internal | umbra-portal | Public guide |
 
 ---
 

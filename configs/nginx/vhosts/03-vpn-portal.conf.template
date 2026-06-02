@@ -15,12 +15,11 @@ server {
     }
 
     location /guide/ {
-        proxy_pass http://umbra-portal:80/;
-        include /etc/nginx/snippets/proxy-headers.conf;
+        return 301 /;
     }
 
     location / {
-        proxy_pass http://umbra-portal:80/;
+        proxy_pass http://umbra-website:3210/;
         include /etc/nginx/snippets/proxy-headers.conf;
     }
 }

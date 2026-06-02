@@ -1,3 +1,5 @@
+"use client";
+
 import type { ReactNode } from "react";
 
 export function Shell({ children }: { children: ReactNode }) {
@@ -5,7 +7,13 @@ export function Shell({ children }: { children: ReactNode }) {
     <main className="app-shell">
       <header className="topbar">
         <a className="brand" href="/">
-          <span className="brand-mark">R</span>
+          <img
+            className="brand-mark"
+            src="/assets/brand/ruyin-symbol-dark.svg"
+            alt="Ruyin"
+            width={28}
+            height={28}
+          />
           <span>
             <strong className="brand-title">Ruyin Account</strong>
             <span className="brand-subtitle">Private VPN access</span>
