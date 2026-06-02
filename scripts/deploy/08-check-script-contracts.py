@@ -100,6 +100,7 @@ CHECKS: list[tuple[str, Path, list[str]]] = [
         "deploy check validates environment formats",
         Path("scripts/deploy/00-check-environment.sh"),
         [
+            '${1:-}',
             "Checking environment value formats",
             "CONSOLE_DOMAIN ADMIN_DOMAIN PASS_DOMAIN",
             "REALITY_SHORT_ID_LENGTH must be a positive even integer",
@@ -227,6 +228,55 @@ CHECKS: list[tuple[str, Path, list[str]]] = [
         [
             'if [[ "$EUID" -eq 0 ]]',
             "Do not run as root",
+        ],
+    ),
+    (
+        "standalone deployment steps tolerate no help argument",
+        Path("scripts/deploy/01-init-data-directories.sh"),
+        [
+            '${1:-}',
+        ],
+    ),
+    (
+        "reality key step tolerates no help argument",
+        Path("scripts/deploy/02-generate-reality-keys.sh"),
+        [
+            '${1:-}',
+        ],
+    ),
+    (
+        "certificate issue step tolerates no help argument",
+        Path("scripts/deploy/03-issue-tls-certificates.sh"),
+        [
+            '${1:-}',
+        ],
+    ),
+    (
+        "self-signed certificate step tolerates no help argument",
+        Path("scripts/deploy/03-self-signed.sh"),
+        [
+            '${1:-}',
+        ],
+    ),
+    (
+        "docker start step tolerates no help argument",
+        Path("scripts/deploy/05-start-docker-services.sh"),
+        [
+            '${1:-}',
+        ],
+    ),
+    (
+        "verify step tolerates no help argument",
+        Path("scripts/deploy/06-verify-deployment.sh"),
+        [
+            '${1:-}',
+        ],
+    ),
+    (
+        "backup operation tolerates no help argument",
+        Path("scripts/ops/backup.sh"),
+        [
+            '${1:-}',
         ],
     ),
     (
