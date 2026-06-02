@@ -24,6 +24,21 @@ log_banner "Umbra - Start Services"
 
 cd "$REPO_DIR"
 
+compose_pull_with_retry() {
+  local attempt
+  for attempt in 1 2 3 4 5 6; do
+    if docker compose pull --quiet; then
+      return 0
+    fi
+
+    log_warn "docker compose pull failed on attempt $attempt; retrying..."
+    sleep $((attempt * 5))
+  done
+
+  log_error "docker compose pull failed after retries."
+  return 1
+}
+
 # -- Marzban TLS cert ----------------------------------------------------------
 # Marzban (newer versions) binds to 127.0.0.1 when no SSL cert is provided,
 # making it unreachable from other Docker containers (nginx gets 502).
@@ -38,7 +53,7 @@ if ! umbra_sync_marzban_tls "$DATA_DIR/letsencrypt" "$EDGE_DOMAIN" "$DATA_DIR/ma
 fi
 
 log_step "Pulling latest images..."
-docker compose pull --quiet
+compose_pull_with_retry
 
 log_step "Starting services..."
 docker compose up -d
