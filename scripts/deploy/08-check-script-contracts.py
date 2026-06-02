@@ -691,7 +691,9 @@ CHECKS: list[tuple[str, Path, list[str]]] = [
         "deploy start pulls images and checks managed containers",
         Path("scripts/deploy/05-start-docker-services.sh"),
         [
+            "compose_pull_with_retry",
             "docker compose pull --quiet",
+            "docker compose pull failed after retries",
             "docker compose up -d",
             "umbra-subproxy",
             "umbra-account",
