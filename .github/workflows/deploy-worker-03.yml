@@ -100,9 +100,21 @@ jobs:
           export IMAGE_NAMESPACE="$ALIYUN_ACR_NAMESPACE"
           export IMAGE_TAG="$IMAGE_TAG"
 
+          docker_login_with_retry() {
+            local attempt
+            for attempt in 1 2 3 4 5 6; do
+              curl -fsSI "https://${IMAGE_REGISTRY}/v2/" >/dev/null 2>&1 || true
+              if printf '%s' "$ALIYUN_ACR_PASSWORD" \
+                | timeout 45 docker login "$IMAGE_REGISTRY" -u "$ALIYUN_ACR_USERNAME" --password-stdin; then
+                return 0
+              fi
+              sleep $((attempt * 5))
+            done
+            return 1
+          }
+
           if [ -n "${ALIYUN_ACR_USERNAME:-}" ] && [ -n "${ALIYUN_ACR_PASSWORD:-}" ]; then
-            printf '%s' "$ALIYUN_ACR_PASSWORD" \
-              | docker login "$IMAGE_REGISTRY" -u "$ALIYUN_ACR_USERNAME" --password-stdin
+            docker_login_with_retry
           fi
 
           bash scripts/deploy.sh all
