@@ -132,6 +132,7 @@ Required secrets:
 
 | Secret | Required |
 |---|---:|
+| `PROMOTION_TOKEN` | yes |
 | `NODE_AUTH_TOKEN` | yes |
 | `ALIYUN_ACR_REGISTRY` | yes |
 | `ALIYUN_ACR_NAMESPACE` | yes |
@@ -233,7 +234,7 @@ Completed locally:
 - [x] Document temporary Docker Desktop gap and non-Docker checks.
 - [x] Add local env template at `private/github-actions.local.env`.
 - [x] Add `scripts/github/set-github-secrets.ps1` for GitHub secret sync.
-- [x] Add secrets in GitHub repository settings.
+- [x] Add secrets in GitHub repository settings, including `PROMOTION_TOKEN`.
 - [x] Add `worker-03` environment secrets.
 - [x] Configure branch rulesets for `develop` and `main`.
       Active repository rulesets:
