@@ -367,6 +367,8 @@ Notes:
 
 - The deploy user must be non-root. `deploy.sh all` intentionally rejects root.
 - The remote repo must not have local commits that prevent fast-forward.
+- ACR login uses retry/backoff because first contact to the remote registry can
+  intermittently hit TLS handshake timeouts.
 - Runtime state remains on worker-03 under `.env`, `DATA_DIR`, and
   `BACKUP_DIR`; CI must not carry production secrets except SSH credentials.
 - Config rendering and certificate lifecycle still belong to Umbra deploy
