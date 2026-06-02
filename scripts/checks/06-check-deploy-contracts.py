@@ -706,7 +706,7 @@ CHECKS: list[tuple[str, Path, list[str]]] = [
         ],
     ),
     (
-        "worker-03 deploy consumes docker-build output and ACR images",
+        "worker-03 deploy consumes docker-build output with GHCR primary and ACR fallback",
         Path(".github/workflows/deploy-worker-03.yml"),
         [
             "name: deploy-worker-03",
@@ -717,15 +717,15 @@ CHECKS: list[tuple[str, Path, list[str]]] = [
             "ALIYUN_ACR_NAMESPACE",
             "docker_login_with_retry",
             "timeout 45 docker login",
-            "curl -fsSI \"https://${IMAGE_REGISTRY}/v2/\"",
-            "docker login \"$IMAGE_REGISTRY\"",
+            "curl -fsSI \"https://${ALIYUN_ACR_REGISTRY}/v2/\"",
+            "docker login \"$ALIYUN_ACR_REGISTRY\"",
             "packages: read",
             "GHCR_TOKEN",
-            "export IMAGE_REGISTRY=\"$ALIYUN_ACR_REGISTRY\"",
-            "export IMAGE_NAMESPACE=\"$ALIYUN_ACR_NAMESPACE\"",
+            "export IMAGE_REGISTRY=\"$GHCR_REGISTRY\"",
+            "export IMAGE_NAMESPACE=\"$GHCR_NAMESPACE\"",
             "export IMAGE_TAG=\"$IMAGE_TAG\"",
-            "FALLBACK_IMAGE_REGISTRY",
-            "FALLBACK_IMAGE_NAMESPACE",
+            "export FALLBACK_IMAGE_REGISTRY=\"$ALIYUN_ACR_REGISTRY\"",
+            "export FALLBACK_IMAGE_NAMESPACE=\"$ALIYUN_ACR_NAMESPACE\"",
             "bash deploy/worker-03/deploy.sh all",
             "bash deploy/worker-03/deploy.sh verify",
         ],
@@ -1374,9 +1374,23 @@ def check_worker_deploy_fallback_contract() -> list[str]:
 
     if "GHCR_TOKEN: ${{ github.token }}" in workflow and "packages: read" not in workflow:
         problems.append("deploy-worker-03 uses github.token for GHCR but lacks packages: read")
-    if "export FALLBACK_IMAGE_REGISTRY=\"$GHCR_REGISTRY\"" in workflow:
-        if "FALLBACK_IMAGE_REGISTRY" not in start_script or "FALLBACK_IMAGE_NAMESPACE" not in start_script:
-            problems.append("deploy workflow exports fallback registry but start script does not consume it")
+    if (
+        "export IMAGE_REGISTRY=\"$GHCR_REGISTRY\"" not in workflow
+        or "export IMAGE_NAMESPACE=\"$GHCR_NAMESPACE\"" not in workflow
+    ):
+        problems.append("deploy workflow must pull GHCR as worker-03 primary registry")
+    if (
+        "export FALLBACK_IMAGE_REGISTRY=\"$ALIYUN_ACR_REGISTRY\"" not in workflow
+        or "export FALLBACK_IMAGE_NAMESPACE=\"$ALIYUN_ACR_NAMESPACE\"" not in workflow
+    ):
+        problems.append("deploy workflow must use Aliyun ACR as worker-03 fallback registry")
+    if (
+        "FALLBACK_IMAGE_REGISTRY" not in start_script
+        or "FALLBACK_IMAGE_NAMESPACE" not in start_script
+    ):
+        problems.append("deploy workflow exports fallback registry but start script does not consume it")
+    if "docker login \"$ALIYUN_ACR_REGISTRY\"" not in workflow:
+        problems.append("deploy workflow must login to Aliyun ACR fallback registry explicitly")
     if "docker compose pull" in start_script:
         problems.append("deploy start must use serial docker pull via docker compose config --images")
     if 'timeout "$pull_timeout" docker pull --quiet "$image"' not in start_script:

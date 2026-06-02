@@ -295,7 +295,8 @@ Optional:
 Compose contract:
 
 `docker-compose.yml` must use the same repository names in `image:` fields.
-For worker-03 production deploys, `image:` should resolve to ACR first.
+For worker-03 production deploys, `image:` should resolve to GHCR first and
+Aliyun ACR second.
 
 Example shape:
 
@@ -307,9 +308,10 @@ services:
     image: ${IMAGE_REGISTRY}/${IMAGE_NAMESPACE}/ruyin-console:${IMAGE_TAG:-latest}
 ```
 
-`IMAGE_REGISTRY` should point to Aliyun ACR on worker-03. The deploy script may
-fall back to GHCR after ACR pull retries are exhausted, because worker-03 can
-experience transient TLS timeouts when pulling large images from ACR.
+`IMAGE_REGISTRY` should point to GHCR on worker-03. The deploy script may fall
+back to Aliyun ACR after GHCR pull retries are exhausted. worker-03 is a Vultr
+Tokyo server, so GHCR is the primary runtime pull source and the Hangzhou ACR
+mirror is retained as a backup for the same immutable image tags.
 
 ## Deploy Workflow
 
@@ -354,9 +356,11 @@ git checkout main
 git merge --ff-only "$PASSED_SHA"
 test "$(git rev-parse HEAD)" = "$PASSED_SHA"
 
-export IMAGE_REGISTRY="$ALIYUN_ACR_REGISTRY"
-export IMAGE_NAMESPACE="${ALIYUN_ACR_NAMESPACE:-vxture}"
+export IMAGE_REGISTRY="$GHCR_REGISTRY"
+export IMAGE_NAMESPACE="$GHCR_NAMESPACE"
 export IMAGE_TAG="sha-<short-sha>"
+export FALLBACK_IMAGE_REGISTRY="$ALIYUN_ACR_REGISTRY"
+export FALLBACK_IMAGE_NAMESPACE="${ALIYUN_ACR_NAMESPACE:-vxture}"
 
 bash deploy/worker-03/deploy.sh all
 bash deploy/worker-03/deploy.sh verify
@@ -368,9 +372,9 @@ Notes:
 - The remote repo must not have local commits that prevent fast-forward.
 - ACR login uses retry/backoff because first contact to the remote registry can
   intermittently hit TLS handshake timeouts.
-- Image pull uses ACR first. If ACR image pulls fail after retries, deployment
-  may switch to GHCR (`ghcr.io/vxture`) for the same immutable `sha-<short-sha>`
-  tag.
+- Image pull uses GHCR first. If GHCR image pulls fail after retries, deployment
+  may switch to Aliyun ACR (`registry.cn-hangzhou.aliyuncs.com/vxture`) for the
+  same immutable `sha-<short-sha>` tag.
 - Runtime state remains on worker-03 under `.env`, `DATA_DIR`, and
   `BACKUP_DIR`; CI must not carry production secrets except SSH credentials.
 - Config rendering and certificate lifecycle still belong to Umbra deploy
