@@ -1,0 +1,4 @@
+# Normalize all text files to LF in the repo and working tree.
+# Memory files are plain Markdown; keeping LF avoids CRLF churn on Windows.
+* text=auto eol=lf
+*.md text eol=lf
