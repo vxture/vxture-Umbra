@@ -43,7 +43,7 @@ jobs:
           REPO: ${{ github.repository }}
         run: |
           set -euo pipefail
-          base="$(gh run list --workflow deploy-worker-03.yml --branch main \
+          base="$(gh run list --repo "$REPO" --workflow deploy-worker-03.yml --branch main \
             --status success --limit 1 --json headSha --jq '.[0].headSha' 2>/dev/null || true)"
           deployable=true
           reason=no-known-base
