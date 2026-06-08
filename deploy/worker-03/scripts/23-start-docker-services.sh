@@ -85,8 +85,22 @@ fi
 log_step "Pulling latest images..."
 compose_pull_with_retry
 
-log_step "Starting services..."
-docker compose up -d
+# Pin every service to an immutable image digest so `docker compose up` only
+# recreates containers whose image actually changed (owned images keep the same
+# digest when source is unchanged; external images stay on their running digest).
+# Falls back to tag-based startup if digests cannot be resolved.
+log_step "Pinning image digests..."
+digest_override="$DATA_DIR/docker-compose.digests.yml"
+if python3 "$SCRIPT_DIR/26-pin-image-digests.py" > "$digest_override" 2>/tmp/umbra-pin.err \
+  && [[ -s "$digest_override" ]]; then
+  cat "$digest_override"
+  log_step "Starting services (digest-pinned)..."
+  docker compose -f "$REPO_DIR/docker-compose.yml" -f "$digest_override" up -d --remove-orphans
+else
+  log_warn "Digest pinning unavailable; falling back to tag-based startup"
+  log_warn "$(cat /tmp/umbra-pin.err 2>/dev/null || true)"
+  docker compose up -d --remove-orphans
+fi
 
 log_step "Reloading nginx rendered configuration..."
 docker compose exec -T umbra-nginx nginx -t
