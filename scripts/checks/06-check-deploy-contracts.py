@@ -12,6 +12,7 @@ from pathlib import Path
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
+RELEASE_WORKFLOW = ".github/workflows/release.yml"
 EXPECTED_RUYIN_IMAGES = {
     "ruyin-account-api",
     "ruyin-admin",
@@ -605,7 +606,7 @@ CHECKS: list[tuple[str, Path, list[str]]] = [
             "Promotion must be a controlled entry point",
             ".github/workflows/ci.yml",
             ".github/workflows/promote.yml",
-            ".github/workflows/release.yml",
+            RELEASE_WORKFLOW,
             "docker-build",
             "ruyin-website",
             "ruyin-console",
@@ -679,7 +680,7 @@ CHECKS: list[tuple[str, Path, list[str]]] = [
     ),
     (
         "docker build workflow publishes six images to GHCR and Aliyun ACR",
-        Path(".github/workflows/release.yml"),
+        Path(RELEASE_WORKFLOW),
         [
             "name: docker-build",
             "push:",
@@ -703,7 +704,7 @@ CHECKS: list[tuple[str, Path, list[str]]] = [
     ),
     (
         "docker build only rebuilds changed images and retags the rest by digest",
-        Path(".github/workflows/release.yml"),
+        Path(RELEASE_WORKFLOW),
         [
             "build_images:",
             "Decide build vs retag",
@@ -715,7 +716,7 @@ CHECKS: list[tuple[str, Path, list[str]]] = [
     ),
     (
         "worker-03 deploy consumes build output with GHCR primary and ACR fallback",
-        Path(".github/workflows/release.yml"),
+        Path(RELEASE_WORKFLOW),
         [
             "name: deploy-worker-03",
             "needs: [detect, build]",
@@ -1278,7 +1279,7 @@ FORBIDDEN: list[tuple[str, Path, str]] = [
     ),
     (
         "worker deploy must not require original push event",
-        Path(".github/workflows/release.yml"),
+        Path(RELEASE_WORKFLOW),
         "github.event.workflow_run.event == 'push'",
     ),
 ]
@@ -1375,7 +1376,7 @@ def check_compose_owned_image_mapping() -> list[str]:
 
 
 def check_docker_build_image_matrix() -> list[str]:
-    text = read(PROJECT_ROOT / ".github/workflows/release.yml")
+    text = read(PROJECT_ROOT / RELEASE_WORKFLOW)
     matrix_images = set(re.findall(r"^\s+- image: (ruyin-[a-z-]+)\s*$", text, flags=re.MULTILINE))
     problems: list[str] = []
     if matrix_images != EXPECTED_RUYIN_IMAGES:
@@ -1397,7 +1398,7 @@ def check_docker_build_image_matrix() -> list[str]:
 
 
 def check_worker_deploy_fallback_contract() -> list[str]:
-    workflow = read(PROJECT_ROOT / ".github/workflows/release.yml")
+    workflow = read(PROJECT_ROOT / RELEASE_WORKFLOW)
     start_script = read(PROJECT_ROOT / "deploy/worker-03/scripts/23-start-docker-services.sh")
     problems: list[str] = []
 
