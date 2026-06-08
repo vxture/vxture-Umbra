@@ -783,6 +783,27 @@ CHECKS: list[tuple[str, Path, list[str]]] = [
         ],
     ),
     (
+        "deploy start pins image digests and removes orphans for minimal recreate",
+        Path("deploy/worker-03/scripts/23-start-docker-services.sh"),
+        [
+            "26-pin-image-digests.py",
+            "docker-compose.digests.yml",
+            "up -d --remove-orphans",
+            "falling back to tag-based startup",
+        ],
+    ),
+    (
+        "digest pinner resolves owned and external image digests",
+        Path("deploy/worker-03/scripts/26-pin-image-digests.py"),
+        [
+            "_service_images",
+            "_running_repo_digest",
+            "RepoDigests",
+            "IMAGE_REGISTRY",
+            "ruyin-",
+        ],
+    ),
+    (
         "image registry variables are documented in env example",
         Path(".env.example"),
         [
