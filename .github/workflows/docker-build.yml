@@ -16,13 +16,15 @@ concurrency:
 permissions:
   contents: read
   packages: write
-  actions: read
 
 jobs:
   detect:
     name: detect-deployable-changes
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    permissions:
+      contents: read
+      actions: read
     if: >-
       ${{
         github.event.workflow_run.conclusion == 'success' &&
@@ -32,22 +34,48 @@ jobs:
     outputs:
       deployable: ${{ steps.scope.outputs.deployable }}
     steps:
-      - name: Checkout passed revision
-        uses: actions/checkout@v6
-        with:
-          ref: ${{ github.event.workflow_run.head_sha }}
-          fetch-depth: 0
-
       - name: Determine deployable scope
         id: scope
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
           HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+          REPO: ${{ github.repository }}
         run: |
           set -euo pipefail
-          bash scripts/ci/changed-scope.sh "$HEAD_SHA" \
-            | tee -a "$GITHUB_OUTPUT"
+          base="$(gh run list --workflow deploy-worker-03.yml --branch main \
+            --status success --limit 1 --json headSha --jq '.[0].headSha' 2>/dev/null || true)"
+          deployable=true
+          reason=no-known-base
+          if [[ -n "$base" ]]; then
+            files="$(gh api "repos/$REPO/compare/$base...$HEAD_SHA" \
+              --jq '.files[].filename' 2>/dev/null || true)"
+            if [[ -z "$files" ]]; then
+              deployable=false
+              reason=no-changes
+            else
+              deployable=false
+              reason=docs-only
+              while IFS= read -r f; do
+                [[ -z "$f" ]] && continue
+                case "$f" in
+                  docs/*|.claude/*) ;;
+                  CLAUDE.md|README.md|LICENSE) ;;
+                  *)
+                    if [[ "${f%/*}" == "$f" && "${f%.md}" != "$f" ]]; then
+                      :
+                    else
+                      deployable=true
+                      reason="deployable:$f"
+                      break
+                    fi
+                    ;;
+                esac
+              done <<< "$files"
+            fi
+          fi
+          echo "deployable=$deployable" >> "$GITHUB_OUTPUT"
+          echo "scope: deployable=$deployable reason=$reason ($base...$HEAD_SHA)"
 
   docker-build:
     name: docker-build
