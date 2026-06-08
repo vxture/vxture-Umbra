@@ -73,6 +73,7 @@ jobs:
           set -euo pipefail
           npm run type-check --prefix portals/website
           npm run type-check --prefix portals/console
+          npm run type-check --prefix portals/admin
 
       - name: Portal production builds
         shell: bash
