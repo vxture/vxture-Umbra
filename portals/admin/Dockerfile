@@ -20,5 +20,9 @@ COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
 COPY --from=builder /app/public ./public
 EXPOSE 3230
+# Next.js standalone server binds to $HOSTNAME; Docker sets HOSTNAME to the
+# container id, so without this it listens only on the container IP and a
+# 127.0.0.1 healthcheck cannot reach it. Bind all interfaces instead.
+ENV HOSTNAME=0.0.0.0
 ENV PORT=3230
 CMD ["node", "server.js"]

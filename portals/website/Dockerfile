@@ -25,6 +25,10 @@ FROM ${NODE_BASE_IMAGE} AS runner
 WORKDIR /app
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
+# Next.js standalone server binds to $HOSTNAME; Docker sets HOSTNAME to the
+# container id, so without this it listens only on the container IP and a
+# 127.0.0.1 healthcheck cannot reach it. Bind all interfaces instead.
+ENV HOSTNAME=0.0.0.0
 ENV PORT=3210
 RUN addgroup -S nextjs && adduser -S nextjs -G nextjs
 COPY --from=builder --chown=nextjs:nextjs /app/.next/standalone ./
