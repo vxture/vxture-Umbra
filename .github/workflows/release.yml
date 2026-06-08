@@ -41,7 +41,7 @@ jobs:
           deployable=true
           reason=no-known-base
           build_all=true
-          declare -A want
+          want=""
           if [[ -n "$base" ]]; then
             files="$(gh api "repos/$REPO/compare/$base...$HEAD_SHA" \
               --jq '.files[].filename' 2>/dev/null || true)"
@@ -62,13 +62,13 @@ jobs:
                 # Map each change to the image(s) it feeds. Unknown paths force a
                 # full rebuild (safe: over-building never ships stale code).
                 case "$f" in
-                  portals/website/*) want[ruyin-website]=1 ;;
-                  portals/console/*) want[ruyin-console]=1 ;;
-                  portals/admin/*) want[ruyin-admin]=1 ;;
-                  brand/*) want[ruyin-website]=1; want[ruyin-console]=1; want[ruyin-admin]=1 ;;
-                  services/account/*|docker/ruyin-account-api.Dockerfile) want[ruyin-account-api]=1 ;;
-                  services/subproxy/*|docker/ruyin-subproxy.Dockerfile) want[ruyin-subproxy]=1 ;;
-                  docker/ruyin-nginx.Dockerfile) want[ruyin-nginx]=1 ;;
+                  portals/website/*) want="$want ruyin-website" ;;
+                  portals/console/*) want="$want ruyin-console" ;;
+                  portals/admin/*) want="$want ruyin-admin" ;;
+                  brand/*) want="$want ruyin-website ruyin-console ruyin-admin" ;;
+                  services/account/*|docker/ruyin-account-api.Dockerfile) want="$want ruyin-account-api" ;;
+                  services/subproxy/*|docker/ruyin-subproxy.Dockerfile) want="$want ruyin-subproxy" ;;
+                  docker/ruyin-nginx.Dockerfile) want="$want ruyin-nginx" ;;
                   docs/*|.claude/*|configs/*|deploy/*|scripts/*) : ;;
                   *.md|LICENSE|.gitignore|.gitattributes|.editorconfig|docker-compose.yml|.env.example) : ;;
                   *) build_all=true ;;
@@ -80,10 +80,10 @@ jobs:
             build_json='[]'
           elif [[ "$build_all" == "true" ]]; then
             build_json="$(printf '%s\n' $all_images | jq -R . | jq -cs 'sort')"
-          elif [[ ${#want[@]} -eq 0 ]]; then
-            build_json='[]'
           else
-            build_json="$(printf '%s\n' "${!want[@]}" | jq -R . | jq -cs 'sort')"
+            # $want is a space-separated, possibly-empty list; dedupe + sort.
+            # Empty (deployable change that maps to no image) yields [].
+            build_json="$(printf '%s\n' $want | sed '/^[[:space:]]*$/d' | sort -u | jq -R . | jq -cs '.')"
           fi
           echo "deployable=$deployable" >> "$GITHUB_OUTPUT"
           echo "build_images=$build_json" >> "$GITHUB_OUTPUT"
