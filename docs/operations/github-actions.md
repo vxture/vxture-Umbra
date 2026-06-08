@@ -19,7 +19,8 @@ Implementation checklist:
 2. Keep `main` as the production-approved branch.
 3. Run a repeatable quality gate before code can advance.
 4. Make promotion auditable and fast-forward only.
-5. Deploy worker-03 automatically only after `main` has passed CI.
+5. Deploy worker-03 automatically only after images are built for the promoted,
+   CI-validated revision.
 6. Build and push immutable images before worker-03 deploys.
 7. Push each image to both GHCR and Aliyun ACR.
 8. Keep production approval before `main`, not inside the deploy job.
@@ -35,8 +36,7 @@ feature/fix branch
   -> merge to develop
   -> ci on develop
   -> controlled promotion develop -> main
-  -> ci on main
-  -> docker-build on main
+  -> docker-build on main push
   -> deploy-worker-03
 ```
 
@@ -57,8 +57,14 @@ needed, it belongs in the promotion step before `main` advances.
 | Pull request to `main` | yes | no | no | no |
 | Push to `develop` | yes | no automatic promotion | no | no |
 | Manual promotion `develop -> main` | validates and pushes | yes | no | no |
-| Push to `main` | yes | no | after CI success | after Docker build success |
+| Push to `main` | no (already validated) | no | on push | after Docker build success |
 | Tag push | no current behavior | no | optional future semver build | no |
+
+CI does not run again on `main`. Promotion only fast-forwards `main` to a
+`develop` revision whose `quality-gate` already passed (promote.yml verifies it,
+and the `main` ruleset requires that same check on the SHA), so re-running CI on
+`main` would re-test byte-identical content. `docker-build` therefore triggers
+directly on the `main` push.
 
 Important constraint:
 
@@ -100,8 +106,11 @@ on:
   push:
     branches:
       - develop
-      - main
 ```
+
+CI does not run on `push` to `main`: `main` only advances by fast-forward
+promotion to an already-validated `develop` SHA, so a `main` CI run would be
+redundant. `docker-build` triggers on the `main` push instead.
 
 CI responsibilities:
 
@@ -199,40 +208,24 @@ Audit output:
 
 ## Docker Build Workflow
 
-`docker-build.yml` runs after `ci` succeeds on a `main` push. It builds the six
-Umbra-owned runtime images and pushes each image to both GHCR and Aliyun ACR.
+`docker-build.yml` runs on `push` to `main`. It builds the six Umbra-owned
+runtime images and pushes each image to both GHCR and Aliyun ACR. `main` is only
+reachable by fast-forward promotion of an already-validated `develop` SHA, so the
+push is trusted and no separate `main` CI run precedes it.
 
 Trigger:
 
 ```yaml
 on:
-  workflow_run:
-    workflows:
-      - ci
-    types:
-      - completed
+  push:
     branches:
       - main
 ```
 
-Required job condition:
-
-```yaml
-if: >-
-  ${{
-    github.event.workflow_run.conclusion == 'success' &&
-    github.event.workflow_run.head_branch == 'main'
-  }}
-```
-
-Do not check `github.event.workflow_run.event == 'push'` here. This deploy
-workflow listens to the `docker-build` workflow, whose event is `workflow_run`;
-the original push has already been validated by `docker-build`.
-
-The build must use the exact SHA that passed CI:
+The build must use the pushed SHA:
 
 ```bash
-PASSED_SHA="${{ github.event.workflow_run.head_sha }}"
+PASSED_SHA="${{ github.sha }}"
 ```
 
 Image tags for `main`:
@@ -340,6 +333,10 @@ if: >-
     github.event.workflow_run.head_branch == 'main'
   }}
 ```
+
+Do not check `github.event.workflow_run.event == 'push'` here. This deploy
+workflow listens to the `docker-build` workflow, whose event is `workflow_run`;
+the original `main` push has already been validated by `docker-build`.
 
 Deployment must use the exact SHA that was built and pushed:
 

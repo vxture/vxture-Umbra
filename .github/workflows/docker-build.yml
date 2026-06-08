@@ -1,16 +1,12 @@
 name: docker-build
 
 on:
-  workflow_run:
-    workflows:
-      - ci
-    types:
-      - completed
+  push:
     branches:
       - main
 
 concurrency:
-  group: docker-build-${{ github.event.workflow_run.head_sha }}
+  group: docker-build-${{ github.sha }}
   cancel-in-progress: false
 
 permissions:
@@ -25,12 +21,6 @@ jobs:
     permissions:
       contents: read
       actions: read
-    if: >-
-      ${{
-        github.event.workflow_run.conclusion == 'success' &&
-        github.event.workflow_run.event == 'push' &&
-        github.event.workflow_run.head_branch == 'main'
-      }}
     outputs:
       deployable: ${{ steps.scope.outputs.deployable }}
       build_images: ${{ steps.scope.outputs.build_images }}
@@ -40,7 +30,7 @@ jobs:
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
-          HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+          HEAD_SHA: ${{ github.sha }}
           REPO: ${{ github.repository }}
         run: |
           set -euo pipefail
@@ -106,7 +96,7 @@ jobs:
     if: ${{ needs.detect.outputs.deployable == 'true' }}
 
     env:
-      PASSED_SHA: ${{ github.event.workflow_run.head_sha }}
+      PASSED_SHA: ${{ github.sha }}
       GHCR_NAMESPACE: vxture
       ACR_REGISTRY: ${{ secrets.ALIYUN_ACR_REGISTRY }}
       ACR_NAMESPACE: ${{ secrets.ALIYUN_ACR_NAMESPACE }}
@@ -160,7 +150,7 @@ jobs:
       - name: Checkout passed revision
         uses: actions/checkout@v6
         with:
-          ref: ${{ github.event.workflow_run.head_sha }}
+          ref: ${{ github.sha }}
 
       - name: Compute image metadata
         id: meta
