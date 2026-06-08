@@ -136,6 +136,12 @@ services:
       NEXT_PUBLIC_RUYIN_ACCOUNT_URL: "https://${CONSOLE_DOMAIN}"
     networks:
       - umbra-net
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3220/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
 
   # -- Website: Ruyin public landing and self-built public pages ---------------
   umbra-website:
@@ -147,6 +153,12 @@ services:
       NEXT_PUBLIC_HERMES_URL: "https://hermes.vxture.com"
     networks:
       - umbra-net
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3210/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
 
   # -- Admin Web: future dedicated platform management surface -----------------
   # Current nginx routing still sends admin.ruyin.ai/dashboard/ to Marzban and
@@ -160,6 +172,12 @@ services:
       PORT: "3230"
     networks:
       - umbra-net
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3230/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
 
   # -- Vaultwarden: Password manager --------------------------------------------
   # Uses SQLite by default - database stored in the /data volume.
