@@ -5,6 +5,8 @@ export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
 const STATE_COOKIE = "umbra_sso_state";
+const PENDING_INVITE_COOKIE = "umbra_pending_invite";
+const INVITE_RE = /^[A-Za-z0-9-]{1,64}$/;
 
 function authBffUrl() {
   return (process.env.AUTH_BFF_URL || "").replace(/\/+$/, "");
@@ -98,6 +100,8 @@ export async function GET(request: NextRequest) {
   const payload = (await verify.json().catch(() => ({}))) as {
     sub?: string;
     tenantId?: string;
+    email?: string;
+    role?: string;
   };
 
   const sign = await fetch(`${authUrl}/auth/internal/sign`, {
@@ -108,8 +112,8 @@ export async function GET(request: NextRequest) {
     },
     body: JSON.stringify({
       sub: payload.sub,
-      email: "",
-      role: "member",
+      email: payload.email ?? "",
+      role: payload.role ?? "member",
       source: "ruyin",
       tenantId: payload.tenantId,
     }),
@@ -120,7 +124,20 @@ export async function GET(request: NextRequest) {
     return redirectClearingState("/login?sso=failed", target);
   }
 
-  const response = redirectClearingState("/dashboard", target);
+  const pendingInvite = request.cookies.get(PENDING_INVITE_COOKIE)?.value;
+  const validInvite = pendingInvite && INVITE_RE.test(pendingInvite) ? pendingInvite : null;
+  const destination = validInvite
+    ? `/register?invite=${encodeURIComponent(validInvite)}`
+    : "/dashboard";
+
+  const response = redirectClearingState(destination, target);
+  response.cookies.set(PENDING_INVITE_COOKIE, "", {
+    httpOnly: true,
+    secure: true,
+    sameSite: "lax",
+    path: "/auth",
+    maxAge: 0,
+  });
   for (const cookie of readSetCookies(sign.headers)) {
     response.headers.append("set-cookie", cookie);
   }

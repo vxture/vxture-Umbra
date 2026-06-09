@@ -47,7 +47,6 @@ PUBLIC_ACCOUNT_URL = os.environ.get("PUBLIC_ACCOUNT_URL", f"https://{os.environ.
 
 USER_RE = re.compile(r"^[A-Za-z][A-Za-z0-9_-]{1,63}$")
 INVITE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
-SESSION_COOKIE = "umbra_session"
 ADMIN_COOKIE = "umbra_admin"
 
 
@@ -157,22 +156,6 @@ def session_hash(value: str) -> str:
     return hmac.new(SESSION_KEY, value.encode("utf-8"), hashlib.sha256).hexdigest()
 
 
-def password_hash(password: str) -> tuple[str, str]:
-    salt = secrets.token_bytes(16)
-    digest = hashlib.pbkdf2_hmac("sha256", password.encode("utf-8"), salt, 240_000)
-    return b64url(salt), b64url(digest)
-
-
-def password_ok(password: str, salt_text: str, hash_text: str) -> bool:
-    try:
-        salt = unb64url(salt_text)
-        expected = unb64url(hash_text)
-    except Exception:
-        return False
-    digest = hashlib.pbkdf2_hmac("sha256", password.encode("utf-8"), salt, 240_000)
-    return hmac.compare_digest(digest, expected)
-
-
 def generate_invite_code() -> str:
     groups = []
     for _ in range(4):
@@ -240,6 +223,9 @@ def init_db() -> None:
               username TEXT NOT NULL UNIQUE,
               display_name TEXT,
               display_name_key TEXT,
+              -- Retired local-password IdP columns: kept NOT NULL for legacy rows.
+              -- Vxture SSO is the sole identity source; binding writes inert
+              -- placeholders here (see bind_invite_to_vxture_account).
               password_salt TEXT NOT NULL,
               password_hash TEXT NOT NULL,
               subscription_url TEXT NOT NULL,
@@ -311,15 +297,6 @@ def init_db() -> None:
               WHERE vxture_account_id IS NOT NULL AND disabled = 0
             """
         )
-
-
-def normalize_display_name(value: str) -> tuple[str, str]:
-    name = " ".join(value.strip().split())
-    if len(name) < 2 or len(name) > 32:
-        raise ValueError("Name must be 2-32 characters.")
-    if any(ord(ch) < 32 for ch in name) or any(ch in "<>\"'`" for ch in name):
-        raise ValueError("Name contains unsupported characters.")
-    return name, name.casefold()
 
 
 def request_json(url: str, token: str | None = None, data: dict[str, Any] | None = None, timeout: int = 10) -> dict[str, Any]:
@@ -665,14 +642,6 @@ class AccountHandler(BaseHTTPRequestHandler):
             self.api_dashboard()
         elif path == "/api/account/admin/invites":
             self.api_admin_invites()
-        elif path == "/":
-            self.login_page()
-        elif path == "/login":
-            self.login_page()
-        elif path == "/register":
-            self.register_page()
-        elif path == "/dashboard":
-            self.dashboard()
         elif path in {"/invites", "/invites/"}:
             self.admin_invites()
         else:
@@ -694,14 +663,6 @@ class AccountHandler(BaseHTTPRequestHandler):
             self.api_admin_reset_subscription()
         elif path == "/api/account/admin/revoke":
             self.api_admin_revoke_invite()
-        elif path == "/login":
-            self.login_submit()
-        elif path == "/register":
-            self.register_submit()
-        elif path == "/dashboard/reset-subscription":
-            self.reset_subscription_submit()
-        elif path == "/logout":
-            self.logout()
         elif path == "/invites/login":
             self.admin_login()
         elif path == "/invites/logout":
@@ -738,12 +699,6 @@ class AccountHandler(BaseHTTPRequestHandler):
     def current_vxture_user(self) -> dict[str, Any] | None:
         payload = self.current_vxture_payload()
         return public_vxture_user(payload) if payload else None
-
-    def user_session(self) -> dict[str, Any] | None:
-        payload = verify_payload(get_cookie(self.headers.get("Cookie"), SESSION_COOKIE))
-        if payload and payload.get("role") == "user":
-            return payload
-        return None
 
     def admin_session(self) -> dict[str, Any] | None:
         payload = verify_payload(get_cookie(self.headers.get("Cookie"), ADMIN_COOKIE))
@@ -1057,237 +1012,6 @@ class AccountHandler(BaseHTTPRequestHandler):
                 (invite_id,),
             )
         self.json(200, {"status": "revoked"})
-
-    def login_page(self, error: str = "") -> None:
-        if self.user_session():
-            self.redirect("/dashboard")
-            return
-        alert = f'<div class="alert">{html.escape(error)}</div>' if error else ""
-        body = f"""
-<section class="panel">
-  <h1>Ruyin Account</h1>
-  <p class="muted">Sign in with the name you chose when activating your invite.</p>
-  {alert}
-  <form method="post" action="/login">
-    <label>Name<input name="name" autocomplete="username" placeholder="Your name" required></label>
-    <label>Password<input name="password" type="password" autocomplete="current-password" required></label>
-    <button type="submit">Sign in</button>
-  </form>
-  <div class="row">
-    <a class="button secondary" href="/register">Register / Activate</a>
-  </div>
-</section>"""
-        self.html(200, page("Account Login", body, narrow=True))
-
-    def register_page(self, error: str = "", ok: str = "") -> None:
-        if self.user_session():
-            self.redirect("/dashboard")
-            return
-        alert = f'<div class="alert">{html.escape(error)}</div>' if error else ""
-        done = f'<div class="alert ok">{html.escape(ok)}</div>' if ok else ""
-        body = f"""
-<section class="panel">
-  <h1>Activate Invite</h1>
-  <p class="muted">Choose a display name and enter the invite code from your administrator. Do not enter USER08 or any other user code here.</p>
-  {alert}{done}
-  <form method="post" action="/register">
-    <label>Name<input name="name" autocomplete="username" placeholder="Your name" required></label>
-    <label>Invite code<input name="invite" autocomplete="one-time-code" placeholder="RY-XXXX-XXXX-XXXX-XXXX" required></label>
-    <label>Password<input name="password" type="password" autocomplete="new-password" minlength="8" required></label>
-    <label>Confirm password<input name="password2" type="password" autocomplete="new-password" minlength="8" required></label>
-    <button type="submit">Activate account</button>
-  </form>
-  <p class="muted">Already activated? <a href="/login">Sign in</a>.</p>
-</section>"""
-        self.html(200, page("Activate Invite", body, narrow=True))
-
-    def login_submit(self) -> None:
-        data = self.form()
-        name_raw = data.get("name", data.get("username", ""))
-        password = data.get("password", "")
-        try:
-            _, name_key = normalize_display_name(name_raw)
-        except ValueError:
-            self.login_page("Invalid name or password.")
-            return
-        with db() as conn:
-            row = conn.execute("SELECT * FROM accounts WHERE display_name_key = ?", (name_key,)).fetchone()
-            if not row or row["disabled"] or not password_ok(password, row["password_salt"], row["password_hash"]):
-                self.login_page("Invalid name or password.")
-                return
-            conn.execute("UPDATE accounts SET last_login_at = ? WHERE id = ?", (iso_now(), row["id"]))
-            username = row["username"]
-        payload = {"role": "user", "sub": username, "exp": int(time.time()) + 86400 * 14}
-        self.send_response(303)
-        self.send_header("Location", "/dashboard")
-        self.send_cookie(SESSION_COOKIE, sign_payload(payload), max_age=86400 * 14)
-        self.end_headers()
-
-    def register_submit(self) -> None:
-        data = self.form()
-        name_raw = data.get("name", "")
-        code = data.get("invite", "")
-        password = data.get("password", "")
-        password2 = data.get("password2", "")
-        try:
-            display_name, display_name_key = normalize_display_name(name_raw)
-        except ValueError as exc:
-            self.register_page(str(exc))
-            return
-        if len(password) < 8:
-            self.register_page("Password must be at least 8 characters.")
-            return
-        if password != password2:
-            self.register_page("Passwords do not match.")
-            return
-
-        code_digest = invite_hash(code)
-        conn: sqlite3.Connection | None = None
-        try:
-            conn = db()
-            conn.execute("BEGIN IMMEDIATE")
-            invite = conn.execute("SELECT * FROM invites WHERE code_hash = ?", (code_digest,)).fetchone()
-            if not invite or invite["disabled"] or invite["used_at"]:
-                raise ValueError("Invitation is invalid or already used.")
-            expires = parse_iso(invite["expires_at"])
-            if expires and expires < utcnow():
-                raise ValueError("Invitation is invalid or already used.")
-            if conn.execute("SELECT id FROM accounts WHERE username = ?", (invite["username"],)).fetchone():
-                raise ValueError("This user code is already bound.")
-            if conn.execute("SELECT id FROM accounts WHERE display_name_key = ? AND disabled = 0", (display_name_key,)).fetchone():
-                raise ValueError("Name is already used.")
-
-            info = subscription_info(invite["subscription_url"])
-            if info.get("username") != invite["username"]:
-                raise ValueError("Invitation target could not be verified.")
-
-            salt, digest = password_hash(password)
-            now = iso_now()
-            cur = conn.execute(
-                """
-                INSERT INTO accounts(username, display_name, display_name_key, password_salt, password_hash, subscription_url, created_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?)
-                """,
-                (invite["username"], display_name, display_name_key, salt, digest, invite["subscription_url"], now),
-            )
-            account_id = cur.lastrowid
-            conn.execute(
-                """
-                UPDATE invites
-                   SET used_at = ?, used_by_account_id = ?, code_plain = NULL
-                 WHERE id = ?
-                """,
-                (now, account_id, invite["id"]),
-            )
-            conn.commit()
-        except (sqlite3.IntegrityError, ValueError) as exc:
-            if conn is not None:
-                conn.rollback()
-            self.register_page(str(exc))
-            return
-        except Exception:
-            if conn is not None:
-                conn.rollback()
-            self.register_page("Invitation target could not be verified.")
-            return
-        finally:
-            if conn is not None:
-                conn.close()
-
-        payload = {"role": "user", "sub": invite["username"], "exp": int(time.time()) + 86400 * 14}
-        self.send_response(303)
-        self.send_header("Location", "/dashboard")
-        self.send_cookie(SESSION_COOKIE, sign_payload(payload), max_age=86400 * 14)
-        self.end_headers()
-
-    def dashboard(self) -> None:
-        sess = self.user_session()
-        if not sess:
-            self.redirect("/login")
-            return
-        username = str(sess.get("sub"))
-        with db() as conn:
-            account = conn.execute("SELECT * FROM accounts WHERE username = ?", (username,)).fetchone()
-        if not account or account["disabled"]:
-            self.redirect("/login", cookies_to_clear=[(SESSION_COOKIE, "/")])
-            return
-
-        sub_url = account["subscription_url"]
-        try:
-            info = subscription_info(sub_url)
-        except Exception:
-            info = {}
-
-        used = int(info.get("used_traffic") or 0)
-        total = int(info.get("data_limit") or 0)
-        remain = max(total - used, 0) if total else 0
-        status = str(info.get("status") or "unknown")
-        display_name = account["display_name"] or username
-        query = urllib.parse.parse_qs(urllib.parse.urlsplit(self.path).query)
-        update_status = query.get("subscription", [""])[0]
-        if update_status == "updated":
-            notice = '<div class="alert ok">Subscription URL reset.</div>'
-        elif update_status == "current":
-            notice = '<div class="alert ok">Subscription URL already matches Marzban.</div>'
-        elif update_status == "failed":
-            notice = '<div class="alert">Subscription URL could not be reset. Try again later.</div>'
-        else:
-            notice = ""
-        body = f"""
-<section class="split">
-  <div class="panel">
-    <h1>{html.escape(display_name)}</h1>
-    <p class="muted">Your Ruyin subscription status and client address.</p>
-    <div class="grid">
-      <div class="metric"><div class="muted">User code</div><div class="value">{html.escape(PROFILE_PREFIX)}-{html.escape(username)}</div></div>
-      <div class="metric"><div class="muted">Status</div><div class="value">{html.escape(status)}</div></div>
-      <div class="metric"><div class="muted">Used traffic</div><div class="value">{format_bytes(used)}</div></div>
-      <div class="metric"><div class="muted">Total traffic</div><div class="value">{format_bytes(total) if total else "Unlimited"}</div></div>
-      <div class="metric"><div class="muted">Remaining</div><div class="value">{format_bytes(remain) if total else "Unlimited"}</div></div>
-      <div class="metric"><div class="muted">Expire</div><div class="value">{format_epoch(info.get("expire"))}</div></div>
-      <div class="metric"><div class="muted">Last online</div><div class="value">{format_datetime(info.get("online_at"))}</div></div>
-    </div>
-  </div>
-  <aside class="panel">
-    <h2>Subscription URL</h2>
-    {notice}
-    <p><code id="subscription-url">{html.escape(sub_url)}</code></p>
-    <div class="row">
-      <button type="button" data-copy="subscription-url">Copy subscription URL</button>
-      <form method="post" action="/dashboard/reset-subscription"><button class="danger" type="submit">Reset subscription URL</button></form>
-      <form method="post" action="/logout"><button class="secondary" type="submit">Sign out</button></form>
-    </div>
-    <p class="muted">Copy this URL into Clash Verge, V2RayN, Sing-box, or any compatible client.</p>
-  </aside>
-</section>
-<script>
-document.addEventListener("click", function (event) {{
-  var target = event.target;
-  if (!target || !target.dataset || !target.dataset.copy) return;
-  var source = document.getElementById(target.dataset.copy);
-  if (!source || !navigator.clipboard) return;
-  navigator.clipboard.writeText(source.textContent || "");
-}});
-</script>"""
-        self.html(200, page("Dashboard", body))
-
-    def reset_subscription_submit(self) -> None:
-        sess = self.user_session()
-        if not sess:
-            self.redirect("/login")
-            return
-        username = str(sess.get("sub"))
-        with db() as conn:
-            account = conn.execute("SELECT * FROM accounts WHERE username = ?", (username,)).fetchone()
-        if not account or account["disabled"]:
-            self.redirect("/login", cookies_to_clear=[(SESSION_COOKIE, "/")])
-            return
-
-        status = reset_bound_account_subscription_url(username)
-        self.redirect(f"/dashboard?subscription={status}")
-
-    def logout(self) -> None:
-        self.redirect("/login", cookies_to_clear=[(SESSION_COOKIE, "/")])
 
     def admin_login_form(self, error: str = "") -> bytes:
         alert = f'<div class="alert">{html.escape(error)}</div>' if error else ""
