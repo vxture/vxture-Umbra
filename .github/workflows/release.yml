@@ -52,8 +52,10 @@ jobs:
               while IFS= read -r f; do
                 [[ -z "$f" ]] && continue
                 # Deployable unless every change is documentation/metadata.
+                # .github/* is CI/CD plumbing (workflows already take effect on
+                # their own push); it ships nothing into the runtime images.
                 case "$f" in
-                  docs/*|.claude/*) : ;;
+                  docs/*|.claude/*|.github/*) : ;;
                   CLAUDE.md|README.md|LICENSE) : ;;
                   *)
                     if [[ "${f%/*}" == "$f" && "${f%.md}" != "$f" ]]; then : ; else deployable=true; fi
@@ -69,7 +71,7 @@ jobs:
                   services/account/*|docker/ruyin-account-api.Dockerfile) want="$want ruyin-account-api" ;;
                   services/subproxy/*|docker/ruyin-subproxy.Dockerfile) want="$want ruyin-subproxy" ;;
                   docker/ruyin-nginx.Dockerfile) want="$want ruyin-nginx" ;;
-                  docs/*|.claude/*|configs/*|deploy/*|scripts/*) : ;;
+                  docs/*|.claude/*|.github/*|configs/*|deploy/*|scripts/*) : ;;
                   *.md|LICENSE|.gitignore|.gitattributes|.editorconfig|docker-compose.yml|.env.example) : ;;
                   *) build_all=true ;;
                 esac
