@@ -2,12 +2,11 @@
 
 import type { ReactNode } from "react";
 import { ThemeProvider } from "@vxture/design-system";
-import { LocaleProvider } from "./locale-provider";
 
 export function Providers({ children }: { children: ReactNode }) {
   return (
     <ThemeProvider defaultMode="system" defaultDensity="default">
-      <LocaleProvider>{children}</LocaleProvider>
+      {children}
     </ThemeProvider>
   );
 }

@@ -7,9 +7,10 @@
 /* Layout */
 
 .app-shell {
-  width: min(calc(100% - 32px), 1180px);
+  /* Match the website shell: 1536px max content width + 32px (--vx-space-2xl) gutter. */
+  width: min(100%, 1536px);
   margin: 0 auto;
-  padding: 28px 0 48px;
+  padding: 0 var(--vx-space-2xl) var(--vx-space-3xl);
 }
 
 body {
@@ -19,44 +20,91 @@ body {
 }
 
 .topbar {
+  /* vxture-header rhythm: 64px bar height, 48px (--vx-space-3xl) gap to content.
+     Horizontal padding comes from .app-shell so header aligns with content. */
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
-  margin-bottom: 24px;
+  gap: var(--vx-space-lg);
+  min-height: var(--vx-space-4xl);
+  margin-bottom: var(--vx-space-3xl);
 }
 
 .brand {
   display: flex;
   align-items: center;
-  gap: 12px;
+  min-width: 0;
+  gap: var(--vx-space-sm);
 }
 
-.brand-mark {
-  display: grid;
-  width: 38px;
-  height: 38px;
-  place-items: center;
-  border-radius: var(--vx-radius-lg);
-  background: var(--vx-color-primary);
-  color: var(--vx-color-text-inverse);
-  font-weight: 800;
+/* Header display-control cluster (theme + language), mirrors the website. */
+.site-tools {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--vx-space-sm);
 }
 
-.brand-title {
-  margin: 0;
-  font-size: 18px;
+/* Section navigation moved out of the header into the content area. */
+.page-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--vx-space-sm);
+  margin-bottom: var(--vx-space-xl);
+}
+
+/* ===== Unified portal header: brand lockup + controls =====
+ * Kept identical across website / console / admin. Tokens from @vxture/design-system.
+ */
+
+/* Brand lockup: product wordmark only (Funnel Display, the DS brand font). */
+.vx-brand-name {
+  flex: 0 0 auto;
+  font-family: var(--font-brand);
+  font-size: 1.5rem;
+  font-weight: 600;
   line-height: 1.2;
+  letter-spacing: var(--vx-typography-logo-letter-spacing);
+  color: var(--vx-color-text-primary);
 }
 
-.muted,
-.brand-subtitle {
+.muted {
   color: var(--vx-color-text-muted);
 }
 
-.brand-subtitle {
-  margin-top: 2px;
-  font-size: 13px;
+/* Unified icon control (theme + language). */
+.icon-button {
+  flex: 0 0 auto;
+  width: 40px;
+  height: 40px;
+  display: inline-grid;
+  place-items: center;
+  border: 1px solid var(--vx-color-border);
+  border-radius: var(--vx-radius-md);
+  color: var(--vx-color-text-muted);
+  background: transparent;
+  cursor: pointer;
+  transition:
+    transform var(--vx-duration-fast) var(--vx-ease-standard),
+    color var(--vx-duration-fast) var(--vx-ease-standard),
+    border-color var(--vx-duration-fast) var(--vx-ease-standard),
+    background var(--vx-duration-fast) var(--vx-ease-standard);
+}
+
+.icon-button:hover {
+  color: var(--vx-color-text-primary);
+  border-color: var(--vx-color-border-strong);
+  transform: translateY(-1px);
+}
+
+.icon-button svg {
+  width: 18px;
+  height: 18px;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  fill: none;
 }
 
 .page-stack {
@@ -365,3 +413,4 @@ th {
     flex-direction: column;
   }
 }
+
