@@ -131,14 +131,20 @@ accounts 1---N app_bindings ...(logical reference)... module resource
 
 ### Migration (idempotent, additive)
 
-- Create `app_bindings`; backfill the existing VPN binding from
-  `accounts.username` and `accounts.subscription_url` into a row with
-  `app_key='vpn'`.
-- Add `username`, `avatar_url`, and `last_seen_at` columns to `accounts`
-  (`display_name` already exists); add `app_key`, `resource_ref`, `metadata` to
-  `invites`, defaulting existing rows to `app_key='vpn'`.
-- Keep legacy columns. Follow the existing PRAGMA `table_info` migration style
-  in `init_db`.
+Delivered in phases so existing code keeps working at each step:
+
+- Step 1 (this baseline): create `app_bindings`; backfill the existing VPN
+  binding from `accounts.username` and `accounts.subscription_url` into a row
+  with `app_key='vpn'`. Add `avatar_url` to `accounts` (`display_name` and
+  `last_login_at` already exist; `last_login_at` serves as `last_seen_at`). Add
+  `app_key`, `resource_ref`, `metadata` to `invites`, defaulting existing rows
+  to `app_key='vpn'`.
+- Later step: once read paths move onto `app_bindings`, free the legacy
+  `accounts.username` (which still holds the Marzban user) and introduce the
+  `username` display handle there. Deferring costs nothing because Vxture does
+  not emit the handle yet.
+- Keep legacy columns (`password_salt`, `password_hash`, `display_name_key`).
+  Follow the existing PRAGMA `table_info` migration style in `init_db`.
 
 ## Technical Architecture
 
