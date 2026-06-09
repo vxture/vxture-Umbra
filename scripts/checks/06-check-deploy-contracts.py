@@ -919,6 +919,17 @@ CHECKS: list[tuple[str, Path, list[str]]] = [
         ],
     ),
     (
+        "account portal defines multi-app binding store",
+        Path("services/account/account.py"),
+        [
+            "CREATE TABLE IF NOT EXISTS app_bindings",
+            "idx_app_binding_account_app",
+            "app_key",
+            "resource_ref",
+            "ADD COLUMN avatar_url",
+        ],
+    ),
+    (
         "account portal binds invites to existing Marzban users",
         Path("services/account/account.py"),
         [

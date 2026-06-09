@@ -260,6 +260,23 @@ def init_db() -> None:
               ON invites(username)
               WHERE used_at IS NULL AND disabled = 0;
 
+            -- Multi-app authorization: one row per (identity, application).
+            -- See docs/design/platform-identity.md.
+            CREATE TABLE IF NOT EXISTS app_bindings (
+              id INTEGER PRIMARY KEY AUTOINCREMENT,
+              account_id INTEGER NOT NULL,
+              app_key TEXT NOT NULL,
+              status TEXT NOT NULL DEFAULT 'active',
+              resource_ref TEXT,
+              metadata TEXT,
+              created_at TEXT NOT NULL,
+              updated_at TEXT,
+              FOREIGN KEY(account_id) REFERENCES accounts(id)
+            );
+
+            CREATE UNIQUE INDEX IF NOT EXISTS idx_app_binding_account_app
+              ON app_bindings(account_id, app_key);
+
             """
         )
         columns = {row["name"] for row in conn.execute("PRAGMA table_info(accounts)").fetchall()}
@@ -297,6 +314,56 @@ def init_db() -> None:
               WHERE vxture_account_id IS NOT NULL AND disabled = 0
             """
         )
+        # Platform identity display field (sourced from Vxture claims; null until
+        # Vxture backfills). display_name and last_login_at already exist; the
+        # username display handle is introduced in a later step once read paths
+        # move off the legacy accounts.username (which still holds the Marzban
+        # user). See docs/design/platform-identity.md.
+        if "avatar_url" not in columns:
+            conn.execute("ALTER TABLE accounts ADD COLUMN avatar_url TEXT")
+
+        # Generalize invites to carry the target application (default 'vpn').
+        invite_columns = {row["name"] for row in conn.execute("PRAGMA table_info(invites)").fetchall()}
+        if "app_key" not in invite_columns:
+            conn.execute("ALTER TABLE invites ADD COLUMN app_key TEXT")
+        if "resource_ref" not in invite_columns:
+            conn.execute("ALTER TABLE invites ADD COLUMN resource_ref TEXT")
+        if "metadata" not in invite_columns:
+            conn.execute("ALTER TABLE invites ADD COLUMN metadata TEXT")
+        legacy_invites = conn.execute(
+            "SELECT id, username, subscription_url FROM invites "
+            "WHERE app_key IS NULL OR app_key = '' OR resource_ref IS NULL OR metadata IS NULL"
+        ).fetchall()
+        for row in legacy_invites:
+            meta = json.dumps({"subscription_url": row["subscription_url"]}, separators=(",", ":"))
+            conn.execute(
+                "UPDATE invites "
+                "   SET app_key = COALESCE(NULLIF(app_key, ''), 'vpn'), "
+                "       resource_ref = COALESCE(resource_ref, ?), "
+                "       metadata = COALESCE(metadata, ?) "
+                " WHERE id = ?",
+                (row["username"], meta, row["id"]),
+            )
+
+        # Backfill the VPN binding for existing accounts (idempotent). Existing
+        # accounts each represent one active VPN user; project that into
+        # app_bindings without disturbing the legacy accounts columns.
+        legacy_accounts = conn.execute(
+            "SELECT id, username, subscription_url, bound_at, created_at "
+            "  FROM accounts a "
+            " WHERE NOT EXISTS ("
+            "       SELECT 1 FROM app_bindings b "
+            "        WHERE b.account_id = a.id AND b.app_key = 'vpn')"
+        ).fetchall()
+        for row in legacy_accounts:
+            meta = json.dumps({"subscription_url": row["subscription_url"]}, separators=(",", ":"))
+            created = row["bound_at"] or row["created_at"] or iso_now()
+            conn.execute(
+                "INSERT INTO app_bindings"
+                "(account_id, app_key, status, resource_ref, metadata, created_at, updated_at) "
+                "VALUES (?, 'vpn', 'active', ?, ?, ?, ?)",
+                (row["id"], row["username"], meta, created, iso_now()),
+            )
 
 
 def request_json(url: str, token: str | None = None, data: dict[str, Any] | None = None, timeout: int = 10) -> dict[str, Any]:
