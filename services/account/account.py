@@ -49,6 +49,14 @@ USER_RE = re.compile(r"^[A-Za-z][A-Za-z0-9_-]{1,63}$")
 INVITE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
 ADMIN_COOKIE = "umbra_admin"
 
+# Application registry that drives the console launcher cards. Adding an app the
+# launcher can show and bind is one entry here plus a broker branch in
+# api_app_bind / api_app_action. See docs/design/platform-identity.md.
+APPS: list[dict[str, Any]] = [
+    {"key": "vpn", "name": "VPN", "href": "/apps/vpn", "enabled": True, "bindable": True, "secondaryAuth": False},
+    {"key": "vault", "name": "Vault", "href": "", "enabled": False, "bindable": True, "secondaryAuth": True},
+]
+
 
 def require_secret(name: str, value: str) -> bytes:
     if len(value) < 32:
@@ -137,9 +145,15 @@ def verify_vxture_jwt(value: str | None) -> dict[str, Any] | None:
 
 
 def public_vxture_user(payload: dict[str, Any]) -> dict[str, Any]:
+    # Display fields (username handle, name, avatar) come from Vxture claims, the
+    # source of truth. They may be empty until Vxture backfills the claims; the
+    # UI falls back. See docs/design/platform-identity.md.
     return {
         "id": str(payload.get("sub") or ""),
         "email": str(payload.get("email") or ""),
+        "username": str(payload.get("preferred_username") or payload.get("username") or ""),
+        "displayName": str(payload.get("name") or payload.get("display_name") or ""),
+        "avatarUrl": str(payload.get("picture") or payload.get("avatar") or ""),
         "tenantId": str(payload.get("tenantId") or ""),
         "role": str(payload.get("role") or "member"),
         "permissions": payload.get("permissions") if isinstance(payload.get("permissions"), list) else [],
@@ -435,10 +449,15 @@ def reset_bound_account_subscription_url(username: str) -> str:
             ).fetchone()
             if not account:
                 return "failed"
-            if fresh_sub_url != account["subscription_url"]:
+            changed = fresh_sub_url != account["subscription_url"]
+            if changed:
                 conn.execute("UPDATE accounts SET subscription_url = ? WHERE username = ?", (fresh_sub_url, username))
-                return "updated"
-        return "current"
+            # Keep the VPN app binding metadata in sync (user-side source of truth).
+            conn.execute(
+                "UPDATE app_bindings SET metadata = ?, updated_at = ? WHERE app_key = 'vpn' AND resource_ref = ?",
+                (json.dumps({"subscription_url": fresh_sub_url}, separators=(",", ":")), iso_now(), username),
+            )
+            return "updated" if changed else "current"
     except Exception:
         return "failed"
 
@@ -497,6 +516,38 @@ def account_payload(row: sqlite3.Row | None) -> dict[str, Any] | None:
     }
 
 
+def bindings_for_account(account_id: int | None) -> dict[str, sqlite3.Row]:
+    if not account_id:
+        return {}
+    with db() as conn:
+        rows = conn.execute("SELECT * FROM app_bindings WHERE account_id = ?", (account_id,)).fetchall()
+    return {str(row["app_key"]): row for row in rows}
+
+
+def apps_for_account(account_row: sqlite3.Row | None) -> list[dict[str, Any]]:
+    bindings = bindings_for_account(account_row["id"] if account_row else None)
+    result: list[dict[str, Any]] = []
+    for app in APPS:
+        binding = bindings.get(app["key"])
+        if not app["enabled"]:
+            status = "disabled"
+        elif binding and str(binding["status"]) == "active":
+            status = "active"
+        else:
+            status = "unbound"
+        result.append(
+            {
+                "key": app["key"],
+                "name": app["name"],
+                "href": app["href"],
+                "bindable": app["bindable"],
+                "secondaryAuth": app["secondaryAuth"],
+                "status": status,
+            }
+        )
+    return result
+
+
 def bind_invite_to_vxture_account(code: str, user: dict[str, Any]) -> dict[str, Any]:
     user_id = str(user.get("id") or "")
     if not user_id:
@@ -549,6 +600,25 @@ def bind_invite_to_vxture_account(code: str, user: dict[str, Any]) -> dict[str, 
             ),
         )
         account_id = cur.lastrowid
+        binding_meta = invite["metadata"] or json.dumps(
+            {"subscription_url": invite["subscription_url"]}, separators=(",", ":")
+        )
+        conn.execute(
+            """
+            INSERT OR IGNORE INTO app_bindings(
+              account_id, app_key, status, resource_ref, metadata, created_at, updated_at
+            )
+            VALUES (?, ?, 'active', ?, ?, ?, ?)
+            """,
+            (
+                account_id,
+                invite["app_key"] or "vpn",
+                invite["resource_ref"] or invite["username"],
+                binding_meta,
+                now,
+                now,
+            ),
+        )
         conn.execute(
             """
             UPDATE invites
@@ -716,6 +786,9 @@ class AccountHandler(BaseHTTPRequestHandler):
 
     def do_POST(self) -> None:
         path = urllib.parse.urlsplit(self.path).path
+        if path.startswith("/api/account/apps/"):
+            self.api_app_post(path)
+            return
         if path == "/api/account/bind-invite":
             self.api_bind_invite()
         elif path == "/api/account/reset-subscription":
@@ -856,6 +929,7 @@ class AccountHandler(BaseHTTPRequestHandler):
                 "status": "active",
                 "user": user,
                 "account": account_payload(account),
+                "apps": apps_for_account(account),
                 **auth_config,
             },
         )
@@ -899,6 +973,54 @@ class AccountHandler(BaseHTTPRequestHandler):
         status = reset_bound_account_subscription_url(str(account["username"]))
         account = account_for_vxture_user(str(user["id"]))
         self.json(200, {"status": status, "account": account_payload(account)})
+
+    # -- Application-keyed surface (launcher cards bind/act per app) -----------
+    def api_app_post(self, path: str) -> None:
+        parts = [segment for segment in path[len("/api/account/apps/"):].split("/") if segment]
+        app_key = parts[0] if parts else ""
+        if not any(app["key"] == app_key and app["enabled"] for app in APPS):
+            self.not_found()
+            return
+        if len(parts) == 2 and parts[1] == "bind":
+            self.api_app_bind(app_key)
+            return
+        if len(parts) == 3 and parts[1] == "action":
+            self.api_app_action(app_key, parts[2])
+            return
+        self.not_found()
+
+    def api_app_bind(self, app_key: str) -> None:
+        user = self.current_vxture_user()
+        if not user:
+            self.api_unauthorized()
+            return
+        code = str(self.json_body().get("inviteCode") or "")
+        try:
+            bind_invite_to_vxture_account(code, user)
+        except ValueError as exc:
+            self.json(400, {"status": "failed", "message": str(exc)})
+            return
+        except Exception:
+            self.json(500, {"status": "failed", "message": "Invitation target could not be verified."})
+            return
+        account = account_for_vxture_user(str(user["id"]))
+        self.json(200, {"status": "bound", "account": account_payload(account), "apps": apps_for_account(account)})
+
+    def api_app_action(self, app_key: str, name: str) -> None:
+        user = self.current_vxture_user()
+        if not user:
+            self.api_unauthorized()
+            return
+        account = account_for_vxture_user(str(user["id"]))
+        if not account:
+            self.json(404, {"status": "unbound"})
+            return
+        if app_key == "vpn" and name == "reset":
+            status = reset_bound_account_subscription_url(str(account["username"]))
+            account = account_for_vxture_user(str(user["id"]))
+            self.json(200, {"status": status, "account": account_payload(account), "apps": apps_for_account(account)})
+            return
+        self.not_found()
 
     def create_admin_session(self, token: str) -> str:
         sid = b64url(secrets.token_bytes(32))
