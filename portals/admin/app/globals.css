@@ -1,42 +1,27 @@
-:root {
-  color-scheme: light dark;
-  --color-bg: #f4f6fa;
-  --color-surface: #ffffff;
-  --color-card: #ffffff;
-  --color-border: #d0d5e0;
-  --color-text: #1a1a2e;
-  --color-text-muted: #6b7280;
-  --color-primary: #1e51ff;
-  --color-primary-hover: #1740d4;
-  --color-vpn: #16a34a;
-  --color-pass: #d97706;
-  --radius: 12px;
-  --radius-sm: 8px;
+/* ===== Admin-specific styles =====
+ * DS @import happens in layout.tsx before this file.
+ * Only keep layout composition and component styles not owned by DS.
+ * All --vx-* tokens (and the .dark palette) are provided by
+ * @vxture/design-system; do not redefine a local color palette here.
+ */
+
+* {
+  box-sizing: border-box;
 }
 
-.dark {
-  --color-bg: #0d0d1a;
-  --color-surface: #16162a;
-  --color-card: #1c1c34;
-  --color-border: #2a2a4a;
-  --color-text: #e8e8f0;
-  --color-text-muted: #8888aa;
-  --color-primary: #4f7bff;
-  --color-primary-hover: #6a8fff;
-  --color-vpn: #4ade80;
-  --color-pass: #f59e0b;
-}
-
-* { box-sizing: border-box; margin: 0; padding: 0; }
-
-html, body {
+html,
+body {
   min-height: 100vh;
-  font-family: system-ui, -apple-system, sans-serif;
-  background: var(--color-bg);
-  color: var(--color-text);
+  margin: 0;
+  font-family: var(--font-sans), system-ui, -apple-system, sans-serif;
+  background: var(--vx-color-background);
+  color: var(--vx-color-text-primary);
 }
 
-a { color: inherit; text-decoration: none; }
+a {
+  color: inherit;
+  text-decoration: none;
+}
 
 /* --- Page shell --- */
 .admin-page {
@@ -45,57 +30,106 @@ a { color: inherit; text-decoration: none; }
   flex-direction: column;
   max-width: 720px;
   margin: 0 auto;
-  padding: 0 24px;
+  padding: 0 var(--vx-space-2xl);
 }
 
 /* --- Header --- */
 .admin-header {
+  /* vxture-header rhythm: 64px bar height, 48px (--vx-space-3xl) gap to content.
+     Horizontal padding comes from .admin-page so header aligns with content. */
   display: flex;
   align-items: center;
-  gap: 16px;
-  padding: 40px 0 48px;
+  justify-content: space-between;
+  gap: var(--vx-space-lg);
+  min-height: var(--vx-space-4xl);
+  margin-bottom: var(--vx-space-3xl);
 }
 
-.admin-brand-mark {
-  flex-shrink: 0;
+.brand {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  gap: var(--vx-space-sm);
 }
 
-.admin-title {
-  font-size: 28px;
-  font-weight: 700;
-  letter-spacing: -0.3px;
+/* ===== Unified portal header: brand lockup + controls =====
+ * Kept identical across website / console / admin. Tokens from @vxture/design-system.
+ */
+
+/* Brand lockup: product wordmark only (Funnel Display, the DS brand font). */
+.vx-brand-name {
+  flex: 0 0 auto;
+  font-family: var(--font-brand);
+  font-size: 1.5rem;
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: var(--vx-typography-logo-letter-spacing);
+  color: var(--vx-color-text-primary);
 }
 
-.admin-subtitle {
-  font-size: 14px;
-  color: var(--color-text-muted);
-  margin-top: 2px;
+/* Unified icon control (theme + language). */
+.icon-button {
+  flex: 0 0 auto;
+  width: 40px;
+  height: 40px;
+  display: inline-grid;
+  place-items: center;
+  border: 1px solid var(--vx-color-border);
+  border-radius: var(--vx-radius-md);
+  color: var(--vx-color-text-muted);
+  background: transparent;
+  cursor: pointer;
+  transition:
+    transform var(--vx-duration-fast) var(--vx-ease-standard),
+    color var(--vx-duration-fast) var(--vx-ease-standard),
+    border-color var(--vx-duration-fast) var(--vx-ease-standard),
+    background var(--vx-duration-fast) var(--vx-ease-standard);
+}
+
+.icon-button:hover {
+  color: var(--vx-color-text-primary);
+  border-color: var(--vx-color-border-strong);
+  transform: translateY(-1px);
+}
+
+.icon-button svg {
+  width: 18px;
+  height: 18px;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  fill: none;
 }
 
 /* --- Cards --- */
 .admin-cards {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: var(--vx-space-xl);
   flex: 1;
 }
 
 .admin-card {
   display: flex;
   align-items: flex-start;
-  gap: 20px;
-  padding: 24px;
-  background: var(--color-card);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius);
-  transition: transform 0.15s, border-color 0.15s, box-shadow 0.15s;
+  gap: var(--vx-space-xl);
+  padding: var(--vx-space-2xl);
+  background: color-mix(in srgb, var(--vx-color-surface) 94%, transparent);
+  border: 1px solid var(--vx-color-border);
+  border-radius: var(--vx-radius-lg);
+  box-shadow: var(--vx-shadow-sm);
+  transition:
+    transform var(--vx-duration-fast) var(--vx-ease-standard),
+    border-color var(--vx-duration-fast) var(--vx-ease-standard),
+    box-shadow var(--vx-duration-fast) var(--vx-ease-standard);
   cursor: pointer;
 }
 
 .admin-card:hover {
   transform: translateY(-2px);
-  border-color: var(--color-primary);
-  box-shadow: 0 8px 32px rgba(79, 123, 255, 0.12);
+  border-color: var(--vx-color-border-strong);
+  box-shadow: var(--vx-shadow-lg);
 }
 
 /* --- Card icon --- */
@@ -103,7 +137,7 @@ a { color: inherit; text-decoration: none; }
   flex-shrink: 0;
   width: 56px;
   height: 56px;
-  border-radius: var(--radius-sm);
+  border-radius: var(--vx-radius-md);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -115,15 +149,15 @@ a { color: inherit; text-decoration: none; }
 }
 
 .card-icon-vpn {
-  background: rgba(74, 222, 128, 0.1);
-  color: var(--color-vpn);
-  border: 1px solid rgba(74, 222, 128, 0.2);
+  background: var(--vx-color-success-surface);
+  color: var(--vx-color-success);
+  border: 1px solid var(--vx-color-success-border);
 }
 
 .card-icon-pass {
-  background: rgba(245, 158, 11, 0.1);
-  color: var(--color-pass);
-  border: 1px solid rgba(245, 158, 11, 0.2);
+  background: var(--vx-color-warning-surface);
+  color: var(--vx-color-warning);
+  border: 1px solid var(--vx-color-warning-border);
 }
 
 /* --- Card body --- */
@@ -133,50 +167,42 @@ a { color: inherit; text-decoration: none; }
 }
 
 .card-title {
-  font-size: 18px;
+  font-size: var(--vx-typography-heading-4-size);
   font-weight: 600;
-  margin-bottom: 6px;
+  margin: 0 0 6px;
 }
 
 .card-desc {
-  font-size: 14px;
-  line-height: 1.5;
-  color: var(--color-text-muted);
-  margin-bottom: 10px;
+  font-size: var(--vx-typography-body-sm-size);
+  line-height: var(--vx-typography-body-sm-line-height);
+  color: var(--vx-color-text-muted);
+  margin: 0 0 10px;
 }
 
 .card-link {
-  font-size: 13px;
+  font-size: var(--vx-typography-body-sm-size);
   font-weight: 600;
-  color: var(--color-primary);
+  color: var(--vx-color-primary);
 }
 
 .admin-card:hover .card-link {
-  color: var(--color-primary-hover);
+  color: var(--vx-color-primary-strong);
 }
 
 /* --- Footer --- */
 .admin-footer {
-  padding: 40px 0 24px;
-  font-size: 12px;
-  color: var(--color-text-muted);
+  padding: var(--vx-space-3xl) 0 var(--vx-space-xl);
+  font-size: var(--vx-typography-body-sm-size);
+  color: var(--vx-color-text-muted);
   text-align: center;
-  opacity: 0.6;
+  opacity: 0.7;
 }
 
 /* --- Responsive --- */
 @media (max-width: 560px) {
-  .admin-header {
-    padding: 28px 0 32px;
-  }
-
-  .admin-title {
-    font-size: 22px;
-  }
-
   .admin-card {
     flex-direction: column;
-    gap: 16px;
+    gap: var(--vx-space-lg);
   }
 
   .card-icon {

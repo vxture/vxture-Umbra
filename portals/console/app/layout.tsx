@@ -1,9 +1,17 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
+import { Funnel_Display } from "next/font/google";
 import { themeBootstrapScript } from "@vxture/design-system";
 import "@vxture/design-system/styles/globals.css";
 import "./globals.css";
 import { Providers } from "./providers";
+
+/** DS brand typeface (Funnel Display) wired to the DS brand-font loader slot. */
+const brandFont = Funnel_Display({
+  subsets: ["latin"],
+  variable: "--vx-font-loader-brand",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: "Ruyin Account",
@@ -16,7 +24,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en-US" suppressHydrationWarning>
+    <html lang="en-US" className={brandFont.variable} suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeBootstrapScript }} />
       </head>

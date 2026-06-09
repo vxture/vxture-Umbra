@@ -69,13 +69,21 @@ a {
 }
 
 .site-header-inner {
+  /* vxture-header rhythm: 64px bar height, 32px horizontal padding. */
   min-height: var(--ruyin-header-height);
   margin: 0 auto;
-  padding: 0 var(--ruyin-shell-gutter);
+  padding: 0 var(--vx-space-2xl);
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: var(--vx-space-lg);
+}
+
+.site-brand {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  gap: var(--vx-space-sm);
 }
 
 .site-header .vx-brand-lockup {
@@ -87,6 +95,29 @@ a {
   opacity: 0.86;
 }
 
+/* ===== Unified portal header: brand lockup + controls =====
+ * This block is kept identical across website / console / admin so the three
+ * portal headers share one visual language. Tokens come from @vxture/design-system.
+ */
+
+/* Brand lockup: product wordmark only (Funnel Display, the DS brand font). */
+.vx-brand-name {
+  flex: 0 0 auto;
+  font-family: var(--font-brand);
+  font-size: 1.5rem;
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: var(--vx-typography-logo-letter-spacing);
+  color: var(--vx-color-text-primary);
+}
+
+.site-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--vx-space-sm);
+}
+
 .site-tools {
   display: flex;
   align-items: center;
@@ -94,16 +125,17 @@ a {
   gap: var(--vx-space-sm);
 }
 
-.site-tool-button {
-  width: 36px;
-  height: 36px;
+/* Unified icon control (theme + language). */
+.icon-button {
+  flex: 0 0 auto;
+  width: 40px;
+  height: 40px;
   display: inline-grid;
   place-items: center;
   border: 1px solid var(--vx-color-border);
-  border-radius: var(--vx-radius-lg);
+  border-radius: var(--vx-radius-md);
   color: var(--vx-color-text-muted);
-  background: color-mix(in srgb, var(--vx-color-surface) 54%, transparent);
-  backdrop-filter: blur(16px);
+  background: transparent;
   cursor: pointer;
   transition:
     transform var(--vx-duration-fast) var(--vx-ease-standard),
@@ -112,15 +144,15 @@ a {
     background var(--vx-duration-fast) var(--vx-ease-standard);
 }
 
-.site-tool-button:hover {
+.icon-button:hover {
   color: var(--vx-color-text-primary);
   border-color: var(--vx-color-border-strong);
   transform: translateY(-1px);
 }
 
-.site-tool-button svg {
-  width: 17px;
-  height: 17px;
+.icon-button svg {
+  width: 18px;
+  height: 18px;
   stroke: currentColor;
   stroke-width: 2;
   stroke-linecap: round;
@@ -128,11 +160,51 @@ a {
   fill: none;
 }
 
-.site-tool-button .tool-label {
-  font-size: 11px;
-  font-weight: 800;
-  letter-spacing: 0.5px;
+/* Header CTAs: register (secondary) + login (primary). */
+.site-cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 36px;
+  padding: 0 var(--vx-space-lg);
+  border-radius: var(--vx-radius-lg);
+  font-size: var(--vx-typography-body-sm-size);
+  font-weight: 700;
   line-height: 1;
+  text-decoration: none;
+  white-space: nowrap;
+  transition:
+    transform var(--vx-duration-fast) var(--vx-ease-standard),
+    box-shadow var(--vx-duration-fast) var(--vx-ease-standard),
+    color var(--vx-duration-fast) var(--vx-ease-standard),
+    border-color var(--vx-duration-fast) var(--vx-ease-standard),
+    background var(--vx-duration-fast) var(--vx-ease-standard),
+    filter var(--vx-duration-fast) var(--vx-ease-standard);
+}
+
+.site-cta-secondary {
+  border: 1px solid var(--vx-color-border);
+  color: var(--vx-color-text-secondary);
+  background: color-mix(in srgb, var(--vx-color-surface) 54%, transparent);
+}
+
+.site-cta-secondary:hover {
+  color: var(--vx-color-text-primary);
+  border-color: var(--vx-color-border-strong);
+  transform: translateY(-1px);
+}
+
+.site-cta-primary {
+  border: 1px solid transparent;
+  color: var(--vx-color-text-inverse);
+  background: var(--vx-gradient-brand);
+  box-shadow: var(--vx-shadow-md);
+}
+
+.site-cta-primary:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.04);
+  box-shadow: var(--vx-shadow-lg);
 }
 
 .body-section {
@@ -305,8 +377,8 @@ a {
 }
 
 @media (max-width: 640px) {
-  .vx-brand-name {
-    font-size: var(--vx-typography-body-lg-size);
+  .site-cta {
+    padding: 0 var(--vx-space-md);
   }
 
   .signature {
