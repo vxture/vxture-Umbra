@@ -99,7 +99,20 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          npm ci --prefix portals/${{ matrix.portal }}
+          # GitHub Packages can return a transient 401 ("authentication token
+          # not provided") when several matrix legs fetch the same @vxture
+          # tarball concurrently. Retry with backoff so a later attempt lands
+          # after the contention clears. The old single job never hit this: its
+          # installs ran sequentially and shared one warm npm cache.
+          for attempt in 1 2 3 4 5; do
+            if npm ci --prefix portals/${{ matrix.portal }}; then
+              exit 0
+            fi
+            echo "npm ci attempt ${attempt} failed; retrying in $((attempt * 8))s" >&2
+            sleep "$((attempt * 8))"
+          done
+          echo "npm ci failed after 5 attempts" >&2
+          exit 1
 
       - name: Type check
         shell: bash
