@@ -108,6 +108,7 @@ Phase 4 - Hardening
 | [`operations/operations.md`](operations/operations.md) | Backup, rollback, cert renewal, user management, monitoring |
 | [`operations/github-actions.md`](operations/github-actions.md) | CI/CD branch flow, promotion contract, and worker-03 deployment design |
 | [`operations/github-actions-enablement.md`](operations/github-actions-enablement.md) | Secrets, rulesets, and first-run checklist for enabling CI/CD |
+| [`operations/ci-cd-optimization.md`](operations/ci-cd-optimization.md) | 2026-06 CI/CD optimization record: goals, change set, pitfalls, verification, invariants |
 | [`operations/certificate-incident.md`](operations/certificate-incident.md) | Certificate incident ledger and non-regression guardrails |
 | [`operations/local-dev-environment.md`](operations/local-dev-environment.md) | Operator workstation notes for TUN, DeepSeek API, and Roo Code |
 | [`memory/README.md`](memory/README.md) | **Memory mirror index.** AI-assistant persistent memory, summaries and pointers |
