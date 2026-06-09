@@ -930,6 +930,20 @@ CHECKS: list[tuple[str, Path, list[str]]] = [
         ],
     ),
     (
+        "account portal exposes the application launcher surface",
+        Path("services/account/account.py"),
+        [
+            "APPS:",
+            "def apps_for_account",
+            "def api_app_post",
+            "def api_app_bind",
+            "def api_app_action",
+            "/api/account/apps/",
+            '"apps": apps_for_account',
+            "secondaryAuth",
+        ],
+    ),
+    (
         "account portal binds invites to existing Marzban users",
         Path("services/account/account.py"),
         [
