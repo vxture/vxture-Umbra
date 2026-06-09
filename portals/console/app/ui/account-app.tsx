@@ -23,16 +23,16 @@ async function fetchJson<T>(url: string, init?: RequestInit): Promise<T> {
   return payload;
 }
 
-function ssoStartUrl(session: SessionPayload) {
+function ssoStartUrl(session: SessionPayload, invite?: string) {
   if (session.ssoUrl) {
-    return "/auth/start";
+    return invite ? `/auth/start?invite=${encodeURIComponent(invite)}` : "/auth/start";
   }
   return session.loginUrl || "https://console.vxture.com/zh-CN/signin";
 }
 
-export function AccountApp({ initialView }: { initialView: View }) {
+export function AccountApp({ initialView, initialInvite }: { initialView: View; initialInvite?: string }) {
   const [session, setSession] = useState<SessionPayload | null>(null);
-  const [inviteCode, setInviteCode] = useState("");
+  const [inviteCode, setInviteCode] = useState(initialInvite ?? "");
   const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
 
@@ -111,7 +111,7 @@ export function AccountApp({ initialView }: { initialView: View }) {
             title="Sign in with Vxture"
             description="Use your unified Vxture account before binding a Ruyin VPN invite."
           />
-          <a className="btn btn-primary" href={ssoStartUrl(session)}>
+          <a className="btn btn-primary" href={ssoStartUrl(session, inviteCode)}>
             Continue with Vxture
           </a>
           <p className="muted">
