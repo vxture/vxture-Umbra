@@ -61,11 +61,17 @@ re-fires the downstream chain.
 ```
 feature -> PR to develop -> ci (quality-gate) -> squash-merge to develop
   -> ci on develop -> promote.yml (manual, fast-forward) -> main
-  -> ci on main -> docker-build (6 images: GHCR + Aliyun ACR)
+  -> release on main: detect -> docker-build (6 images: GHCR + Aliyun ACR)
   -> deploy-worker-03 (auto SSH deploy + verify)
 ```
 
-Workflows: `.github/workflows/{ci,promote,docker-build,deploy-worker-03}.yml`.
+Workflows: `.github/workflows/{ci,promote,release}.yml`. `docker-build` and
+`deploy-worker-03` are jobs inside `release.yml` (gated by a `detect` job that
+skips docs-only changes and builds only the images whose sources changed), not
+standalone workflow files - the contract check forbids the retired
+`docker-build.yml`/`deploy-worker-03.yml` filenames from reappearing. `ci.yml`
+triggers on PRs to develop/main and pushes to develop; it does NOT run on
+`main` (main only advances via `promote.yml`, which fires `release.yml`).
 Design doc: `docs/operations/github-actions.md`. Deploy internals live under
 `deploy/worker-03/`.
 
@@ -92,7 +98,8 @@ invariants and an ASCII-only rule over source/doc paths
 (`.github`, `configs`, `portals`, `docs`, `services`, `scripts`, `deploy`,
 plus a few root files). In those paths use ASCII only - no em-dashes, smart
 quotes, or non-ASCII characters, or `quality-gate` fails. Retired workflows
-(`quality-gate.yml`, `promote-develop-to-main.yml`) must not reappear.
+(`quality-gate.yml`, `promote-develop-to-main.yml`, `docker-build.yml`,
+`deploy-worker-03.yml`) must not reappear.
 
 ## Operational gotchas
 
