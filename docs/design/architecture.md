@@ -112,12 +112,20 @@ Services:
 ---
 ## Server Directory Structure
 
+The Git repo is cloned on the server, but the server is a thin runtime: it pulls
+prebuilt images from the registry (GHCR / Aliyun ACR) and does NOT build portal
+images locally. The checkout exists mainly for orchestration - `docker-compose.yml`,
+`configs/` templates, and the `deploy/worker-03/` scripts that render runtime
+config and manage the lifecycle. The `portals/` source rides along in the
+checkout but is built in CI, not on the server.
+
 ```
 /srv/vxture/
 |-- repo/
-|   `-- umbra/                         # Git repo
+|   `-- umbra/                         # Git repo (orchestration + config + scripts)
 |       |-- docker-compose.yml
 |       |-- .env.example
+|       |-- brand/                     # Canonical brand identity PNG/ICO (single source)
 |       |-- configs/
 |       |   |-- nginx/
 |       |   |   |-- nginx.conf
@@ -138,42 +146,45 @@ Services:
 |       |   |-- xray/
 |       |   |   `-- config.json.template
 |       |   `-- marzban/
-|       |       `-- clash-subscription.j2
-|       |-- portals/
-|       |   |-- website/
-|       |   |   |-- app/
-|       |   |   |-- components/
-|       |   |   |-- public/
-|       |   |   `-- Dockerfile
-|       |   |-- console/
-|       |   |   |-- app/
-|       |   |   `-- public/
-|       |   |       `-- guide/
-|       |   `-- admin/
-|       |-- scripts/
-|       |   |-- server.sh
-|       |   |-- deploy.sh
-|       |   |-- ops.sh
-|       |   |-- lib/
-|       |   |   |-- env.sh
-|       |   |   `-- log.sh
-|       |   |-- server/
-|       |   |   |-- init.sh
-|       |   |   `-- reset.sh
-|       |   |-- deploy/
-|       |   |   |-- 11-check-runtime-environment.sh
-|       |   |   |-- 12-prepare-runtime-directories.sh
-|       |   |   |-- 13-generate-runtime-secrets.sh
-|       |   |   |-- 20-issue-tls-certificates.sh
-|       |   |   |-- 21-issue-self-signed-certificates.sh
-|       |   |   |-- 22-render-runtime-configs.py
-|       |   |   |-- 23-start-docker-services.sh
-|       |   |   |-- 24-verify-deployment.sh
-|       |   |   |-- all.sh
-|       |   |   `-- 25-run-post-deploy-wizard.sh
-|       |   `-- ops/
-|       |       |-- backup.sh
-|       |       `-- certs.sh
+|       |       |-- clash-subscription.j2
+|       |       `-- must-direct-rules.txt
+|       |-- docker/                    # Dockerfiles for CI-built images
+|       |   |-- ruyin-account-api.Dockerfile
+|       |   |-- ruyin-nginx.Dockerfile
+|       |   `-- ruyin-subproxy.Dockerfile
+|       |-- portals/                   # Next.js source; images built in CI, not here
+|       |   |-- website/               # app/, components/, lib/, public/, Dockerfile
+|       |   |-- console/               # app/, public/, Dockerfile
+|       |   `-- admin/                 # app/, public/, Dockerfile
+|       |-- services/                  # Ruyin-owned Python edge services
+|       |   |-- account/account.py
+|       |   `-- subproxy/subproxy.py
+|       |-- deploy/
+|       |   `-- worker-03/             # Server-side deploy/ops entrypoints
+|       |       |-- server.sh
+|       |       |-- deploy.sh
+|       |       |-- ops.sh
+|       |       |-- lib/
+|       |       |   |-- 00-log.sh
+|       |       |   |-- 01-env.sh
+|       |       |   `-- 02-certs.sh
+|       |       `-- scripts/
+|       |           |-- 10-bootstrap-server.sh
+|       |           |-- 11-check-runtime-environment.sh
+|       |           |-- 12-prepare-runtime-directories.sh
+|       |           |-- 13-generate-runtime-secrets.sh
+|       |           |-- 20-issue-tls-certificates.sh
+|       |           |-- 21-issue-self-signed-certificates.sh
+|       |           |-- 22-render-runtime-configs.py
+|       |           |-- 23-start-docker-services.sh
+|       |           |-- 24-verify-deployment.sh
+|       |           |-- 25-run-post-deploy-wizard.sh
+|       |           |-- 26-pin-image-digests.py
+|       |           |-- 30-run-full-deployment.sh
+|       |           `-- (55-backup / 53-certs / 60-reset / 9x-compat wrappers)
+|       |-- scripts/                   # Repo-side checks and GitHub helpers (not server runtime)
+|       |   |-- checks/
+|       |   `-- github/
 |       `-- docs/
 |-- data/
 |   `-- umbra/                         # Runtime data, not in Git
@@ -188,15 +199,18 @@ Services:
 |       |   |-- db.sqlite3
 |       |   |-- xray_config.json
 |       |   |-- templates/
-|       |   `-- tls/
-|       |-- portal/
-|       |   `-- html/
+|       |   |   |-- clash/
+|       |   |   `-- v2ray/
+|       |   `-- logs/
 |       |-- account/
 |       |   `-- account.db
 |       |-- vaultwarden/
 |       |   `-- data/
 |       |-- letsencrypt/
 |       |-- certbot/
+|       |   |-- www/
+|       |   |-- config/
+|       |   `-- hooks/
 |       `-- private/
 |           `-- reality.json
 `-- backup/
@@ -240,14 +254,19 @@ The authoritative file list is the repository itself. The high-level layout is:
 ```
 umbra/
 |-- README.md
+|-- CLAUDE.md
 |-- .env.example
 |-- docker-compose.yml
+|-- brand/
 |-- configs/
+|-- deploy/
+|   `-- worker-03/
+|-- docker/
 |-- docs/
 |-- portals/
 |   |-- website/
 |   |-- console/
 |   `-- admin/
-|-- services/
-`-- scripts/
+|-- scripts/
+`-- services/
 ```
