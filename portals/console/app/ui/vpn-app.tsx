@@ -143,7 +143,7 @@ export function VpnApp({
             title="Subscription URL"
             description="Copy this URL into Clash Verge, v2rayN, Stash, or a compatible client."
           >
-            <code className="code-box">{account.subscriptionUrl}</code>
+            <code className="url-box">{account.subscriptionUrl}</code>
             <div className="actions">
               <Button
                 onClick={() => {

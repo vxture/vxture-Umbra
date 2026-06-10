@@ -1,12 +1,11 @@
 /* ===== Console layout composition =====
- * Design primitives (colors, typography, controls, cards) come from
- * @vxture/design-system. This file holds layout-only composition plus the
- * legacy classes still used by the invite console (admin/invites), which moves
- * to DS DataTable in a later pass. Do not add colors, fonts, or component looks
- * here - extend the DS package instead. See docs/design/ds-extension-requests.md.
+ * All design primitives (colors, typography, controls, cards, tables) come from
+ * @vxture/design-system. This file holds layout-only composition. Do not add
+ * colors, fonts, or component looks here - extend the DS package instead. See
+ * docs/design/ds-extension-requests.md.
  */
 
-/* Layout */
+/* Shell + layout */
 
 .app-shell {
   /* 1536px max content width + 32px (--vx-space-2xl) gutter. */
@@ -42,14 +41,6 @@ body {
 .page-stack {
   display: grid;
   gap: var(--vx-space-lg);
-}
-
-/* Grid & split */
-
-.grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: var(--vx-space-md);
 }
 
 .split {
@@ -91,23 +82,7 @@ body {
   gap: var(--vx-space-md);
 }
 
-/* ===== Invite console (admin/invites) - legacy classes, DS migration pending =====
- * These render the Marzban invite table and admin login form. Kept until the
- * invite console is rebuilt on DS DataTable in the admin pass.
- */
-
-.section-card {
-  border: 1px solid var(--vx-color-border);
-  border-radius: var(--vx-radius-lg);
-  background: color-mix(in srgb, var(--vx-color-surface) 94%, transparent);
-  box-shadow: var(--vx-shadow-sm);
-  padding: 20px;
-}
-
-.section-card h2 {
-  margin: 0 0 10px;
-  font-size: 18px;
-}
+/* Auth / form composition (DS Input + Button supply the control looks) */
 
 .auth-card {
   width: min(100%, 480px);
@@ -116,7 +91,7 @@ body {
 
 .form {
   display: grid;
-  gap: 14px;
+  gap: var(--vx-space-md);
 }
 
 .field {
@@ -127,63 +102,9 @@ body {
   font-weight: 650;
 }
 
-.input {
-  width: 100%;
-  min-height: 42px;
-  border: 1px solid var(--vx-color-border);
-  border-radius: var(--vx-radius-md);
-  background: var(--vx-color-surface);
-  color: var(--vx-color-text-primary);
-  padding: 10px 12px;
-  outline: none;
-}
+/* Monospace URL / token display (DS has no code primitive). */
 
-.input:focus {
-  border-color: var(--vx-color-border-strong);
-  box-shadow: 0 0 0 3px var(--vx-color-primary-soft);
-}
-
-.btn {
-  display: inline-flex;
-  min-height: 38px;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  border: 1px solid transparent;
-  border-radius: var(--vx-radius-md);
-  padding: 0 14px;
-  cursor: pointer;
-  font-size: 14px;
-  font-weight: 700;
-}
-
-.btn:disabled {
-  cursor: not-allowed;
-  opacity: 0.62;
-}
-
-.btn-primary {
-  background: var(--vx-color-primary);
-  color: var(--vx-color-text-inverse);
-}
-
-.btn-primary:hover:not(:disabled) {
-  background: var(--vx-color-primary-strong);
-}
-
-.btn-secondary {
-  border-color: var(--vx-color-border);
-  background: var(--vx-color-surface);
-  color: var(--vx-color-text-primary);
-}
-
-.btn-danger {
-  border-color: var(--vx-color-danger-border);
-  background: var(--vx-color-danger-surface);
-  color: var(--vx-color-danger);
-}
-
-.code-box {
+.url-box {
   display: block;
   width: 100%;
   overflow-wrap: anywhere;
@@ -194,44 +115,6 @@ body {
   color: var(--vx-color-text-secondary);
   font-family: var(--vx-font-mono, ui-monospace, SFMono-Regular, Consolas, monospace);
   font-size: 13px;
-}
-
-.notice {
-  border: 1px solid var(--vx-color-border);
-  border-radius: var(--vx-radius-md);
-  background: var(--vx-color-surface-muted);
-  padding: 12px;
-  color: var(--vx-color-text-secondary);
-}
-
-.notice-danger {
-  border-color: var(--vx-color-danger-border);
-  background: var(--vx-color-danger-surface);
-  color: var(--vx-color-danger);
-}
-
-.table-wrap {
-  overflow-x: auto;
-}
-
-table {
-  width: 100%;
-  min-width: 980px;
-  border-collapse: collapse;
-}
-
-th,
-td {
-  border-bottom: 1px solid var(--vx-color-border);
-  padding: 11px 10px;
-  text-align: left;
-  vertical-align: top;
-  font-size: 14px;
-}
-
-th {
-  color: var(--vx-color-text-muted);
-  font-weight: 750;
 }
 
 /* Responsive */
