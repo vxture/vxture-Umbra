@@ -26,6 +26,9 @@ jobs:
       deployable: ${{ steps.scope.outputs.deployable }}
       build_images: ${{ steps.scope.outputs.build_images }}
     steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
       - name: Determine deployable scope and changed images
         id: scope
         shell: bash
@@ -35,61 +38,35 @@ jobs:
           REPO: ${{ github.repository }}
         run: |
           set -euo pipefail
-          all_images="ruyin-website ruyin-console ruyin-admin ruyin-nginx ruyin-account-api ruyin-subproxy"
+          # The allow-list classifier in scripts/checks/ is the single source of
+          # truth for path -> image / deployable rules. This step only handles
+          # the base lookup and the fail-open cases; it holds no path logic.
+          all_json="$(python3 scripts/checks/classify_changes.py --all-images)"
+
           base="$(gh run list --repo "$REPO" --workflow release.yml --branch main \
             --status success --limit 1 --json headSha --jq '.[0].headSha' 2>/dev/null || true)"
-          deployable=true
-          reason=no-known-base
-          build_all=true
-          want=""
-          if [[ -n "$base" ]]; then
-            files="$(gh api "repos/$REPO/compare/$base...$HEAD_SHA" \
-              --jq '.files[].filename' 2>/dev/null || true)"
-            if [[ -z "$files" ]]; then
-              deployable=false; reason=no-changes; build_all=false
-            else
-              deployable=false; reason=docs-only; build_all=false
-              while IFS= read -r f; do
-                [[ -z "$f" ]] && continue
-                # Deployable unless every change is documentation/metadata.
-                # .github/* is CI/CD plumbing (workflows already take effect on
-                # their own push); it ships nothing into the runtime images.
-                # scripts/* is repo-side tooling (quality-gate checks, GitHub
-                # helpers); worker-03 deploys from deploy/worker-03/, never from
-                # scripts/, so a scripts-only change ships nothing to runtime.
-                case "$f" in
-                  docs/*|.claude/*|.github/*|scripts/*) : ;;
-                  CLAUDE.md|README.md|LICENSE) : ;;
-                  *)
-                    if [[ "${f%/*}" == "$f" && "${f%.md}" != "$f" ]]; then : ; else deployable=true; fi
-                    ;;
-                esac
-                # Map each change to the image(s) it feeds. Unknown paths force a
-                # full rebuild (safe: over-building never ships stale code).
-                case "$f" in
-                  portals/website/*) want="$want ruyin-website" ;;
-                  portals/console/*) want="$want ruyin-console" ;;
-                  portals/admin/*) want="$want ruyin-admin" ;;
-                  brand/*) want="$want ruyin-website ruyin-console ruyin-admin" ;;
-                  services/account/*|docker/ruyin-account-api.Dockerfile) want="$want ruyin-account-api" ;;
-                  services/subproxy/*|docker/ruyin-subproxy.Dockerfile) want="$want ruyin-subproxy" ;;
-                  docker/ruyin-nginx.Dockerfile) want="$want ruyin-nginx" ;;
-                  docs/*|.claude/*|.github/*|configs/*|deploy/*|scripts/*) : ;;
-                  *.md|LICENSE|.gitignore|.gitattributes|.editorconfig|docker-compose.yml|.env.example) : ;;
-                  *) build_all=true ;;
-                esac
-              done <<< "$files"
-            fi
-          fi
-          if [[ "$deployable" != "true" ]]; then
-            build_json='[]'
-          elif [[ "$build_all" == "true" ]]; then
-            build_json="$(printf '%s\n' $all_images | jq -R . | jq -cs 'sort')"
+
+          if [[ -z "$base" ]]; then
+            # First release with no known-good base: deploy and rebuild all -
+            # fail-open, because we cannot prove what changed.
+            deployable=true; reason=no-known-base; build_json="$all_json"
+          elif ! files="$(gh api "repos/$REPO/compare/$base...$HEAD_SHA" --jq '.files[].filename')"; then
+            # The compare API call itself failed (infra/flake). Fail OPEN: a gate
+            # that cannot classify must never silently skip a real release.
+            deployable=true; reason=compare-failed; build_json="$all_json"
+          elif [[ -z "$files" ]]; then
+            deployable=false; reason=no-changes; build_json='[]'
           else
-            # $want is a space-separated, possibly-empty list; dedupe + sort.
-            # Empty (deployable change that maps to no image) yields [].
-            build_json="$(printf '%s\n' $want | sed '/^[[:space:]]*$/d' | sort -u | jq -R . | jq -cs '.')"
+            # Allow-list / default-skip: a path is non-deployable unless a rule
+            # claims it. No build_all fallback - the exhaustiveness guard in
+            # quality-gate ensures every path is claimed, so an unmapped
+            # image-context path is caught at PR time, not shipped stale here.
+            scope_json="$(printf '%s\n' "$files" | python3 scripts/checks/classify_changes.py)"
+            deployable="$(printf '%s' "$scope_json" | jq -r '.deployable')"
+            build_json="$(printf '%s' "$scope_json" | jq -c '.build_images')"
+            reason=classified
           fi
+
           echo "deployable=$deployable" >> "$GITHUB_OUTPUT"
           echo "build_images=$build_json" >> "$GITHUB_OUTPUT"
           echo "scope: deployable=$deployable reason=$reason build_images=$build_json ($base...$HEAD_SHA)"

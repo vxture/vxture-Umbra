@@ -224,34 +224,63 @@ on:
 Change detection (`detect` job):
 
 `detect` runs once and compares the pushed SHA against the base - the SHA of the
-last successful `release.yml` run on `main`. It emits two outputs that gate the
-rest of the pipeline:
+last successful `release.yml` run on `main`. The path logic lives in one place,
+`scripts/checks/classify_changes.py` (the workflow holds none of its own), and
+follows an allow-list / default-skip model: a path ships nothing to the runtime
+unless a rule explicitly claims it. Adding a new top-level path is therefore
+non-deployable by default until a rule claims it - the safe direction (a missed
+path skips, it never wrongly deploys). detect emits two outputs:
 
-- `deployable` - false when every changed file is documentation or repo-side
-  metadata, true otherwise. Non-deployable paths: `docs/*`, `.claude/*`,
-  `.github/*`, `scripts/*`, and root `CLAUDE.md` / `README.md` / `LICENSE`.
-  worker-03 deploys from `deploy/worker-03/`, never from `scripts/` (repo-side
-  quality-gate checks and GitHub helpers) or `.github/*` (CI plumbing), so a
-  change confined to those ships nothing to the runtime images. When
-  `deployable=false`, both `docker-build` and `deploy-worker-03` are skipped.
-- `build_images` - the subset of images whose source changed, mapped per path
-  (`portals/website/*` -> `ruyin-website`, `brand/*` -> the three portals,
-  `services/account/*` or its Dockerfile -> `ruyin-account-api`, and so on). An
-  unknown non-doc path forces a full rebuild (over-building is safe; shipping
-  stale code is not). With no known base (the first release), detect defaults to
-  deployable with a full rebuild.
+- `deployable` - true when any changed path maps to an image or is a deploy
+  input; false otherwise. When false, `docker-build` and `deploy-worker-03` both
+  skip.
+- `build_images` - the exact set of images to rebuild; every other image is
+  retagged by digest, never rebuilt.
 
-Three outcomes follow:
+Authoritative path map (kept honest by the exhaustiveness guard below):
+
+| Changed path | Result |
+|---|---|
+| `portals/website/**` | rebuild `ruyin-website` |
+| `portals/console/**` | rebuild `ruyin-console` |
+| `portals/admin/**` | rebuild `ruyin-admin` |
+| `brand/**` | rebuild `ruyin-website` + `ruyin-console` + `ruyin-admin` (brand build-context) |
+| `services/account/**`, `docker/ruyin-account-api.Dockerfile` | rebuild `ruyin-account-api` |
+| `services/subproxy/**`, `docker/ruyin-subproxy.Dockerfile` | rebuild `ruyin-subproxy` |
+| `docker/ruyin-nginx.Dockerfile` | rebuild `ruyin-nginx` |
+| `configs/**`, `deploy/**`, `docker-compose.yml` | deployable, rebuild nothing |
+| `docs/**`, `.claude/**`, `.github/**`, `scripts/**`, root `*.md` / `LICENSE` / dotfiles / `.env.example` | non-deployable, skip |
+
+Outcomes:
 
 | Change scope | deployable | build_images | Effect |
 |---|---|---|---|
-| docs / scripts / `.github` only | false | n/a | `docker-build` and `deploy-worker-03` skipped |
-| `configs/*` or `deploy/*` only | true | `[]` | every image retags `:latest` to the per-commit tag (digest preserved, no rebuild); deploy re-renders config |
-| portal / service / brand source | true | changed set | rebuild the changed images, retag the rest, then deploy |
+| docs / scripts / `.github` only | false | `[]` | `docker-build` and `deploy-worker-03` skipped |
+| `configs/*` or `deploy/*` only | true | `[]` | every image retags `:latest` to the per-commit tag (digest preserved); deploy re-renders config |
+| image source (portal / service / brand) | true | changed set | rebuild the changed images, retag the rest, then deploy |
 
 The retag path (`docker buildx imagetools create`) keeps the running container's
 image digest stable, so a config-only release re-renders templates and reloads
 nginx without a pointless container recreate.
+
+No silent gaps. There is deliberately no "unknown path rebuilds everything"
+fallback. Instead `scripts/checks/08-check-change-classifier.py` (run in
+`quality-gate`) asserts every tracked file is claimed by a rule, so a new
+image-context path cannot be merged unmapped - the failure surfaces at PR time,
+not as a stale image in production. Adding a new image or top-level path means
+adding its rule to `classify_changes.py` (the guard fails until you do).
+
+Fail-open mechanism. The classification *default* is skip (safe), but a
+classification *failure* is not: if the base SHA is unknown (first release) or
+the compare API call fails, detect deploys and rebuilds all images. A gate that
+cannot classify must never silently skip a real release.
+
+Known limitation. A change to `release.yml`'s own build logic (build-args, base
+image) counts as `.github/**` and is non-deployable, so it does not auto-rebuild
+images. umbra has no shared-code "rebuild all" trigger - it consumes `@vxture/*`
+as published packages with no local shared packages, so the only fan-out is
+`brand/**`. An image-content build change must be triggered deliberately (touch
+the relevant Dockerfile).
 
 The `docker-build` job (and the `deploy-worker-03` job) use the pushed SHA:
 
