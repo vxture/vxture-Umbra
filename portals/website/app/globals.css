@@ -4,6 +4,8 @@
   --ruyin-shell-gutter: var(--vx-space-lg);
   /* Match vxture.com header: fixed 64px (Tailwind h-16), density-independent. */
   --ruyin-header-height: 64px;
+  /* Header/footer left-right whitespace (more open than the body gutter). */
+  --ruyin-shell-pad-x: 48px;
 }
 
 html,
@@ -71,7 +73,7 @@ a {
   width: min(100%, var(--ruyin-shell-max-width));
   min-height: var(--ruyin-header-height);
   margin: 0 auto;
-  padding: 0 var(--vx-space-2xl);
+  padding: 0 var(--ruyin-shell-pad-x);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -189,9 +191,10 @@ a {
 
 .site-footer-inner {
   width: min(100%, var(--ruyin-shell-max-width));
+  min-height: 40px;
   margin: 0 auto;
-  /* Match vxture.com footer band: 16px vertical padding (Tailwind py-4). */
-  padding: var(--vx-space-lg) var(--vx-space-2xl);
+  /* Compact 40px band (DS inner is align-items:center), more side whitespace. */
+  padding: 0 var(--ruyin-shell-pad-x);
   /* Small, muted legal text (the DS footer sets no base size/color). Copyright
      and links both inherit this. */
   font-size: var(--vx-typography-body-sm-size);
@@ -217,6 +220,10 @@ a {
 }
 
 @media (max-width: 640px) {
+  :root {
+    --ruyin-shell-pad-x: 24px;
+  }
+
   .signature {
     width: min(92vw, 560px);
   }
@@ -229,5 +236,7 @@ a {
     flex-direction: column;
     align-items: flex-start;
     gap: var(--vx-space-md);
+    padding-top: var(--vx-space-md);
+    padding-bottom: var(--vx-space-md);
   }
 }
