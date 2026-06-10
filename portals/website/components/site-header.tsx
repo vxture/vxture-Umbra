@@ -41,6 +41,7 @@ export function SiteHeader() {
           logoSrc={markSrc(theme)}
           logoAlt=""
           label={ruyinBrand.productDomain}
+          labelClassName="site-brand-name"
         />
 
         <div className="site-actions">
@@ -57,7 +58,7 @@ export function SiteHeader() {
             />
           </div>
 
-          <Button variant="secondary" asChild>
+          <Button variant="ghost" asChild>
             <a href={ruyinBrand.registerUrl}>{text.register}</a>
           </Button>
           <Button asChild>
