@@ -53,6 +53,9 @@ jobs:
           python -m compileall -q deploy scripts services
           python scripts/checks/06-check-deploy-contracts.py
           python scripts/checks/08-check-change-classifier.py
+          # Portals must consume @vxture/design-system only - no self-built
+          # design primitives (raw colors, local fonts, duplicated component CSS).
+          python scripts/checks/09-check-ds-usage.py --strict
 
       - name: Docker Compose config validation
         shell: bash
