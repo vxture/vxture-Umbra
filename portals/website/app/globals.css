@@ -99,8 +99,8 @@ a {
    larger size by default. Apply the brand font (Funnel Display) at 20px. */
 .site-brand-name {
   font-family: var(--font-brand);
-  font-size: var(--vx-typography-heading-3-size);
-  letter-spacing: var(--vx-typography-logo-letter-spacing);
+  font-size: var(--vx-typography-heading-2-size);
+  letter-spacing: var(--vx-typography-logo-large-letter-spacing);
 }
 
 /* Hero: open, centered, wide. No section dividers - whitespace separates. */
