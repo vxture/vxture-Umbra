@@ -2,7 +2,8 @@
   /* Wide, open content track (stripe-like but wider, no divider lines). */
   --ruyin-shell-max-width: 1680px;
   --ruyin-shell-gutter: var(--vx-space-lg);
-  --ruyin-header-height: var(--vx-space-4xl);
+  /* Match vxture.com header: fixed 64px (Tailwind h-16), density-independent. */
+  --ruyin-header-height: 64px;
 }
 
 html,
@@ -184,13 +185,13 @@ a {
    edge and the links to the right edge). A subtle top hairline separates it. */
 .site-footer {
   border-top: 1px solid var(--vx-color-border);
-  margin-top: var(--vx-space-4xl);
 }
 
 .site-footer-inner {
   width: min(100%, var(--ruyin-shell-max-width));
   margin: 0 auto;
-  padding: var(--vx-space-xl) var(--vx-space-2xl);
+  /* Match vxture.com footer band: 16px vertical padding (Tailwind py-4). */
+  padding: var(--vx-space-lg) var(--vx-space-2xl);
   /* Small, muted legal text (the DS footer sets no base size/color). Copyright
      and links both inherit this. */
   font-size: var(--vx-typography-body-sm-size);
