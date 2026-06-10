@@ -52,6 +52,7 @@ jobs:
           done
           python -m compileall -q deploy scripts services
           python scripts/checks/06-check-deploy-contracts.py
+          python scripts/checks/08-check-change-classifier.py
 
       - name: Docker Compose config validation
         shell: bash
