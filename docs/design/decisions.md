@@ -451,7 +451,8 @@ BACKUP_DIR/*         chmod 600
 | 1 | Nginx TLS termination and reverse proxy | no public service routing |
 | 2 | Marzban web login (username + password) | Marzban login form |
 
-Do not add nginx IP allow/deny or Basic Auth to this vhost. Operators need to reach Marzban pages directly, and Marzban's frontend relies on Bearer-token API calls.
+The "no nginx IP allow/deny or Basic Auth" rule and its reasoning are the
+contract in [`../specs/security.md`](../specs/security.md) "Admin Console".
 
 **Credentials storage:**
 - Marzban credentials -> `.env` (`MARZBAN_ADMIN_USER`, `MARZBAN_ADMIN_PASSWORD`)
