@@ -101,9 +101,18 @@ Services:
     - internal-only metadata normalizer for /sub/<token>
 
   umbra-account
-    - current lightweight account/invite API on :3281
+    - current lightweight account/invite API (BFF) on :3281
     - stores account and invite state in DATA_DIR/account/account.db
     - talks to Marzban API and native subscription info endpoints
+
+  umbra-account-web
+    - Ruyin console UI (Next.js) on :3220
+    - serves console.ruyin.ai and admin.ruyin.ai/invites
+    - calls the umbra-account API for auth and invite state
+
+  umbra-admin
+    - future dedicated platform-management surface on :3230
+    - image built and published; not yet wired into nginx routing
 
   umbra-vaultwarden
     - Vaultwarden on :80
@@ -231,6 +240,7 @@ checkout but is built in CI, not on the server.
 | 3281 | Internal | umbra-account | Invite-bound account portal |
 | 3210 | Internal | umbra-website | Ruyin public Next website |
 | 3220 | Internal | umbra-account-web | User console and invite UI |
+| 3230 | Internal | umbra-admin | Platform admin surface (built, not yet routed) |
 | 80 | Internal | umbra-vaultwarden | Vaultwarden HTTP |
 
 ---
