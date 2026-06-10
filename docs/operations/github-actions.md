@@ -8,9 +8,8 @@ Umbra publishes deployable images to GitHub Container Registry and Aliyun ACR.
 worker-03 deploys by pulling those images and restarting Docker Compose. It
 must not build production images on the server during normal deployment.
 
-Implementation checklist:
+Enablement checklist:
 
-- [`plans/ci-cd-acr-rollout-checklist.md`](../../plans/ci-cd-acr-rollout-checklist.md)
 - [`docs/operations/github-actions-enablement.md`](github-actions-enablement.md)
 
 ## Goals

@@ -10,7 +10,7 @@ deployment scripts, and Ruyin-specific content stay in this repository.
 
 ```text
 umbra/
-|-- brand/                   # Canonical brand identity SVGs (single source)
+|-- brand/                   # Canonical brand identity PNG/ICO (single source)
 |-- configs/                 # Runtime templates: nginx, marzban, xray
 |-- docs/                    # Product, design, implementation, deployment docs
 |-- portals/                 # Browser-facing apps and compatibility pages
@@ -31,7 +31,7 @@ internals, assets, and clear ownership boundaries.
 
 ```text
 umbra/
-|-- brand/                   # Canonical brand identity SVGs (single source)
+|-- brand/                   # Canonical brand identity PNG/ICO (single source)
 |-- configs/
 |   |-- nginx/
 |   |-- marzban/
