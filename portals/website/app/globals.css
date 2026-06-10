@@ -193,13 +193,13 @@ a {
 
 .site-footer-inner {
   width: min(100%, var(--ruyin-shell-max-width));
-  min-height: 40px;
+  min-height: 48px;
   margin: 0 auto;
-  /* Compact 40px band (DS inner is align-items:center). */
+  /* Compact 48px band (DS inner is align-items:center). */
   padding: 0 32px;
   /* Small, muted legal text (the DS footer sets no base size/color). Copyright
      and links both inherit this. */
-  font-size: var(--vx-typography-body-sm-size);
+  font-size: 10px;
   color: var(--vx-color-text-muted);
 }
 
