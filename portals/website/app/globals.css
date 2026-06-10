@@ -191,6 +191,10 @@ a {
   width: min(100%, var(--ruyin-shell-max-width));
   margin: 0 auto;
   padding: var(--vx-space-xl) var(--vx-space-2xl);
+  /* Small, muted legal text (the DS footer sets no base size/color). Copyright
+     and links both inherit this. */
+  font-size: var(--vx-typography-body-sm-size);
+  color: var(--vx-color-text-muted);
 }
 
 @media (min-width: 640px) {
