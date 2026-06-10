@@ -4,8 +4,8 @@
   --ruyin-shell-gutter: var(--vx-space-lg);
   /* Match vxture.com header: fixed 64px (Tailwind h-16), density-independent. */
   --ruyin-header-height: 64px;
-  /* Header/footer left-right whitespace (more open than the body gutter). */
-  --ruyin-shell-pad-x: 48px;
+  /* Header/footer side inset = outer margin (48px) + inner padding (32px). */
+  --ruyin-shell-margin-x: 48px;
 }
 
 html,
@@ -56,6 +56,7 @@ a {
   left: 0;
   z-index: 50;
   width: 100%;
+  padding-inline: var(--ruyin-shell-margin-x);
   background: color-mix(in srgb, var(--vx-color-surface) 0%, transparent);
   transition:
     background var(--vx-duration-moderate) var(--vx-ease-standard),
@@ -73,7 +74,7 @@ a {
   width: min(100%, var(--ruyin-shell-max-width));
   min-height: var(--ruyin-header-height);
   margin: 0 auto;
-  padding: 0 var(--ruyin-shell-pad-x);
+  padding: 0 32px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -187,14 +188,15 @@ a {
    edge and the links to the right edge). A subtle top hairline separates it. */
 .site-footer {
   border-top: 1px solid var(--vx-color-border);
+  padding-inline: var(--ruyin-shell-margin-x);
 }
 
 .site-footer-inner {
   width: min(100%, var(--ruyin-shell-max-width));
   min-height: 40px;
   margin: 0 auto;
-  /* Compact 40px band (DS inner is align-items:center), more side whitespace. */
-  padding: 0 var(--ruyin-shell-pad-x);
+  /* Compact 40px band (DS inner is align-items:center). */
+  padding: 0 32px;
   /* Small, muted legal text (the DS footer sets no base size/color). Copyright
      and links both inherit this. */
   font-size: var(--vx-typography-body-sm-size);
@@ -221,7 +223,7 @@ a {
 
 @media (max-width: 640px) {
   :root {
-    --ruyin-shell-pad-x: 24px;
+    --ruyin-shell-margin-x: 16px;
   }
 
   .signature {
