@@ -32,11 +32,12 @@ Purpose:    Production overseas edge entry node
 | Service | Container | Domain | Purpose |
 |---------|-----------|--------|---------|
 | Nginx | `umbra-nginx` | gateway | SNI stream + HTTP virtual hosts |
-| Website | `umbra-website` | ruyin.ai | Ruyin public Next.js homepage |
+| Website | `umbra-website` | ruyin.ai, vpn.ruyin.ai | Ruyin public Next.js homepage and VPN display |
 | Marzban + Xray | `umbra-marzban` | sub.ruyin.ai, admin.ruyin.ai, REALITY ingress | VPN user management, subscription, bundled Xray subprocess |
 | Subscription Proxy | `umbra-subproxy` | internal | Normalizes subscription response metadata only |
-| Account Portal | `umbra-account` | console.ruyin.ai, admin.ruyin.ai/invites | Invite-bound user dashboard and invite management |
-| Public Guide | *removed* | vpn.ruyin.ai -> umbra-website | VPN display merged into umbra-website |
+| Account API | `umbra-account` | internal (BFF) | Auth and invite backend for the console and invite flows |
+| Console Web | `umbra-account-web` | console.ruyin.ai, admin.ruyin.ai/invites | Invite-bound user dashboard and invite management UI |
+| Admin Web | `umbra-admin` | built, not yet routed | Future dedicated platform-management surface; image published so routing can switch without pipeline changes |
 | Vaultwarden | `umbra-vaultwarden` | pass.ruyin.ai | Password manager |
 | Certbot | one-shot Docker container | ACME webroot | Let's Encrypt issue/renew automation |
 
@@ -58,31 +59,34 @@ Purpose:    Production overseas edge entry node
 
 ## Current Milestone
 
-**Building: v1.0 Production Edge Node**
+**v1.0 Production Edge Node - SHIPPED.** The node runs in production with
+automated CI/CD deploys to worker-03. Current work evolves the account portal
+toward a multi-app identity model - see
+[`design/platform-identity.md`](design/platform-identity.md).
 
-Deploy order (dependencies drive sequence):
+v1.0 deploy phases (all complete):
 
 ```
 Phase 1 - Infrastructure
-  [ ] Nginx (base config, HTTP only)
-  [ ] Certbot (issue all certs)
-  [ ] Nginx (HTTPS + SNI stream)
+  [x] Nginx (base config, HTTP only)
+  [x] Certbot (issue all certs)
+  [x] Nginx (HTTPS + SNI stream)
 
 Phase 2 - Core Services
-  [ ] Xray-core (VLESS + REALITY)
-  [ ] Marzban
-  [ ] Account Portal
+  [x] Xray-core (VLESS + REALITY)
+  [x] Marzban
+  [x] Account Portal
 
 Phase 3 - Supporting Services
-  [ ] Vaultwarden
-  [ ] Docs site
+  [x] Vaultwarden
+  [-] Docs site (dropped - docs live in-repo under docs/)
 
 Phase 4 - Hardening
-  [ ] Marzban console login boundary
-  [ ] Backup automation
-  [ ] Logrotate
-  [ ] Cert renewal cron
-  [ ] External uptime monitoring configured (BetterStack / UptimeRobot)
+  [x] Marzban console login boundary
+  [x] Backup automation (post-deploy + daily cron)
+  [x] Cert renewal cron (daily 03:17)
+  [x] Logrotate
+  [ ] External uptime monitoring (operator-optional - BetterStack / UptimeRobot)
 ```
 
 ---
@@ -98,7 +102,10 @@ Phase 4 - Hardening
 | [`design/architecture.md`](design/architecture.md) | Traffic flow, SNI routing, container topology, directory layout |
 | [`design/modules.md`](design/modules.md) | Per-service spec: config, volumes, ports, environment variables |
 | [`design/decisions.md`](design/decisions.md) | Design decisions: security model, B++ rules, subscription design |
+| [`design/platform-identity.md`](design/platform-identity.md) | Multi-app identity model: app bindings, invite app_key, identity broker |
+| [`design/vxture-sso.md`](design/vxture-sso.md) | Vxture SSO handoff contract for the Ruyin console (auth start, callback, verify) |
 | [`implementation/repository.md`](implementation/repository.md) | Current repository layout and source-of-truth paths |
+| [`implementation/brand-assets.md`](implementation/brand-assets.md) | Brand asset spec: PNG/ICO source of truth, per-portal sync, build-time injection |
 | [`implementation/project-structure-plan.md`](implementation/project-structure-plan.md) | Target portal layout, brand assets, and cleanup phases |
 | [`implementation/config-rendering.md`](implementation/config-rendering.md) | Template renderer inputs, syntax, and outputs |
 | [`implementation/scripts.md`](implementation/scripts.md) | Deployment script entrypoints and ordered steps |
@@ -137,22 +144,22 @@ Phase 4 - Hardening
 
 ---
 
-## v1.0 Success Criteria
+## v1.0 Success Criteria (met in production)
 
 ```
-[ ] All containers running: nginx, website, marzban, subproxy, account, vaultwarden, portal
-[ ] HTTPS working on active public domains
-[ ] Xray REALITY connection functional (test with Clash Verge)
-[ ] Marzban console accessible at admin.ruyin.ai and protected by Marzban login
-[ ] Marzban subscription URL functional at sub.ruyin.ai
-[ ] Subscription imports correctly into Clash Verge
-[ ] Node name shows vx-tokyo
-[ ] B++ rules present and correct (openai.com and cloudflare.com PROXY; microsoft.com and vultr.com DIRECT)
-[ ] Vaultwarden login functional at pass.ruyin.ai
-[ ] VPN display loading at vpn.ruyin.ai
-[ ] User console loading at console.ruyin.ai
-[ ] Invite Console loading at admin.ruyin.ai/invites
-[ ] Backup archive created with correct permissions (600)
-[ ] Cert renewal cron configured
-[ ] Sensitive files not present in Git
+[x] All containers running: nginx, website, marzban, subproxy, account, account-web, admin, vaultwarden
+[x] HTTPS working on active public domains
+[x] Xray REALITY connection functional (test with Clash Verge)
+[x] Marzban console accessible at admin.ruyin.ai and protected by Marzban login
+[x] Marzban subscription URL functional at sub.ruyin.ai
+[x] Subscription imports correctly into Clash Verge
+[x] Node name shows vx-tokyo
+[x] B++ rules present and correct (openai.com and cloudflare.com PROXY; microsoft.com and vultr.com DIRECT)
+[x] Vaultwarden login functional at pass.ruyin.ai
+[x] VPN display loading at vpn.ruyin.ai
+[x] User console loading at console.ruyin.ai
+[x] Invite Console loading at admin.ruyin.ai/invites
+[x] Backup archive created with correct permissions (600)
+[x] Cert renewal cron configured
+[x] Sensitive files not present in Git
 ```
