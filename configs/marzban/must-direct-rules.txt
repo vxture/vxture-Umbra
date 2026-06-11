@@ -62,6 +62,25 @@ DOMAIN-SUFFIX,deepseek.com
 DOMAIN-SUFFIX,deepseek.ai
 DOMAIN-SUFFIX,api.deepseek.com
 
+# Tailscale. Control plane, console, login, DERP relays, package repo, and
+# logging all live under tailscale.com, so one suffix covers them. ts.net is
+# the MagicDNS hostname domain (also the TLS cert SAN); letsencrypt.org issues
+# those certs; tailscale.io is the legacy telemetry domain kept as a safety net.
+DOMAIN-SUFFIX,tailscale.com
+DOMAIN-SUFFIX,ts.net
+DOMAIN-SUFFIX,tailscale.io
+DOMAIN-SUFFIX,letsencrypt.org
+
+# Tailscale tunnel and infrastructure IP blocks. 100.64.0.0/10 is the tailnet
+# node CGNAT range (peer traffic must stay on tailscale0). The rest are the
+# published control-plane and logging blocks (IPv4 + IPv6) in case a client
+# connects by IP before domain rules apply.
+IP-CIDR,100.64.0.0/10
+IP-CIDR,192.200.0.0/24
+IP-CIDR,199.165.136.0/24
+IP-CIDR6,2606:B740:49::/48
+IP-CIDR6,2606:B740:1::/48
+
 # Current VPN/VPS public endpoint. Keep an exact IP direct rule because some
 # clients may resolve the edge host before applying domain rules.
-IP-CIDR,108.61.182.248/32
+IP-CIDR,207.148.95.189/32
