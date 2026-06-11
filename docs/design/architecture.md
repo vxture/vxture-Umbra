@@ -16,7 +16,7 @@ Internet
            `-- other SNI values -> umbra-nginx internal HTTPS listener :8443
                                       |-- ruyin.ai         -> umbra-website:3210
                                       |-- www.ruyin.ai     -> 301 redirect to ruyin.ai
-                                      |-- EDGE_DOMAIN      -> public VPN guide
+                                      |-- EDGE_DOMAIN      -> 444 (web retired; node is REALITY on :443)
                                       |-- sub.ruyin.ai           -> umbra-subproxy:8080 -> umbra-marzban:8000 /sub/<token>
                                       |-- console.ruyin.ai -> umbra-account-web + umbra-account API
                                       |-- admin.ruyin.ai   -> umbra-marzban:8000 and /invites -> account web/API
@@ -58,7 +58,7 @@ Mode 1: stream (layer 4, public port 443)
 
 Mode 2: http (layer 7, internal port 8443)
   - Terminates TLS for normal domains
-  - Routes by server_name to container upstreams, redirects, or public guide surfaces
+  - Routes by server_name to container upstreams or redirects (unknown hosts -> 444)
 ```
 
 Why two-level? Because:
@@ -147,7 +147,6 @@ checkout but is built in CI, not on the server.
 |       |   |       |-- 00-default.conf.template
 |       |   |       |-- 01-ruyin.conf.template
 |       |   |       |-- 02-www.conf.template
-|       |   |       |-- 03-vpn-portal.conf.template
 |       |   |       |-- 04-sub.conf.template
 |       |   |       |-- 05-console.conf.template
 |       |   |       |-- 06-pass.conf.template

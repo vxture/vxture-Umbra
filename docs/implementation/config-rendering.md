@@ -14,7 +14,7 @@ Do not run it with `bash`.
 
 - `.env`
 - `DATA_DIR/private/reality.json`
-- templates and public guide files under `configs/` and `portals/`
+- templates and static portal files under `configs/` and `portals/`
 - Ruyin website assets under `portals/website/public/` are served by the Next app container
 
 ## Template Syntax

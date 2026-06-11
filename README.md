@@ -13,7 +13,7 @@ Production VPN edge node - SNI routing, VLESS+REALITY proxy, subscription delive
 | Domain | Service |
 |--------|---------|
 | `ruyin.ai` / `www.ruyin.ai` | Brand landing page (Next.js) |
-| `vpn.ruyin.ai` | VPN edge host and VPN guide display |
+| `vpn.ruyin.ai` | VPN proxy node host (REALITY on `:443`); no web surface |
 | `sub.ruyin.ai` | Marzban subscription endpoint with `Ruyin-USERNAME` display names |
 | `console.ruyin.ai` | User self-service console |
 | `admin.ruyin.ai` | Marzban console *(Marzban login)* |
@@ -100,7 +100,7 @@ NODE_NAME=vx-tokyo                    # label shown in subscription config
 # -- Domains --------------------------------------------
 APEX_DOMAIN=ruyin.ai
 WWW_DOMAIN=www.ruyin.ai
-EDGE_DOMAIN=vpn.ruyin.ai             # VPN edge host and display page
+EDGE_DOMAIN=vpn.ruyin.ai             # VPN proxy node host (REALITY :443)
 SUB_DOMAIN=sub.ruyin.ai              # subscription endpoint
 CONSOLE_DOMAIN=console.ruyin.ai
 ADMIN_DOMAIN=admin.ruyin.ai
@@ -216,7 +216,7 @@ sed -i 's/^#\?PermitRootLogin.*/PermitRootLogin no/' /etc/ssh/sshd_config && sys
 
 Add free monitors at [BetterStack](https://betterstack.com) or [UptimeRobot](https://uptimerobot.com):
 - TCP `vpn.ruyin.ai:443` - catches full-node outage
-- HTTPS `https://vpn.ruyin.ai` - catches nginx failures
+- HTTPS `https://sub.ruyin.ai` - catches nginx/subscription failures
 
 ---
 
@@ -353,7 +353,7 @@ Internet
                  |- SNI = www.microsoft.com -> Xray VLESS+REALITY (port 10443 internal)
                  `- SNI = anything else     -> nginx HTTP block (:8443)
                                                 |- ruyin.ai          -> umbra-website (Next.js landing)
-                                                |- vpn.ruyin.ai      -> umbra-website (VPN guide)
+                                                |- vpn.ruyin.ai      -> 444 (web retired; node is REALITY on :443)
                                                 |- sub.ruyin.ai      -> Marzban /sub/<token>
                                                 |- console.ruyin.ai  -> umbra-account-web (Next.js console)
                                                 |- admin.ruyin.ai    -> Marzban dashboard + umbra-account-web /invites

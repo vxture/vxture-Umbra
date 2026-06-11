@@ -143,8 +143,9 @@ log_step "HTTPS endpoints..."
 check_http "$APEX_DOMAIN"        "https://$APEX_DOMAIN"
 check_http_body_contains "$APEX_DOMAIN Ruyin homepage" "https://$APEX_DOMAIN/" "VXTURE STUDIO"
 check_http "$WWW_DOMAIN"         "https://$WWW_DOMAIN"
-check_http "$EDGE_DOMAIN"        "https://$EDGE_DOMAIN"
-check_http_body_contains "$EDGE_DOMAIN VPN display" "https://$EDGE_DOMAIN/" "VXTURE STUDIO"
+# EDGE_DOMAIN (vpn) display retired: vpn.ruyin.ai now falls through to the
+# catch-all (444), identical to any unknown host. The proxy node on :443 is
+# still verified by the port-open check below.
 check_http_body_contains "$CONSOLE_DOMAIN account home" "https://$CONSOLE_DOMAIN/" "Ruyin Account"
 check_http "$CONSOLE_DOMAIN account login" "https://$CONSOLE_DOMAIN/login"
 check_http "$CONSOLE_DOMAIN account registration" "https://$CONSOLE_DOMAIN/register"

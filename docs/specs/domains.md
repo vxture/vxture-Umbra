@@ -6,7 +6,7 @@ Domain ownership is explicit. Do not repurpose a domain without updating nginx v
 |---|---|---|
 | `APEX_DOMAIN` | `ruyin.ai` | Brand landing page |
 | `WWW_DOMAIN` | `www.ruyin.ai` | Landing page copy and REALITY camouflage target is separate via `REALITY_SNI` |
-| `EDGE_DOMAIN` | `vpn.ruyin.ai` | VPN edge host and VPN display page |
+| `EDGE_DOMAIN` | `vpn.ruyin.ai` | VPN proxy node host (REALITY on `:443`); no web surface |
 | `SUB_DOMAIN` | `sub.ruyin.ai` | Marzban native subscription endpoint with normalized response metadata |
 | `CONSOLE_DOMAIN` | `console.ruyin.ai` | User self-service console: SSO, invite activation, subscription dashboard |
 | `ADMIN_DOMAIN` | `admin.ruyin.ai` | Platform management: Marzban console and invite management page |
