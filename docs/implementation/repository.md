@@ -29,7 +29,6 @@ Key implementation paths:
 | `configs/marzban/clash-subscription.j2` | Marzban Clash template rendered to `DATA_DIR/marzban/templates/clash/default.yml` |
 | `portals/website/` | Next.js public website for `ruyin.ai`, including reusable shell components and `public/assets/` |
 | `portals/console/` | Next.js user portal for `console.ruyin.ai` and temporary invite UI |
-| `portals/console/public/guide/` | Source for the public guide served under `vpn.ruyin.ai/guide/` |
 | `portals/admin/` | Temporary admin portal boundary; invite UI will move here after route split |
 | `services/account/account.py` | Current lightweight Python account/invite API; future formal business backend should be NestJS |
 | `services/subproxy/subproxy.py` | Lightweight Python subscription response metadata adapter |
@@ -66,8 +65,6 @@ root compose file.
 - Brand PNG/ICO assets have a single source of truth under `brand/`; see
   [`brand-assets.md`](brand-assets.md). Do not deploy Vxture brand files as
   Ruyin assets.
-- `portals/console/public/guide/` is standalone guide content kept only until
-  the console covers onboarding, then retired.
 - The invite admin UI currently lives in `portals/console`; it moves to
   `portals/admin` only after nginx routing and deploy checks are ready.
 

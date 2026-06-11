@@ -244,8 +244,8 @@ subprocess.run(
     check=True,
 )
 
-print("\n-- [REMOVED] Public VPN guide -------------------------------------------")
-print("[SKIP] Portal container removed; VPN display merged into umbra-website")
+print("\n-- [REMOVED] Public VPN web surface -------------------------------------")
+print("[SKIP] vpn.ruyin.ai web retired; unknown SNI falls through to 444 catch-all")
 
 print("\n-- Website app -----------------------------------------------------------")
 print("[SKIP] Ruyin website is served by umbra-website Next app")

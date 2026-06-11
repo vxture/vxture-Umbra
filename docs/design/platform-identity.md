@@ -157,7 +157,7 @@ Browser (*.ruyin.ai:443)
        console.ruyin.ai/              -> umbra-account-web (launcher + app views)
        console.ruyin.ai/api/account/* -> umbra-account (identity broker + auth DB + module brokers)
        console.ruyin.ai/auth/*        -> umbra-account-web (SSO start/callback)
-       vpn.ruyin.ai/                  -> VPN display surface
+       vpn.ruyin.ai/                  -> 444 (web retired; VPN node is REALITY on :443)
        pass.ruyin.ai/                 -> umbra-vaultwarden (later)
   umbra-account -> umbra-marzban (VPN source of truth)
 External: Vxture SSO + auth-bff (identity provider; signs/verifies ry_access_token)

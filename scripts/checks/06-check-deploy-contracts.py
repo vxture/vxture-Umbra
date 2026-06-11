@@ -355,7 +355,6 @@ CHECKS: list[tuple[str, Path, list[str]]] = [
             "umbra-account",
             "umbra-account-web",
             "check_http_body_contains",
-            "$EDGE_DOMAIN VPN display",
             "VXTURE STUDIO",
             "Ruyin Account",
             "$CONSOLE_DOMAIN account home",
@@ -790,16 +789,6 @@ CHECKS: list[tuple[str, Path, list[str]]] = [
             "IMAGE_REGISTRY=ghcr.io",
             "IMAGE_NAMESPACE=vxture",
             "IMAGE_TAG=latest",
-        ],
-    ),
-    (
-        "vpn vhost serves edge display via website",
-        Path("configs/nginx/vhosts/03-vpn-portal.conf.template"),
-        [
-            "resolver 127.0.0.11 valid=30s ipv6=off",
-            "location /guide/",
-            "return 301 /",
-            "proxy_pass http://umbra-website:3210/",
         ],
     ),
     (

@@ -32,7 +32,7 @@ Purpose:    Production overseas edge entry node
 | Service | Container | Domain | Purpose |
 |---------|-----------|--------|---------|
 | Nginx | `umbra-nginx` | gateway | SNI stream + HTTP virtual hosts |
-| Website | `umbra-website` | ruyin.ai, vpn.ruyin.ai | Ruyin public Next.js homepage and VPN display |
+| Website | `umbra-website` | ruyin.ai | Ruyin public Next.js homepage |
 | Marzban + Xray | `umbra-marzban` | sub.ruyin.ai, admin.ruyin.ai, REALITY ingress | VPN user management, subscription, bundled Xray subprocess |
 | Subscription Proxy | `umbra-subproxy` | internal | Normalizes subscription response metadata only |
 | Account API | `umbra-account` | internal (BFF) | Auth and invite backend for the console and invite flows |
@@ -49,7 +49,7 @@ Purpose:    Production overseas edge entry node
 |--------|--------|-------|
 | `ruyin.ai` | Nginx -> umbra-website | Brand home and Hermes entry |
 | `www.ruyin.ai` | Nginx -> ruyin.ai | Canonical redirect |
-| `vpn.ruyin.ai` | Nginx -> umbra-website | VPN display via website (/guide/ redirects to /) |
+| `vpn.ruyin.ai` | Nginx -> 444 catch-all | Web surface retired; VPN node is REALITY on `:443` |
 | `sub.ruyin.ai` | Nginx -> umbra-subproxy -> umbra-marzban | Marzban-native subscription endpoint with normalized metadata |
 | `console.ruyin.ai` | Nginx -> umbra-account-web + umbra-account | User login, invite activation, subscription dashboard |
 | `admin.ruyin.ai` | Nginx -> umbra-marzban; /invites -> account web/API | Marzban console and invite generation |
