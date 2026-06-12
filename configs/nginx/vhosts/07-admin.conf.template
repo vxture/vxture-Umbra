@@ -1,6 +1,9 @@
-# admin.ruyin.ai - Platform management: Marzban + invite administration
-# Marzban owns dashboard authentication. Invite administration is guarded by
-# the Ruyin account API using Vxture account permissions/allowlists.
+# admin.ruyin.ai - Platform management console (umbra-admin) + Marzban + Vault.
+# The admin app owns the site root behind its own built-in credential login and
+# renders the invite/subscription block. Marzban keeps its dashboard/API/static/
+# sub paths (catch-all); the admin app's "VPN console" block jumps to /dashboard/.
+# Vault is an external jump. Invite administration is guarded by the Ruyin account
+# API built-in admin credential (independent of Marzban auth).
 server {
     listen 8443 ssl proxy_protocol;
     server_name {{ ADMIN_DOMAIN }};
@@ -12,33 +15,32 @@ server {
 
     resolver 127.0.0.11 valid=30s ipv6=off;
     set $account_upstream "umbra-account:3281";
-    set $account_web_upstream "umbra-account-web:3220";
+    set $admin_web_upstream "umbra-admin:3230";
     set $marzban_upstream "umbra-marzban:8000";
 
+    # Admin management app (umbra-admin) owns the site root and its Next assets.
     location = / {
-        return 302 /dashboard/;
-    }
-
-    location = /invites {
-        proxy_pass http://$account_web_upstream;
+        proxy_pass http://$admin_web_upstream;
         include /etc/nginx/snippets/proxy-headers.conf;
     }
 
+    location = /favicon.ico {
+        proxy_pass http://$admin_web_upstream;
+        include /etc/nginx/snippets/proxy-headers.conf;
+    }
+
+    location ^~ /_next/ {
+        proxy_pass http://$admin_web_upstream;
+        include /etc/nginx/snippets/proxy-headers.conf;
+    }
+
+    # Account API: built-in admin login + invite/subscription endpoints.
     location ^~ /api/account/ {
         proxy_pass http://$account_upstream;
         include /etc/nginx/snippets/proxy-headers.conf;
     }
 
-    location ^~ /_next/ {
-        proxy_pass http://$account_web_upstream;
-        include /etc/nginx/snippets/proxy-headers.conf;
-    }
-
-    location ^~ /invites/ {
-        proxy_pass http://$account_web_upstream;
-        include /etc/nginx/snippets/proxy-headers.conf;
-    }
-
+    # Marzban management console plus its API/static/sub paths (everything else).
     location / {
         proxy_pass https://$marzban_upstream;
         proxy_ssl_verify off;

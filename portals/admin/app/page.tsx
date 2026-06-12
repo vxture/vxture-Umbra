@@ -1,5 +1,5 @@
-import { AdminHome } from "./ui/admin-home";
+import { AdminApp } from "./ui/admin-app";
 
 export default function Page() {
-  return <AdminHome />;
+  return <AdminApp />;
 }

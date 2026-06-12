@@ -9,12 +9,13 @@ import {
   Icon,
   Input,
   MetricGrid,
+  PageHeader,
   Skeleton,
   StatusBadge,
   useToast,
 } from "@vxture/design-system";
 import type { DataTableColumn, MetricGridItem, StatusBadgeTone } from "@vxture/design-system";
-import { PageHeader, Shell } from "./shell";
+import { AdminShell } from "./admin-shell";
 import type { AdminInvitesPayload, AdminUserRow } from "./types";
 
 async function api<T>(url: string, init?: RequestInit): Promise<T> {
@@ -48,7 +49,12 @@ function bindingLabel(row: AdminUserRow): string {
   return "Pending binding";
 }
 
-export function InviteConsole() {
+/**
+ * Admin management surface (admin.ruyin.ai). Built-in credential login, then the
+ * vpn-invites block: every subscription link, invite-code issuance, and bound
+ * accounts. Marzban and Vault are sidebar jump-links (see AdminShell).
+ */
+export function AdminApp() {
   const [data, setData] = useState<AdminInvitesPayload | null>(null);
   const [busy, setBusy] = useState("");
   const [username, setUsername] = useState("");
@@ -80,7 +86,7 @@ export function InviteConsole() {
       setPassword("");
       await refresh();
     } catch {
-      toast({ tone: "error", title: "Invalid Marzban admin credentials." });
+      toast({ tone: "error", title: "Invalid admin credentials." });
     } finally {
       setBusy("");
     }
@@ -147,22 +153,22 @@ export function InviteConsole() {
 
   if (!data) {
     return (
-      <Shell>
+      <AdminShell bare>
         <section className="auth-card page-stack">
           <Skeleton variant="line" lines={3} />
         </section>
-      </Shell>
+      </AdminShell>
     );
   }
 
   if (data.status === "admin_login_required") {
     return (
-      <Shell>
+      <AdminShell bare>
         <section className="auth-card page-stack">
           <PageHeader
             icon="user"
             title="Admin Sign In"
-            description="Use the same Marzban admin account to manage Ruyin invites."
+            description="Sign in with the Ruyin management credential to manage invites and subscriptions."
           />
           <form className="form" onSubmit={login}>
             <label className="field">
@@ -190,18 +196,24 @@ export function InviteConsole() {
             </Button>
           </form>
         </section>
-      </Shell>
+      </AdminShell>
     );
   }
 
   if (data.status !== "ok") {
     return (
-      <Shell>
-        <section className="auth-card page-stack">
+      <AdminShell active="invites">
+        <div className="page-stack">
           <PageHeader
             icon="warning"
             title="Invite Console Unavailable"
             description="Marzban could not be reached. Try again after services recover."
+            actions={
+              <Button variant="secondary" disabled={busy === "logout"} onClick={logout}>
+                <Icon name="sign-out" size="sm" />
+                Sign out
+              </Button>
+            }
           />
           <div className="actions">
             <Button variant="secondary" onClick={() => refresh().catch(() => undefined)}>
@@ -209,8 +221,8 @@ export function InviteConsole() {
               Retry
             </Button>
           </div>
-        </section>
-      </Shell>
+        </div>
+      </AdminShell>
     );
   }
 
@@ -309,25 +321,17 @@ export function InviteConsole() {
   ];
 
   return (
-    <Shell>
+    <AdminShell active="invites">
       <div className="page-stack">
         <PageHeader
           icon="users"
-          title="Invite Console"
-          description="Generate one-time VPN invites for existing Marzban users and manage bound subscriptions."
+          title="Invites & Users"
+          description="Issue one-time VPN invites for Marzban users and manage bound subscriptions."
           actions={
-            <div className="actions">
-              <Button variant="secondary" asChild>
-                <a href="/dashboard/">
-                  <Icon name="table" size="sm" />
-                  Marzban Dashboard
-                </a>
-              </Button>
-              <Button variant="secondary" disabled={busy === "logout"} onClick={logout}>
-                <Icon name="sign-out" size="sm" />
-                Sign out
-              </Button>
-            </div>
+            <Button variant="secondary" disabled={busy === "logout"} onClick={logout}>
+              <Icon name="sign-out" size="sm" />
+              Sign out
+            </Button>
           }
         />
         <MetricGrid items={metrics} />
@@ -343,6 +347,6 @@ export function InviteConsole() {
           }
         />
       </div>
-    </Shell>
+    </AdminShell>
   );
 }
