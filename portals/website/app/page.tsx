@@ -31,7 +31,7 @@ export default function HomePage() {
       <main className="body-section">
         <section className="hero" aria-labelledby="hero-title">
           <div className="eyebrow">
-            <span className="eyebrow-studio">Virtual Nature Studio</span>
+            <span className="eyebrow-studio">Vxture Studio</span>
             <span className="eyebrow-sep"> | </span>
             <span className="eyebrow-product">Ruyin Agent</span>
           </div>
