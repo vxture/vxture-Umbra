@@ -8,8 +8,9 @@ import { markSrc, ruyinBrand } from "../../lib/brand";
 /**
  * Thin admin shell: sidebar + topbar composed from DS Shell* primitives. This
  * stands in for the DS AppShell (requested in docs/design/ds-extension-requests.md)
- * and swaps to it once that lands. External deep links (Marzban, Vaultwarden)
- * are intentionally left jumping out to the existing tools.
+ * and swaps to it once that lands. The two external blocks (Marzban, Vaultwarden)
+ * are sidebar jump-links; the in-app block is invite/subscription management.
+ * `bare` renders only the topbar (no sidebar) for the pre-auth login screen.
  */
 
 interface NavItem {
@@ -21,8 +22,7 @@ interface NavItem {
 }
 
 const NAV: NavItem[] = [
-  { id: "overview", label: "Overview", href: "/", icon: "squares-four" },
-  { id: "invites", label: "Invites & Users", href: "/invites", icon: "users" },
+  { id: "invites", label: "Invites & Users", href: "/", icon: "users" },
   { id: "marzban", label: "VPN console", href: "/dashboard/", icon: "shield-check", external: true },
   { id: "vault", label: "Passwords", href: "https://pass.ruyin.ai/admin", icon: "key", external: true },
 ];
@@ -30,9 +30,11 @@ const NAV: NavItem[] = [
 export function AdminShell({
   active,
   children,
+  bare = false,
 }: {
-  active: string;
+  active?: string;
   children: ReactNode;
+  bare?: boolean;
 }) {
   const { theme, setTheme } = useTheme();
 
@@ -52,44 +54,48 @@ export function AdminShell({
         </div>
       </header>
 
-      <div className="admin-body">
-        <aside className="admin-sidebar" aria-label="Admin navigation">
-          <nav className="admin-nav">
-            {NAV.map((item) => {
-              const isActive = item.id === active;
-              const className = `admin-nav-item${isActive ? " is-active" : ""}`;
-              const inner = (
-                <>
-                  <Icon name={item.icon} size="md" />
-                  <span>{item.label}</span>
-                </>
-              );
-              return item.external ? (
-                <a
-                  key={item.id}
-                  className={className}
-                  href={item.href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  {inner}
-                </a>
-              ) : (
-                <a
-                  key={item.id}
-                  className={className}
-                  href={item.href}
-                  aria-current={isActive ? "page" : undefined}
-                >
-                  {inner}
-                </a>
-              );
-            })}
-          </nav>
-        </aside>
+      {bare ? (
+        <main className="admin-content admin-auth">{children}</main>
+      ) : (
+        <div className="admin-body">
+          <aside className="admin-sidebar" aria-label="Admin navigation">
+            <nav className="admin-nav">
+              {NAV.map((item) => {
+                const isActive = item.id === active;
+                const className = `admin-nav-item${isActive ? " is-active" : ""}`;
+                const inner = (
+                  <>
+                    <Icon name={item.icon} size="md" />
+                    <span>{item.label}</span>
+                  </>
+                );
+                return item.external ? (
+                  <a
+                    key={item.id}
+                    className={className}
+                    href={item.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    {inner}
+                  </a>
+                ) : (
+                  <a
+                    key={item.id}
+                    className={className}
+                    href={item.href}
+                    aria-current={isActive ? "page" : undefined}
+                  >
+                    {inner}
+                  </a>
+                );
+              })}
+            </nav>
+          </aside>
 
-        <main className="admin-content">{children}</main>
-      </div>
+          <main className="admin-content">{children}</main>
+        </div>
+      )}
 
       <ShellLegalFooter
         className="admin-footer"

@@ -38,6 +38,11 @@ INVITE_TTL_DAYS = int(os.environ.get("ACCOUNT_INVITE_TTL_DAYS", "30"))
 MARZBAN_BASE_URL = os.environ.get("MARZBAN_BASE_URL", "https://umbra-marzban:8000").rstrip("/")
 MARZBAN_ADMIN_USER = os.environ.get("MARZBAN_ADMIN_USER", "")
 MARZBAN_ADMIN_PASSWORD = os.environ.get("MARZBAN_ADMIN_PASSWORD", "")
+# Built-in management-console credential (independent of Marzban). The admin
+# portal (admin.ruyin.ai) authenticates against this; Marzban is reached with the
+# service credential above only to read/manage subscriptions.
+ACCOUNT_ADMIN_USERNAME = os.environ.get("ACCOUNT_ADMIN_USERNAME", "")
+ACCOUNT_ADMIN_PASSWORD = os.environ.get("ACCOUNT_ADMIN_PASSWORD", "")
 PROFILE_PREFIX = (os.environ.get("SUB_PROFILE_PREFIX", "Ruyin").strip() or "Ruyin")
 VXTURE_JWT_SECRET = os.environ.get("VXTURE_JWT_SECRET", os.environ.get("JWT_SECRET", ""))
 VXTURE_COOKIE_ACCESS = os.environ.get("VXTURE_COOKIE_ACCESS", "ry_access_token")
@@ -646,6 +651,15 @@ def marzban_admin_token() -> str:
     return marzban_login(MARZBAN_ADMIN_USER, MARZBAN_ADMIN_PASSWORD)
 
 
+def admin_credentials_ok(username: str, password: str) -> bool:
+    """Constant-time check of the built-in management-console credential."""
+    if not ACCOUNT_ADMIN_USERNAME or not ACCOUNT_ADMIN_PASSWORD:
+        return False
+    user_ok = hmac.compare_digest(username, ACCOUNT_ADMIN_USERNAME)
+    pass_ok = hmac.compare_digest(password, ACCOUNT_ADMIN_PASSWORD)
+    return user_ok and pass_ok
+
+
 def get_cookie(header: str | None, name: str) -> str | None:
     if not header:
         return None
@@ -860,7 +874,7 @@ class AccountHandler(BaseHTTPRequestHandler):
             if expires and expires < utcnow():
                 conn.execute("DELETE FROM admin_sessions WHERE session_hash = ?", (session_hash(sid),))
                 return None
-        return {"role": "admin", "sid": sid, "token": row["token"]}
+        return {"role": "admin", "sid": sid}
 
     def send_cookie(self, name: str, value: str, *, max_age: int, path: str = "/") -> None:
         self.send_header(
@@ -1038,15 +1052,17 @@ class AccountHandler(BaseHTTPRequestHandler):
             return
         self.not_found()
 
-    def create_admin_session(self, token: str) -> str:
+    def create_admin_session(self) -> str:
         sid = b64url(secrets.token_bytes(32))
         expires_ts = int(time.time()) + 3600 * 8
         expires_at = dt.datetime.fromtimestamp(expires_ts, dt.timezone.utc).replace(microsecond=0).isoformat()
         with db() as conn:
             conn.execute("DELETE FROM admin_sessions WHERE expires_at < ?", (iso_now(),))
+            # The Marzban service token is fetched per-request (marzban_admin_token),
+            # so the session row keeps no upstream token.
             conn.execute(
                 "INSERT INTO admin_sessions(session_hash, token, created_at, expires_at) VALUES (?, ?, ?, ?)",
-                (session_hash(sid), token, iso_now(), expires_at),
+                (session_hash(sid), "", iso_now(), expires_at),
             )
         return sign_payload({"role": "admin", "sid": sid, "exp": expires_ts})
 
@@ -1059,17 +1075,17 @@ class AccountHandler(BaseHTTPRequestHandler):
 
     def api_admin_login(self) -> None:
         data = self.json_body()
-        try:
-            token = marzban_login(str(data.get("username") or ""), str(data.get("password") or ""))
-        except Exception:
-            self.json(401, {"status": "failed", "message": "Invalid Marzban admin credentials."})
+        username = str(data.get("username") or "")
+        password = str(data.get("password") or "")
+        if not admin_credentials_ok(username, password):
+            self.json(401, {"status": "failed", "message": "Invalid admin credentials."})
             return
 
         raw = json.dumps({"status": "ok"}, separators=(",", ":")).encode("utf-8")
         self.send_response(200)
         self.send_header("Content-Type", "application/json; charset=utf-8")
         self.send_header("Content-Length", str(len(raw)))
-        self.send_cookie(ADMIN_COOKIE, self.create_admin_session(token), max_age=3600 * 8, path="/api/account/admin")
+        self.send_cookie(ADMIN_COOKIE, self.create_admin_session(), max_age=3600 * 8, path="/api/account/admin")
         self.end_headers()
         self.wfile.write(raw)
 
@@ -1092,7 +1108,7 @@ class AccountHandler(BaseHTTPRequestHandler):
         if not sess:
             return
         try:
-            users = marzban_users(str(sess["token"]))
+            users = marzban_users(marzban_admin_token())
         except Exception:
             self.json(502, {"status": "marzban_unavailable", "users": []})
             return
@@ -1165,7 +1181,7 @@ class AccountHandler(BaseHTTPRequestHandler):
             self.json(400, {"status": "failed", "message": "Invalid username."})
             return
         try:
-            user = marzban_user(str(sess["token"]), username)
+            user = marzban_user(marzban_admin_token(), username)
         except Exception:
             self.json(502, {"status": "failed", "message": "Marzban user could not be loaded."})
             return
@@ -1247,7 +1263,7 @@ class AccountHandler(BaseHTTPRequestHandler):
             ).fetchall()
 
         try:
-            users = marzban_users(str(sess["token"]))
+            users = marzban_users(marzban_admin_token())
         except urllib.error.HTTPError as exc:
             if exc.code in {401, 403}:
                 self.redirect("/invites/", cookies_to_clear=[(ADMIN_COOKIE, "/invites")])
@@ -1369,14 +1385,12 @@ document.addEventListener("click", function (event) {{
 
     def admin_login(self) -> None:
         data = self.form()
-        try:
-            token = marzban_login(data.get("username", ""), data.get("password", ""))
-        except Exception:
-            self.html(401, self.admin_login_form("Invalid Marzban admin credentials."))
+        if not admin_credentials_ok(data.get("username", ""), data.get("password", "")):
+            self.html(401, self.admin_login_form("Invalid admin credentials."))
             return
         self.send_response(303)
         self.send_header("Location", "/invites/")
-        self.send_cookie(ADMIN_COOKIE, self.create_admin_session(token), max_age=3600 * 8, path="/invites")
+        self.send_cookie(ADMIN_COOKIE, self.create_admin_session(), max_age=3600 * 8, path="/invites")
         self.end_headers()
 
     def admin_logout(self) -> None:
@@ -1396,7 +1410,7 @@ document.addEventListener("click", function (event) {{
             self.redirect("/invites/")
             return
         try:
-            user = marzban_user(str(sess["token"]), username)
+            user = marzban_user(marzban_admin_token(), username)
         except urllib.error.HTTPError:
             self.redirect("/invites/")
             return

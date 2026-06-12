@@ -214,40 +214,51 @@ else
   log_warn "No saved subscription URL file found in $BACKUP_DIR; run deploy.sh wizard after first deploy"
 fi
 
-# -- ADMIN_DOMAIN login -------------------------------------------------------
-# The admin vhost must be publicly reachable. Marzban owns dashboard auth.
+# -- ADMIN_DOMAIN management app ----------------------------------------------
+# admin.ruyin.ai serves the umbra-admin management app at the root (built-in
+# credential login + invite/subscription block). Marzban keeps /dashboard/ and
+# its API; Vault is an external jump.
 log_step "$ADMIN_DOMAIN admin..."
-check_http "$ADMIN_DOMAIN invite console" "https://$ADMIN_DOMAIN/invites"
+check_http_body_contains "$ADMIN_DOMAIN admin app home" "https://$ADMIN_DOMAIN/" "Ruyin Admin"
 
 admin_root_headers="$(mktemp)"
 ADMIN_ROOT_CODE=$(curl -sk --max-time 10 -D "$admin_root_headers" -o /dev/null -w "%{http_code}" "https://$ADMIN_DOMAIN/" || true)
 if grep -Eiq '^location: .*:8443(/|[[:space:]]|$)' "$admin_root_headers"; then
   log_fail "$ADMIN_DOMAIN root redirect exposes internal port 8443"
   (( ++FAIL ))
-elif [[ "$ADMIN_ROOT_CODE" =~ ^(301|302|307|308)$ ]] && grep -Eiq '^location: (https://'"$ADMIN_DOMAIN"')?/dashboard/?[[:space:]]*$' "$admin_root_headers"; then
-  log_ok "$ADMIN_DOMAIN root redirects to dashboard ($ADMIN_ROOT_CODE)"
+elif [[ "$ADMIN_ROOT_CODE" == "200" ]]; then
+  log_ok "$ADMIN_DOMAIN root serves the admin app ($ADMIN_ROOT_CODE)"
   (( ++PASS ))
 else
-  log_fail "$ADMIN_DOMAIN root does not redirect to dashboard (got $ADMIN_ROOT_CODE)"
+  log_fail "$ADMIN_DOMAIN root does not serve the admin app (got $ADMIN_ROOT_CODE)"
   (( ++FAIL ))
 fi
 rm -f "$admin_root_headers"
 
-ADMIN_CODE=$(curl -sk --max-time 10 -o /dev/null -w "%{http_code}" "https://$ADMIN_DOMAIN/dashboard/" || echo "000")
-if [[ "$ADMIN_CODE" =~ ^(200|301|302|307|308|401)$ ]]; then
-  log_ok "$ADMIN_DOMAIN login reachable ($ADMIN_CODE)"
+ADMIN_LOGIN_CODE=$(curl -sk --max-time 10 -o /dev/null -w "%{http_code}" -X POST -H "Content-Type: application/json" -d '{"username":"","password":""}' "https://$ADMIN_DOMAIN/api/account/admin/invites" || echo "000")
+if [[ "$ADMIN_LOGIN_CODE" == "401" ]]; then
+  log_ok "$ADMIN_DOMAIN admin API requires login ($ADMIN_LOGIN_CODE)"
   (( ++PASS ))
 else
-  log_fail "$ADMIN_DOMAIN login not reachable (got $ADMIN_CODE)"
+  log_fail "$ADMIN_DOMAIN admin API does not require login (got $ADMIN_LOGIN_CODE)"
+  (( ++FAIL ))
+fi
+
+ADMIN_DASH_CODE=$(curl -sk --max-time 10 -o /dev/null -w "%{http_code}" "https://$ADMIN_DOMAIN/dashboard/" || echo "000")
+if [[ "$ADMIN_DASH_CODE" =~ ^(200|301|302|307|308|401)$ ]]; then
+  log_ok "$ADMIN_DOMAIN Marzban dashboard reachable ($ADMIN_DASH_CODE)"
+  (( ++PASS ))
+else
+  log_fail "$ADMIN_DOMAIN Marzban dashboard not reachable (got $ADMIN_DASH_CODE)"
   (( ++FAIL ))
 fi
 
 ADMIN_API_CODE=$(curl -sk --max-time 10 -o /dev/null -w "%{http_code}" "https://$ADMIN_DOMAIN/api/admin" || echo "000")
 if [[ "$ADMIN_API_CODE" =~ ^(401|403)$ ]]; then
-  log_ok "$ADMIN_DOMAIN API reaches Marzban auth ($ADMIN_API_CODE)"
+  log_ok "$ADMIN_DOMAIN Marzban API reachable ($ADMIN_API_CODE)"
   (( ++PASS ))
 else
-  log_fail "$ADMIN_DOMAIN API does not reach Marzban auth (got $ADMIN_API_CODE)"
+  log_fail "$ADMIN_DOMAIN Marzban API not reachable (got $ADMIN_API_CODE)"
   (( ++FAIL ))
 fi
 

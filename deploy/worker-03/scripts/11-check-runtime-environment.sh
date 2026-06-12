@@ -60,6 +60,7 @@ REQUIRED_VARS=(
   MARZBAN_SSL_CA_TYPE SUBSCRIPTION_URL_PREFIX
   SUB_PROFILE_PREFIX SUB_PROFILE_TITLE
   ACCOUNT_SESSION_SECRET ACCOUNT_INVITE_SECRET ACCOUNT_INVITE_TTL_DAYS
+  ACCOUNT_ADMIN_USERNAME ACCOUNT_ADMIN_PASSWORD
   JWT_SECRET AUTH_BFF_URL AUTH_INTERNAL_TOKEN VXTURE_LOGIN_URL
   VAULTWARDEN_ADMIN_TOKEN
   CERTBOT_EMAIL CERTBOT_STAGING CERTBOT_SKIP
@@ -130,6 +131,13 @@ if [[ "${#account_invite_secret}" -ge 32 ]]; then
   log_ok "ACCOUNT_INVITE_SECRET length is valid"
 else
   fail "ACCOUNT_INVITE_SECRET must be at least 32 characters"
+fi
+
+account_admin_password="${ACCOUNT_ADMIN_PASSWORD:-}"
+if [[ "${#account_admin_password}" -ge 12 ]]; then
+  log_ok "ACCOUNT_ADMIN_PASSWORD length is valid"
+else
+  fail "ACCOUNT_ADMIN_PASSWORD must be at least 12 characters"
 fi
 
 jwt_secret="${JWT_SECRET:-}"
