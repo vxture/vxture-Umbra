@@ -46,9 +46,12 @@ ACCOUNT_ADMIN_PASSWORD = os.environ.get("ACCOUNT_ADMIN_PASSWORD", "")
 PROFILE_PREFIX = (os.environ.get("SUB_PROFILE_PREFIX", "Ruyin").strip() or "Ruyin")
 VXTURE_JWT_SECRET = os.environ.get("VXTURE_JWT_SECRET", os.environ.get("JWT_SECRET", ""))
 VXTURE_COOKIE_ACCESS = os.environ.get("VXTURE_COOKIE_ACCESS", "ry_access_token")
-VXTURE_LOGIN_URL = os.environ.get("VXTURE_LOGIN_URL", "https://console.vxture.com/zh-CN/signin")
+VXTURE_LOGIN_URL = os.environ.get("VXTURE_LOGIN_URL", "https://accounts.vxture.com/signin")
 VXTURE_SSO_URL = os.environ.get("VXTURE_SSO_URL", "")
 PUBLIC_ACCOUNT_URL = os.environ.get("PUBLIC_ACCOUNT_URL", f"https://{os.environ.get('CONSOLE_DOMAIN', 'console.ruyin.ai')}").rstrip("/")
+# Parent domain the session cookie is shared on (one login across ruyin.ai +
+# every *.ruyin.ai app). Logout must clear the cookie on this same domain.
+RUYIN_COOKIE_DOMAIN = os.environ.get("RUYIN_COOKIE_DOMAIN", "").strip()
 
 USER_RE = re.compile(r"^[A-Za-z][A-Za-z0-9_-]{1,63}$")
 INVITE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
@@ -900,11 +903,11 @@ class AccountHandler(BaseHTTPRequestHandler):
             f"{name}={value}; Max-Age={max_age}; Path={path}; HttpOnly; Secure; SameSite=Lax",
         )
 
-    def clear_cookie(self, name: str, *, path: str = "/") -> None:
-        self.send_header(
-            "Set-Cookie",
-            f"{name}=; Max-Age=0; Path={path}; HttpOnly; Secure; SameSite=Lax",
-        )
+    def clear_cookie(self, name: str, *, path: str = "/", domain: str = "") -> None:
+        attrs = f"{name}=; Max-Age=0; Path={path}; HttpOnly; Secure; SameSite=Lax"
+        if domain:
+            attrs += f"; Domain={domain}"
+        self.send_header("Set-Cookie", attrs)
 
     def html(self, status: int, content: bytes, extra_headers: dict[str, str] | None = None) -> None:
         self.send_response(status)
@@ -969,15 +972,18 @@ class AccountHandler(BaseHTTPRequestHandler):
         )
 
     def api_logout(self) -> None:
-        # Clear the Vxture SSO access cookie this portal reads. The cookie may
-        # also be set on a shared parent domain by the SSO upstream; clearing it
-        # here removes the console-domain copy. The client then reloads into the
-        # anonymous SSO sign-in view.
+        # Clear the Vxture SSO access cookie this portal reads. The session is
+        # shared across ruyin.ai + every *.ruyin.ai app via a parent-domain
+        # cookie (RUYIN_COOKIE_DOMAIN), so clear it on that domain. Also clear a
+        # legacy host-only copy so older sessions sign out cleanly. The client
+        # then reloads, which (being anonymous) auto-redirects to SSO.
         body = b'{"status":"ok"}'
         self.send_response(200)
         self.send_header("Content-Type", "application/json; charset=utf-8")
         self.send_header("Cache-Control", "no-store")
         self.clear_cookie(VXTURE_COOKIE_ACCESS, path="/")
+        if RUYIN_COOKIE_DOMAIN:
+            self.clear_cookie(VXTURE_COOKIE_ACCESS, path="/", domain=RUYIN_COOKIE_DOMAIN)
         self.send_header("Content-Length", str(len(body)))
         self.end_headers()
         self.wfile.write(body)

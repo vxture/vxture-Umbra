@@ -21,5 +21,5 @@ export function ssoStartUrl(session: SessionPayload, invite?: string) {
   if (session.ssoUrl) {
     return invite ? `/auth/start?invite=${encodeURIComponent(invite)}` : "/auth/start";
   }
-  return session.loginUrl || "https://console.vxture.com/zh-CN/signin";
+  return session.loginUrl || "https://accounts.vxture.com/signin";
 }

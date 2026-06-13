@@ -1,4 +1,6 @@
-# ruyin.ai - Brand landing page
+# ruyin.ai - Brand landing page (also the unified front door: its header reads
+# the shared session and offers sign-in / workspace, so it proxies the account
+# API same-origin).
 server {
     listen 8443 ssl proxy_protocol;
     server_name {{ APEX_DOMAIN }};
@@ -7,6 +9,14 @@ server {
     ssl_certificate_key /etc/letsencrypt/live/{{ APEX_DOMAIN }}/privkey.pem;
     include /etc/nginx/snippets/ssl-params.conf;
     include /etc/nginx/snippets/security-headers.conf;
+
+    resolver 127.0.0.11 valid=30s ipv6=off;
+    set $account_upstream "umbra-account:3281";
+
+    location ^~ /api/account/ {
+        proxy_pass http://$account_upstream;
+        include /etc/nginx/snippets/proxy-headers.conf;
+    }
 
     location / {
         proxy_pass http://umbra-website:3210;

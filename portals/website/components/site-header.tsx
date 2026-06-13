@@ -6,21 +6,59 @@ import {
   ShellBrand,
   ShellLocaleSwitcher,
   ShellThemeToggle,
+  ShellUserMenu,
   useTheme,
 } from "@vxture/design-system";
 import type { Locale } from "@vxture/shared";
 import { ruyinBrand, markSrc } from "@/lib/brand";
 import { useLocale } from "@/lib/locale-provider";
+import { logout, useSession } from "@/lib/session";
 
-const HEADER_TEXT: Record<string, { register: string; login: string }> = {
-  "en-US": { register: "Sign up", login: "Log in" },
-  "zh-CN": { register: "注册", login: "登录" },
+const HEADER_TEXT: Record<string, {
+  register: string;
+  login: string;
+  workspace: string;
+  profile: string;
+  signout: string;
+  account: string;
+}> = {
+  "en-US": {
+    register: "Sign up",
+    login: "Log in",
+    workspace: "Workspace",
+    profile: "Personal info",
+    signout: "Sign out",
+    account: "Account menu",
+  },
+  "zh-CN": {
+    register: "注册",
+    login: "登录",
+    workspace: "工作台",
+    profile: "个人信息",
+    signout: "退出登录",
+    account: "账户菜单",
+  },
 };
+
+function initials(name: string): string {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return "?";
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+}
+
+/** All login entries route through the unified Vxture account center and come
+ *  back to this site (failure stays at the account center, never loops here). */
+function authStartUrl(hint: "login" | "signup"): string {
+  const returnTo = encodeURIComponent(ruyinBrand.siteUrl);
+  return `${ruyinBrand.consoleUrl}/auth/start?returnTo=${returnTo}&screen_hint=${hint}`;
+}
 
 export function SiteHeader() {
   const [isScrolled, setIsScrolled] = useState(false);
   const { theme, setTheme } = useTheme();
   const { locale, setLocale } = useLocale();
+  const session = useSession();
   const text = HEADER_TEXT[locale] ?? HEADER_TEXT["en-US"];
 
   useEffect(() => {
@@ -29,6 +67,9 @@ export function SiteHeader() {
     window.addEventListener("scroll", update);
     return () => window.removeEventListener("scroll", update);
   }, []);
+
+  const user = session.user;
+  const displayName = user?.displayName || user?.username || user?.email || "";
 
   return (
     <header
@@ -58,12 +99,44 @@ export function SiteHeader() {
             />
           </div>
 
-          <Button variant="ghost" asChild>
-            <a href={ruyinBrand.registerUrl}>{text.register}</a>
-          </Button>
-          <Button asChild>
-            <a href={ruyinBrand.loginUrl}>{text.login}</a>
-          </Button>
+          {session.status === "loading" ? null : session.status === "active" && user ? (
+            <>
+              <Button asChild>
+                <a href={ruyinBrand.consoleUrl}>{text.workspace}</a>
+              </Button>
+              <ShellUserMenu
+                openLabel={text.account}
+                user={{
+                  displayName,
+                  uniqueLine: user.email,
+                  avatarSrc: user.avatarUrl,
+                  avatarAlt: displayName,
+                  avatarFallback: initials(displayName),
+                  badges: user.role ? [{ key: "role", label: user.role }] : undefined,
+                }}
+                actions={[
+                  {
+                    key: "profile",
+                    label: text.profile,
+                    icon: "user",
+                    onClick: () => {
+                      window.location.href = `${ruyinBrand.consoleUrl}/account`;
+                    },
+                  },
+                  { key: "logout", label: text.signout, icon: "sign-out", onClick: logout },
+                ]}
+              />
+            </>
+          ) : (
+            <>
+              <Button variant="ghost" asChild>
+                <a href={authStartUrl("signup")}>{text.register}</a>
+              </Button>
+              <Button asChild>
+                <a href={authStartUrl("login")}>{text.login}</a>
+              </Button>
+            </>
+          )}
         </div>
       </div>
     </header>
