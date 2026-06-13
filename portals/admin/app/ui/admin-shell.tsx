@@ -22,23 +22,23 @@ import { markSrc, ruyinBrand } from "../../lib/brand";
  * carry for their many locale-aware components.
  */
 function useAdminLocale() {
-  const [locale, setLocaleState] = useState<Locale>(DEFAULT_LOCALE);
+  const [locale, setLocale] = useState<Locale>(DEFAULT_LOCALE);
 
   useEffect(() => {
     const stored = localStorage.getItem(LOCALE_CONSTANTS.STORAGE_KEY) as Locale | null;
     if (stored && SUPPORTED_LOCALES.includes(stored)) {
-      setLocaleState(stored);
+      setLocale(stored);
       document.documentElement.lang = stored;
     }
   }, []);
 
-  const setLocale = (next: Locale) => {
-    setLocaleState(next);
+  const changeLocale = (next: Locale) => {
+    setLocale(next);
     localStorage.setItem(LOCALE_CONSTANTS.STORAGE_KEY, next);
     document.documentElement.lang = next;
   };
 
-  return { locale, setLocale };
+  return { locale, changeLocale };
 }
 
 /**
@@ -76,7 +76,7 @@ export function AdminShell({
   onSignOut?: () => void | Promise<void>;
 }) {
   const { theme, setTheme } = useTheme();
-  const { locale, setLocale } = useAdminLocale();
+  const { locale, changeLocale } = useAdminLocale();
   const [isScrolled, setIsScrolled] = useState(false);
 
   useEffect(() => {
@@ -107,7 +107,7 @@ export function AdminShell({
               <ShellLocaleSwitcher
                 currentLocale={locale as Locale}
                 buttonLabel="Language"
-                onLocaleChange={(next) => setLocale(next)}
+                onLocaleChange={(next) => changeLocale(next)}
               />
             </div>
             {authed ? (
