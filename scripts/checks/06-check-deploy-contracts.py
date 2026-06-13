@@ -866,7 +866,7 @@ CHECKS: list[tuple[str, Path, list[str]]] = [
         [
             "inviteUrl",
             "Invite link",
-            "Subscription / Invite link",
+            "Subscription URL",
             "Copy link",
             "Copy code",
         ],
