@@ -22,10 +22,10 @@ export const ruyinBrand = {
   /** Product wordmark shown beside the studio name. */
   productDomain: "ruyin.ai",
   studioUrl: "https://vxture.com",
-  /** Ruyin account console (self-service portal). */
+  /** Public marketing front door (this site); used as the post-login returnTo. */
+  siteUrl: "https://ruyin.ai",
+  /** Ruyin account console (self-service portal / the workspace app). */
   consoleUrl: "https://console.ruyin.ai",
-  loginUrl: "https://console.ruyin.ai/login",
-  registerUrl: "https://console.ruyin.ai/register",
   copyright: "© 2026 vxture studio, inc. All rights reserved.",
   legalLinks: [
     ["Terms of Service", "https://vxture.com/legal/terms"],

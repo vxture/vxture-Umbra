@@ -112,6 +112,7 @@ services:
       VXTURE_LOGIN_URL: "${VXTURE_LOGIN_URL}"
       VXTURE_SSO_URL: "${VXTURE_SSO_URL:-}"
       PUBLIC_ACCOUNT_URL: "https://${CONSOLE_DOMAIN}"
+      RUYIN_COOKIE_DOMAIN: "${RUYIN_COOKIE_DOMAIN:-}"
     volumes:
       - ${DATA_DIR}/account:/var/lib/umbra-account
     networks:
@@ -136,6 +137,10 @@ services:
       AUTH_INTERNAL_TOKEN: "${AUTH_INTERNAL_TOKEN}"
       VXTURE_SSO_URL: "${VXTURE_SSO_URL:-}"
       NEXT_PUBLIC_RUYIN_ACCOUNT_URL: "https://${CONSOLE_DOMAIN}"
+      # Session shared across ruyin.ai + every *.ruyin.ai app: the callback
+      # rewrites the access cookie onto this parent domain (one login, whole site).
+      RUYIN_COOKIE_DOMAIN: "${RUYIN_COOKIE_DOMAIN:-}"
+      VXTURE_COOKIE_ACCESS: "${VXTURE_COOKIE_ACCESS:-ry_access_token}"
     networks:
       - umbra-net
     healthcheck:
