@@ -227,10 +227,16 @@ a {
   color: var(--vx-color-text-inverse);
 }
 
-.admin-login-mark {
-  width: 48px;
-  height: 48px;
-  object-fit: contain;
+/* Dark mode: the bright brand gradient is too loud against the dark page. Use a
+   muted, faintly brand-tinted dark surface that still reads as a distinct panel
+   beside the form, with light foreground text. */
+.dark .admin-login-aside {
+  background: linear-gradient(
+    160deg,
+    color-mix(in srgb, var(--vx-color-primary) 16%, var(--vx-color-surface-muted)) 0%,
+    var(--vx-color-surface-muted) 100%
+  );
+  color: var(--vx-color-text-primary);
 }
 
 .admin-login-aside-text {

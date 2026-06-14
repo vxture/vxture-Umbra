@@ -34,6 +34,13 @@ server {
         include /etc/nginx/snippets/proxy-headers.conf;
     }
 
+    # Admin app static files (public/): brand symbols, etc. Without this they
+    # fall through to the Marzban catch-all below and 404.
+    location ^~ /assets/ {
+        proxy_pass http://$admin_web_upstream;
+        include /etc/nginx/snippets/proxy-headers.conf;
+    }
+
     # Account API: built-in admin login + invite/subscription endpoints.
     location ^~ /api/account/ {
         proxy_pass http://$account_upstream;
