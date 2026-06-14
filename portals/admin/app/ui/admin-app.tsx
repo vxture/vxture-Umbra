@@ -10,12 +10,11 @@ import {
   MetricGrid,
   Skeleton,
   StatusBadge,
-  useTheme,
   useToast,
 } from "@vxture/design-system";
 import type { IconName, MetricGridItem, StatusBadgeTone } from "@vxture/design-system";
 import { AdminShell } from "./admin-shell";
-import { markSrc, ruyinBrand } from "../../lib/brand";
+import { ruyinBrand } from "../../lib/brand";
 import type { AdminInvitesPayload, AdminUserRow } from "./types";
 
 /**
@@ -107,7 +106,6 @@ export function AdminApp() {
   const [busy, setBusy] = useState("");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const { theme } = useTheme();
   const { toast } = useToast();
 
   async function refresh() {
@@ -220,7 +218,6 @@ export function AdminApp() {
         <section className="admin-login">
           <div className="admin-login-card">
             <aside className="admin-login-aside">
-              <img className="admin-login-mark" src={markSrc(theme)} alt="" />
               <div className="admin-login-aside-text">
                 <p className="admin-login-eyebrow">Management console</p>
                 <h2 className="admin-login-aside-title">{ruyinBrand.productName}</h2>
