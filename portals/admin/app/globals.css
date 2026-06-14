@@ -321,6 +321,164 @@ a {
   gap: var(--vx-space-lg);
 }
 
+/* Content-area heading (DS PageHeader sizes its title from shell-scoped tokens
+   this website-style chrome lacks, so we mirror the console SectionHeading on
+   root-level DS tokens): 24px brand icon, bold brand title, muted description. */
+.section-heading {
+  display: grid;
+  gap: var(--vx-space-sm);
+}
+
+.section-heading-row {
+  display: flex;
+  align-items: center;
+  gap: var(--vx-space-sm);
+}
+
+.section-heading-icon {
+  flex: none;
+  color: var(--vx-color-primary);
+}
+
+.section-heading-title {
+  margin: 0;
+  color: var(--vx-color-primary);
+  font-weight: 700;
+  font-size: var(--vx-typography-heading-3-size);
+  line-height: 1.24;
+}
+
+.section-heading-badge {
+  display: inline-flex;
+  align-items: center;
+}
+
+.section-heading-actions {
+  margin-left: auto;
+}
+
+.section-heading-desc {
+  margin: 0;
+  max-width: 72ch;
+  color: var(--vx-color-text-secondary);
+  font-size: var(--vx-typography-body-size);
+  line-height: 1.5;
+}
+
+/* ===== Content-area list: one card per Marzban user ===== */
+
+.invite-list {
+  display: grid;
+  gap: var(--vx-space-md);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.invite-card {
+  display: grid;
+  gap: var(--vx-space-md);
+  border: 1px solid var(--vx-color-border);
+  border-radius: var(--vx-radius-xl);
+  background: var(--vx-color-surface);
+  padding: var(--vx-space-lg);
+  transition: border-color var(--vx-duration-fast) var(--vx-ease-standard),
+    box-shadow var(--vx-duration-fast) var(--vx-ease-standard);
+}
+
+.invite-card:hover {
+  border-color: color-mix(in srgb, var(--vx-color-primary) 32%, var(--vx-color-border));
+  box-shadow: var(--vx-shadow-sm);
+}
+
+/* Identity + status badges. Wraps to two rows when the badges run out of room. */
+.invite-card-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--vx-space-sm) var(--vx-space-lg);
+}
+
+.invite-identity {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: var(--vx-space-xs) var(--vx-space-sm);
+  min-width: 0;
+}
+
+.invite-code {
+  font-family: var(--vx-font-mono, ui-monospace, SFMono-Regular, Consolas, monospace);
+  font-size: var(--vx-typography-body-lg-size);
+  font-weight: 700;
+  color: var(--vx-color-text-primary);
+}
+
+.invite-name {
+  color: var(--vx-color-text-muted);
+  font-size: var(--vx-typography-body-sm-size);
+}
+
+.invite-badges {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--vx-space-sm);
+}
+
+/* Compact metric strip: label over value, auto-fitting columns. */
+.invite-meta {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: var(--vx-space-sm) var(--vx-space-lg);
+  margin: 0;
+  padding: var(--vx-space-md) 0;
+  border-top: 1px solid var(--vx-color-border);
+  border-bottom: 1px solid var(--vx-color-border);
+}
+
+.invite-meta-item {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.invite-meta-item dt {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--vx-color-text-muted);
+}
+
+.invite-meta-item dd {
+  margin: 0;
+  font-size: var(--vx-typography-body-sm-size);
+  color: var(--vx-color-text-primary);
+  overflow-wrap: anywhere;
+}
+
+.invite-link {
+  display: grid;
+  gap: var(--vx-space-xs);
+}
+
+.invite-link-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--vx-color-text-muted);
+}
+
+.invite-card-foot {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--vx-space-sm);
+  align-items: center;
+}
+
 .actions {
   display: flex;
   flex-wrap: wrap;

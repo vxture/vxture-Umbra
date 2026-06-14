@@ -1,24 +1,55 @@
 "use client";
 
-import type { FormEvent } from "react";
+import type { FormEvent, ReactNode } from "react";
 import { useEffect, useState } from "react";
 import {
   Button,
-  DataTable,
   EmptyState,
   Icon,
   Input,
   MetricGrid,
-  PageHeader,
   Skeleton,
   StatusBadge,
   useTheme,
   useToast,
 } from "@vxture/design-system";
-import type { DataTableColumn, IconName, MetricGridItem, StatusBadgeTone } from "@vxture/design-system";
+import type { IconName, MetricGridItem, StatusBadgeTone } from "@vxture/design-system";
 import { AdminShell } from "./admin-shell";
 import { markSrc, ruyinBrand } from "../../lib/brand";
 import type { AdminInvitesPayload, AdminUserRow } from "./types";
+
+/**
+ * Content-area section heading. The DS PageHeader sizes its title from
+ * shell-scoped tokens (--vx-platform-page-title-size) that this portal's
+ * website-style chrome does not provide, so the title would collapse to a bare
+ * default. This mirrors the console's SectionHeading, built on root-level DS
+ * typography/color tokens.
+ */
+function SectionHeading({
+  icon,
+  title,
+  description,
+  badge,
+  actions,
+}: {
+  icon: IconName;
+  title: string;
+  description?: string;
+  badge?: ReactNode;
+  actions?: ReactNode;
+}) {
+  return (
+    <div className="section-heading">
+      <div className="section-heading-row">
+        <Icon name={icon} size={24} className="section-heading-icon" />
+        <h1 className="section-heading-title">{title}</h1>
+        {badge ? <span className="section-heading-badge">{badge}</span> : null}
+        {actions ? <div className="section-heading-actions">{actions}</div> : null}
+      </div>
+      {description ? <p className="section-heading-desc">{description}</p> : null}
+    </div>
+  );
+}
 
 const LOGIN_FEATURES: { icon: IconName; label: string }[] = [
   { icon: "users", label: "Issue invites and bind subscriber accounts" },
@@ -55,6 +86,15 @@ function bindingLabel(row: AdminUserRow): string {
   if (row.bindingState === "bound") return `Bound: ${row.displayName ?? row.username}`;
   if (row.bindingState === "invite_pending") return "Invite pending";
   return "Pending binding";
+}
+
+/** Tone for the upstream Marzban account status (active / limited / expired ...). */
+function statusTone(status: string): StatusBadgeTone {
+  const value = status.toLowerCase();
+  if (value === "active") return "success";
+  if (value === "limited" || value === "expired") return "warning";
+  if (value === "disabled") return "danger";
+  return "neutral";
 }
 
 /**
@@ -242,9 +282,9 @@ export function AdminApp() {
     return (
       <AdminShell active="invites" authed onSignOut={logout}>
         <div className="page-stack">
-          <PageHeader
+          <SectionHeading
             icon="warning"
-            title="Invite Console Unavailable"
+            title="Invite console unavailable"
             description="Marzban could not be reached. Try again after services recover."
           />
           <div className="actions">
@@ -265,113 +305,140 @@ export function AdminApp() {
     { label: "Pending binding", value: data.summary.pendingBinding },
   ];
 
-  const columns: DataTableColumn<AdminUserRow>[] = [
-    { id: "username", header: "User code", cell: (row) => row.username },
-    { id: "status", header: "Status", cell: (row) => row.status },
-    { id: "used", header: "Used", cell: (row) => row.usedText },
-    { id: "total", header: "Total", cell: (row) => row.dataLimitText },
-    { id: "expire", header: "Expire", cell: (row) => row.expireText },
-    { id: "online", header: "Last online", cell: (row) => row.onlineText },
-    {
-      id: "binding",
-      header: "Binding",
-      cell: (row) => <StatusBadge tone={BINDING_TONE[row.bindingState]}>{bindingLabel(row)}</StatusBadge>,
-    },
-    {
-      id: "link",
-      header: "Subscription / Invite link",
-      cell: (row) =>
-        row.subscriptionUrl || row.inviteUrl || row.inviteCode ? (
-          <code className="url-box">{row.subscriptionUrl || row.inviteUrl || row.inviteCode}</code>
-        ) : (
-          <span className="muted">-</span>
-        ),
-    },
-    {
-      id: "actions",
-      header: "Actions",
-      align: "right",
-      cell: (row) => (
-        <div className="actions">
-          {row.subscriptionUrl ? (
-            <>
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={() => copy(row.subscriptionUrl || "", "Subscription URL copied.")}
-              >
-                <Icon name="copy" size="sm" />
-                Copy
-              </Button>
-              <Button
-                variant="destructive"
-                size="sm"
-                disabled={busy === row.username}
-                onClick={() => reset(row.username)}
-              >
-                <Icon name="clock-counter-clockwise" size="sm" />
-                Reset
-              </Button>
-            </>
-          ) : row.inviteCode ? (
-            <>
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={() => copy(row.inviteUrl || row.inviteCode || "", "Invite link copied.")}
-              >
-                <Icon name="copy" size="sm" />
-                Copy link
-              </Button>
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={() => copy(row.inviteCode || "", "Invite code copied.")}
-              >
-                <Icon name="copy" size="sm" />
-                Copy code
-              </Button>
-              <Button
-                variant="secondary"
-                size="sm"
-                disabled={busy === String(row.inviteId)}
-                onClick={() => revoke(row.inviteId)}
-              >
-                <Icon name="trash" size="sm" />
-                Revoke
-              </Button>
-            </>
-          ) : (
-            <Button size="sm" disabled={busy === row.username} onClick={() => generate(row.username)}>
-              <Icon name="plus" size="sm" />
-              Generate
-            </Button>
-          )}
-        </div>
-      ),
-    },
-  ];
+  function renderActions(row: AdminUserRow): ReactNode {
+    if (row.subscriptionUrl) {
+      return (
+        <>
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => copy(row.subscriptionUrl || "", "Subscription URL copied.")}
+          >
+            <Icon name="copy" size="sm" />
+            Copy URL
+          </Button>
+          <Button
+            variant="destructive"
+            size="sm"
+            disabled={busy === row.username}
+            onClick={() => reset(row.username)}
+          >
+            <Icon name="clock-counter-clockwise" size="sm" />
+            Reset
+          </Button>
+        </>
+      );
+    }
+    if (row.inviteCode) {
+      return (
+        <>
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => copy(row.inviteUrl || row.inviteCode || "", "Invite link copied.")}
+          >
+            <Icon name="copy" size="sm" />
+            Copy link
+          </Button>
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => copy(row.inviteCode || "", "Invite code copied.")}
+          >
+            <Icon name="copy" size="sm" />
+            Copy code
+          </Button>
+          <Button
+            variant="secondary"
+            size="sm"
+            disabled={busy === String(row.inviteId)}
+            onClick={() => revoke(row.inviteId)}
+          >
+            <Icon name="trash" size="sm" />
+            Revoke
+          </Button>
+        </>
+      );
+    }
+    return (
+      <Button size="sm" disabled={busy === row.username} onClick={() => generate(row.username)}>
+        <Icon name="plus" size="sm" />
+        Generate invite
+      </Button>
+    );
+  }
 
   return (
     <AdminShell active="invites" authed onSignOut={logout}>
       <div className="page-stack">
-        <PageHeader
+        <SectionHeading
           icon="users"
-          title="Invites & Users"
+          title="Invites & users"
           description="Issue one-time VPN invites for Marzban users and manage bound subscriptions."
         />
         <MetricGrid items={metrics} />
-        <DataTable
-          columns={columns}
-          rows={data.users}
-          rowKey={(row) => row.username}
-          empty={
-            <EmptyState
-              title="No Marzban users"
-              description="Create users in the Marzban dashboard first, then generate invites here."
-            />
-          }
-        />
+
+        {data.users.length === 0 ? (
+          <EmptyState
+            title="No Marzban users"
+            description="Create users in the Marzban dashboard first, then generate invites here."
+          />
+        ) : (
+          <ul className="invite-list">
+            {data.users.map((row) => {
+              const link = row.subscriptionUrl || row.inviteUrl || row.inviteCode;
+              const linkLabel = row.subscriptionUrl
+                ? "Subscription URL"
+                : row.inviteUrl || row.inviteCode
+                  ? "Invite link"
+                  : null;
+              return (
+                <li key={row.username} className="invite-card">
+                  <div className="invite-card-head">
+                    <div className="invite-identity">
+                      <span className="invite-code">{row.username}</span>
+                      {row.displayName ? <span className="invite-name">{row.displayName}</span> : null}
+                    </div>
+                    <div className="invite-badges">
+                      <StatusBadge tone={statusTone(row.status)} dot>
+                        {row.status}
+                      </StatusBadge>
+                      <StatusBadge tone={BINDING_TONE[row.bindingState]}>{bindingLabel(row)}</StatusBadge>
+                    </div>
+                  </div>
+
+                  <dl className="invite-meta">
+                    <div className="invite-meta-item">
+                      <dt>Used</dt>
+                      <dd>{row.usedText}</dd>
+                    </div>
+                    <div className="invite-meta-item">
+                      <dt>Total</dt>
+                      <dd>{row.dataLimitText}</dd>
+                    </div>
+                    <div className="invite-meta-item">
+                      <dt>Expire</dt>
+                      <dd>{row.expireText}</dd>
+                    </div>
+                    <div className="invite-meta-item">
+                      <dt>Last online</dt>
+                      <dd>{row.onlineText}</dd>
+                    </div>
+                  </dl>
+
+                  {link && linkLabel ? (
+                    <div className="invite-link">
+                      <span className="invite-link-label">{linkLabel}</span>
+                      <code className="url-box">{link}</code>
+                    </div>
+                  ) : null}
+
+                  <div className="invite-card-foot">{renderActions(row)}</div>
+                </li>
+              );
+            })}
+          </ul>
+        )}
       </div>
     </AdminShell>
   );
