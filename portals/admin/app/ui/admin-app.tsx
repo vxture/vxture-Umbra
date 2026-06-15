@@ -7,12 +7,12 @@ import {
   EmptyState,
   Icon,
   Input,
-  MetricGrid,
+  MetricCard,
   Skeleton,
   StatusBadge,
   useToast,
 } from "@vxture/design-system";
-import type { IconName, MetricGridItem, StatusBadgeTone } from "@vxture/design-system";
+import type { IconName, StatusBadgeTone } from "@vxture/design-system";
 import type { Locale } from "@vxture/shared";
 import { AdminShell } from "./admin-shell";
 import { ruyinBrand } from "../../lib/brand";
@@ -236,6 +236,24 @@ const BINDING_TONE: Record<AdminUserRow["bindingState"], StatusBadgeTone> = {
   pending_binding: "neutral",
 };
 
+/**
+ * Relative "x days/hours ago" tag from an ISO timestamp, localized via
+ * Intl.RelativeTimeFormat. Returns null when there is no usable timestamp so
+ * the caller can fall back to the absolute string alone.
+ */
+function relativeOnline(iso: string | null, locale: Locale): string | null {
+  if (!iso) return null;
+  const then = Date.parse(iso);
+  if (Number.isNaN(then)) return null;
+  const diffSec = Math.round((then - Date.now()) / 1000);
+  const abs = Math.abs(diffSec);
+  const rtf = new Intl.RelativeTimeFormat(locale, { numeric: "auto" });
+  if (abs < 60) return rtf.format(Math.round(diffSec), "second");
+  if (abs < 3600) return rtf.format(Math.round(diffSec / 60), "minute");
+  if (abs < 86400) return rtf.format(Math.round(diffSec / 3600), "hour");
+  return rtf.format(Math.round(diffSec / 86400), "day");
+}
+
 /** Tone for the upstream Marzban account status (active / limited / expired ...). */
 function statusTone(status: string): StatusBadgeTone {
   const value = status.toLowerCase();
@@ -443,66 +461,51 @@ export function AdminApp() {
     );
   }
 
-  const metrics: MetricGridItem[] = [
-    { label: m.metrics.users, value: data.summary.users },
-    { label: m.metrics.bound, value: data.summary.bound, tone: "success" },
-    { label: m.metrics.invitePending, value: data.summary.invitePending, tone: "warning" },
-    { label: m.metrics.pendingBinding, value: data.summary.pendingBinding },
+  const metrics: { key: string; label: string; value: number; icon: IconName; tone: string }[] = [
+    { key: "users", label: m.metrics.users, value: data.summary.users, icon: "users", tone: "neutral" },
+    { key: "bound", label: m.metrics.bound, value: data.summary.bound, icon: "shield-check", tone: "success" },
+    {
+      key: "invitePending",
+      label: m.metrics.invitePending,
+      value: data.summary.invitePending,
+      icon: "clock-counter-clockwise",
+      tone: "warning",
+    },
+    {
+      key: "pendingBinding",
+      label: m.metrics.pendingBinding,
+      value: data.summary.pendingBinding,
+      icon: "user-switch",
+      tone: "neutral",
+    },
   ];
 
+  // Primary action only; copy lives inline next to each value (see card body).
   function renderActions(row: AdminUserRow): ReactNode {
     if (row.subscriptionUrl) {
       return (
-        <>
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={() => copy(row.subscriptionUrl || "", m.toastSubCopied)}
-          >
-            <Icon name="copy" size="sm" />
-            {m.copyUrl}
-          </Button>
-          <Button
-            variant="destructive"
-            size="sm"
-            disabled={busy === row.username}
-            onClick={() => reset(row.username)}
-          >
-            <Icon name="clock-counter-clockwise" size="sm" />
-            {m.reset}
-          </Button>
-        </>
+        <Button
+          variant="destructive"
+          size="sm"
+          disabled={busy === row.username}
+          onClick={() => reset(row.username)}
+        >
+          <Icon name="clock-counter-clockwise" size="sm" />
+          {m.reset}
+        </Button>
       );
     }
     if (row.inviteCode) {
       return (
-        <>
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={() => copy(row.inviteUrl || row.inviteCode || "", m.toastLinkCopied)}
-          >
-            <Icon name="copy" size="sm" />
-            {m.copyLink}
-          </Button>
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={() => copy(row.inviteCode || "", m.toastCodeCopied)}
-          >
-            <Icon name="copy" size="sm" />
-            {m.copyCode}
-          </Button>
-          <Button
-            variant="secondary"
-            size="sm"
-            disabled={busy === String(row.inviteId)}
-            onClick={() => revoke(row.inviteId)}
-          >
-            <Icon name="trash" size="sm" />
-            {m.revoke}
-          </Button>
-        </>
+        <Button
+          variant="secondary"
+          size="sm"
+          disabled={busy === String(row.inviteId)}
+          onClick={() => revoke(row.inviteId)}
+        >
+          <Icon name="trash" size="sm" />
+          {m.revoke}
+        </Button>
       );
     }
     return (
@@ -510,6 +513,31 @@ export function AdminApp() {
         <Icon name="plus" size="sm" />
         {m.generate}
       </Button>
+    );
+  }
+
+  /** Inline "Label: [value] [copy]" row, one line with breathing room. */
+  function copyLine(opts: {
+    label: string;
+    copyLabel: string;
+    copyValue: string;
+    toastMsg: string;
+    value?: string;
+  }): ReactNode {
+    return (
+      <div className="invite-line">
+        <span className="invite-line-label">{opts.label}</span>
+        {opts.value ? <code className="invite-line-value">{opts.value}</code> : null}
+        <button
+          type="button"
+          className="invite-copy"
+          aria-label={opts.copyLabel}
+          title={opts.copyLabel}
+          onClick={() => copy(opts.copyValue, opts.toastMsg)}
+        >
+          <Icon name="copy" size="sm" />
+        </button>
+      </div>
     );
   }
 
@@ -530,7 +558,15 @@ export function AdminApp() {
           }
         />
         <div className="admin-metrics">
-          <MetricGrid items={metrics} />
+          {metrics.map((x) => (
+            <MetricCard
+              key={x.key}
+              className={`admin-metric admin-metric--${x.tone}`}
+              icon={<Icon name={x.icon} size="sm" />}
+              label={x.label}
+              value={x.value}
+            />
+          ))}
         </div>
 
         {data.users.length === 0 ? (
@@ -538,14 +574,7 @@ export function AdminApp() {
         ) : (
           <ul className="invite-list">
             {data.users.map((row) => {
-              // Invite code shows in its own chip below, so the URL box carries
-              // only the subscription URL (bound) or the invite URL (unbound).
-              const link = row.subscriptionUrl || row.inviteUrl;
-              const linkLabel = row.subscriptionUrl
-                ? m.subscriptionUrl
-                : row.inviteUrl
-                  ? m.inviteLink
-                  : null;
+              const online = relativeOnline(row.onlineAt, locale);
               return (
                 <li key={row.username} className="invite-card">
                   <div className="invite-card-head">
@@ -577,23 +606,40 @@ export function AdminApp() {
                     </div>
                     <div className="invite-meta-item">
                       <dt>{m.lastOnline}</dt>
-                      <dd>{row.onlineText}</dd>
+                      <dd className="invite-online">
+                        {online ? <StatusBadge tone="neutral">{online}</StatusBadge> : null}
+                        <span>{row.onlineText}</span>
+                      </dd>
                     </div>
                   </dl>
 
-                  {row.inviteCode ? (
-                    <div className="invite-code-chip">
-                      <span className="invite-code-chip-label">{m.inviteCode}</span>
-                      <code>{row.inviteCode}</code>
-                    </div>
-                  ) : null}
+                  {row.inviteCode
+                    ? copyLine({
+                        label: m.inviteCode,
+                        copyLabel: m.copyCode,
+                        copyValue: row.inviteCode,
+                        toastMsg: m.toastCodeCopied,
+                        value: row.inviteCode,
+                      })
+                    : null}
 
-                  {link && linkLabel ? (
-                    <div className="invite-link">
-                      <span className="invite-link-label">{linkLabel}</span>
-                      <code className="url-box">{link}</code>
-                    </div>
-                  ) : null}
+                  {!row.subscriptionUrl && row.inviteUrl
+                    ? copyLine({
+                        label: m.inviteLink,
+                        copyLabel: m.copyLink,
+                        copyValue: row.inviteUrl,
+                        toastMsg: m.toastLinkCopied,
+                      })
+                    : null}
+
+                  {row.subscriptionUrl
+                    ? copyLine({
+                        label: m.subscriptionUrl,
+                        copyLabel: m.copyUrl,
+                        copyValue: row.subscriptionUrl,
+                        toastMsg: m.toastSubCopied,
+                      })
+                    : null}
                 </li>
               );
             })}

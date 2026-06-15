@@ -1174,6 +1174,7 @@ class AccountHandler(BaseHTTPRequestHandler):
                     "dataLimitText": format_bytes(item.get("data_limit")) if item.get("data_limit") else "Unlimited",
                     "expireText": format_epoch(item.get("expire")),
                     "onlineText": format_datetime(item.get("online_at")),
+                    "onlineAt": item.get("online_at"),
                     "bindingState": state,
                     "displayName": display_name,
                     "inviteCode": invite_code,
