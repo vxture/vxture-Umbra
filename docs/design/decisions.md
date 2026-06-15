@@ -188,8 +188,8 @@ Cloudflare:  cloudflare.com, cloudflare-dns.com, cloudflareaccess.com
 ### Hard Constraint: Must-NOT-Force-PROXY
 
 ```
-Microsoft:   microsoft.com, microsoftonline.com, windows.com, windowsupdate.com
-             office.com, office365.com, sharepoint.com, onedrive.com
+Microsoft:   microsoft.com, windows.com, windowsupdate.com
+             office.com, office365.com, onedrive.com
              live.com, outlook.com, hotmail.com, msn.com, bing.com
              azure.com, azurewebsites.net, azureedge.net, trafficmanager.net
              visualstudio.com, vscode.dev, xbox.com, xboxlive.com
@@ -200,6 +200,8 @@ DeepSeek:    deepseek.com, deepseek.ai, api.deepseek.com
 ```
 
 **Reason:** Microsoft services are accessible from most networks without proxy; forcing them causes latency and auth degradation. DeepSeek is a Chinese domestic service; direct connection is faster and more stable. DeepSeek is also excluded from Clash fake-ip DNS so local tools such as Roo Code receive real DNS answers instead of `198.18.0.0/16` synthetic addresses.
+
+**Microsoft enterprise exception:** `microsoftonline.com`, `microsoftonline-p.com`, and `sharepoint.com` are deliberately NOT must-direct - they are forced to `PROXY`. Work/school (Entra ID) tenants geo-block direct logins from CN, so org auth and OneDrive for Business / SharePoint storage fail on a direct route. Personal accounts authenticate via `live.com` and keep working on direct.
 
 Cloudflare login, dashboard, challenge, and edge service domains are forced to `PROXY` because direct routing can leave the Cloudflare account login flow stalled. Vultr hosts the VPS control plane and provider storage domains; proxying them through the same node can create management loops.
 The exact VPN/VPS endpoint IP is pinned as `IP-CIDR,108.61.182.248/32,DIRECT,no-resolve` to avoid proxy loops without requiring ASN databases during client startup.
@@ -236,14 +238,17 @@ rules:
   - IP-CIDR,169.254.0.0/16,DIRECT,no-resolve
   - IP-CIDR,198.18.0.0/15,DIRECT,no-resolve
 
-  # 2. Microsoft ecosystem direct
+  # 0a. Microsoft enterprise (work/school) auth + OneDrive for Business proxy
+  - DOMAIN-SUFFIX,microsoftonline.com,PROXY
+  - DOMAIN-SUFFIX,microsoftonline-p.com,PROXY
+  - DOMAIN-SUFFIX,sharepoint.com,PROXY
+
+  # 2. Microsoft ecosystem direct (personal accounts)
   - DOMAIN-SUFFIX,microsoft.com,DIRECT
-  - DOMAIN-SUFFIX,microsoftonline.com,DIRECT
   - DOMAIN-SUFFIX,windows.com,DIRECT
   - DOMAIN-SUFFIX,windowsupdate.com,DIRECT
   - DOMAIN-SUFFIX,office.com,DIRECT
   - DOMAIN-SUFFIX,office365.com,DIRECT
-  - DOMAIN-SUFFIX,sharepoint.com,DIRECT
   - DOMAIN-SUFFIX,onedrive.com,DIRECT
   - DOMAIN-SUFFIX,live.com,DIRECT
   - DOMAIN-SUFFIX,outlook.com,DIRECT
