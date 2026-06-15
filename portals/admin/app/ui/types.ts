@@ -5,6 +5,7 @@ export interface AdminUserRow {
   dataLimitText: string;
   expireText: string;
   onlineText: string;
+  onlineAt: string | null;
   bindingState: "bound" | "invite_pending" | "pending_binding";
   displayName: string | null;
   inviteCode: string | null;

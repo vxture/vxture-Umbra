@@ -317,11 +317,38 @@ a {
   gap: var(--vx-space-lg);
 }
 
-/* Stats row: force the four DS metric cards onto a single elastic row
-   (minmax(0,1fr) lets them shrink instead of wrapping). Drops to two columns
-   on narrow screens (see responsive block). */
-.admin-metrics .vx-metric-grid {
+/* Stats row: four DS MetricCards on a single elastic row (minmax(0,1fr) lets
+   them shrink instead of wrapping). Drops to two columns on narrow screens. */
+.admin-metrics {
+  display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--vx-space-md);
+}
+
+/* Decorated stat card: DS Card border/background, a soft shadow, and a tone
+   accent bar across the top. The DS MetricCard already renders the tinted icon
+   chip; the accent differentiates the four tones at a glance. */
+.admin-metric {
+  position: relative;
+  overflow: hidden;
+  background: var(--vx-color-surface);
+  box-shadow: var(--vx-shadow-sm);
+}
+
+.admin-metric::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 3px;
+  background: var(--vx-color-primary);
+}
+
+.admin-metric--success::before {
+  background: var(--vx-color-success);
+}
+
+.admin-metric--warning::before {
+  background: var(--vx-color-warning);
 }
 
 /* Content-area heading (DS PageHeader sizes its title from shell-scoped tokens
@@ -457,15 +484,24 @@ a {
   overflow-wrap: anywhere;
 }
 
-/* Row 3a: invite code shown on its own, distinct from the invite URL below. */
-.invite-code-chip {
+/* Last online: relative tag, breathing room, then the absolute UTC time. */
+.invite-online {
   display: inline-flex;
   align-items: center;
-  gap: var(--vx-space-xs);
-  width: fit-content;
+  flex-wrap: wrap;
+  gap: var(--vx-space-sm);
 }
 
-.invite-code-chip-label {
+/* Inline "Label: [value] [copy]" rows for invite code / invite link /
+   subscription URL - one line, generous spacing. */
+.invite-line {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--vx-space-sm);
+}
+
+.invite-line-label {
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.08em;
@@ -473,7 +509,7 @@ a {
   color: var(--vx-color-text-muted);
 }
 
-.invite-code-chip code {
+.invite-line-value {
   border: 1px solid var(--vx-color-border);
   border-radius: var(--vx-radius-md);
   background: var(--vx-color-surface-muted);
@@ -481,20 +517,30 @@ a {
   color: var(--vx-color-text-primary);
   font-family: var(--vx-font-mono, ui-monospace, SFMono-Regular, Consolas, monospace);
   font-size: 13px;
+  overflow-wrap: anywhere;
 }
 
-/* Row 3b: subscription / invite URL. */
-.invite-link {
-  display: grid;
-  gap: var(--vx-space-xs);
+/* Compact icon-only copy button (DS has no inline icon-button primitive). */
+.invite-copy {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: 1px solid var(--vx-color-border);
+  border-radius: var(--vx-radius-md);
+  background: var(--vx-color-surface);
+  color: var(--vx-color-text-secondary);
+  cursor: pointer;
+  transition:
+    background var(--vx-duration-fast) var(--vx-ease-standard),
+    color var(--vx-duration-fast) var(--vx-ease-standard),
+    border-color var(--vx-duration-fast) var(--vx-ease-standard);
 }
 
-.invite-link-label {
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--vx-color-text-muted);
+.invite-copy:hover {
+  border-color: color-mix(in srgb, var(--vx-color-primary) 32%, var(--vx-color-border));
+  color: var(--vx-color-primary);
 }
 
 .actions {
@@ -521,20 +567,6 @@ a {
   color: var(--vx-color-text-muted);
 }
 
-/* Monospace URL / token display (DS has no code primitive). */
-.url-box {
-  display: block;
-  width: 100%;
-  overflow-wrap: anywhere;
-  border: 1px solid var(--vx-color-border);
-  border-radius: var(--vx-radius-md);
-  background: var(--vx-color-surface-muted);
-  padding: 12px;
-  color: var(--vx-color-text-secondary);
-  font-family: var(--vx-font-mono, ui-monospace, SFMono-Regular, Consolas, monospace);
-  font-size: 13px;
-}
-
 /* ===== Responsive ===== */
 
 /* Collapse the login split into a single column; the brand panel stacks above. */
@@ -556,7 +588,7 @@ a {
   }
 
   /* Stats drop to two columns when a single elastic row gets too cramped. */
-  .admin-metrics .vx-metric-grid {
+  .admin-metrics {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
