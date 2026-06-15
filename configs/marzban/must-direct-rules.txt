@@ -38,6 +38,9 @@ DOMAIN-SUFFIX,office.com
 DOMAIN-SUFFIX,office.net
 DOMAIN-SUFFIX,office365.com
 DOMAIN-SUFFIX,onedrive.com
+# OneDrive sync-client bootstrap/config endpoint (oneclient.sfx.ms). Shared by
+# personal and business clients; not auth/storage, so keep it direct.
+DOMAIN-SUFFIX,sfx.ms
 DOMAIN-SUFFIX,live.com
 DOMAIN-SUFFIX,outlook.com
 DOMAIN-SUFFIX,hotmail.com
@@ -51,6 +54,8 @@ DOMAIN-SUFFIX,azureedge.net
 DOMAIN-SUFFIX,trafficmanager.net
 DOMAIN-SUFFIX,visualstudio.com
 DOMAIN-SUFFIX,vscode.dev
+# VS Code asset/download CDN (main.vscode-cdn.net). Direct works; no proxy.
+DOMAIN-SUFFIX,vscode-cdn.net
 DOMAIN-SUFFIX,skype.com
 DOMAIN-SUFFIX,teams.microsoft.com
 DOMAIN-SUFFIX,xbox.com
