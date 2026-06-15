@@ -23,7 +23,8 @@ import type { AdminInvitesPayload, AdminUserRow } from "./types";
  * Localized copy for the signed-in invites surface. The English side must keep
  * the literal phrases "Invite link", "Subscription URL", "Copy link", and
  * "Copy code" - a deploy contract check (06-check-deploy-contracts.py) asserts
- * they are present in this file. The pre-auth login screen stays English.
+ * they are present in this file. Covers both the signed-in surface and the
+ * pre-auth login screen.
  */
 type AdminCopy = {
   title: string;
@@ -56,6 +57,16 @@ type AdminCopy = {
   toastSubCopied: string;
   toastLinkCopied: string;
   toastCodeCopied: string;
+  loginAsideEyebrow: string;
+  loginAsideLead: string;
+  loginFeatures: [string, string, string];
+  loginEyebrow: string;
+  loginTitle: string;
+  loginSub: string;
+  loginUsername: string;
+  loginPassword: string;
+  loginSubmit: string;
+  toastInvalidCreds: string;
 };
 
 const MESSAGES: Record<Locale, AdminCopy> = {
@@ -96,6 +107,20 @@ const MESSAGES: Record<Locale, AdminCopy> = {
     toastSubCopied: "Subscription URL copied.",
     toastLinkCopied: "Invite link copied.",
     toastCodeCopied: "Invite code copied.",
+    loginAsideEyebrow: "Management console",
+    loginAsideLead: "One secure place to operate invites, VPN subscriptions, and credentials.",
+    loginFeatures: [
+      "Issue invites and bind subscriber accounts",
+      "Manage Marzban VPN subscriptions",
+      "Reach the shared password vault",
+    ],
+    loginEyebrow: "Admin access",
+    loginTitle: "Sign in",
+    loginSub: "Use your Ruyin management credential to continue.",
+    loginUsername: "Admin username",
+    loginPassword: "Admin password",
+    loginSubmit: "Sign in",
+    toastInvalidCreds: "Invalid admin credentials.",
   },
   "zh-CN": {
     title: "邀请与用户",
@@ -133,6 +158,20 @@ const MESSAGES: Record<Locale, AdminCopy> = {
     toastSubCopied: "订阅地址已复制。",
     toastLinkCopied: "邀请链接已复制。",
     toastCodeCopied: "邀请码已复制。",
+    loginAsideEyebrow: "管理控制台",
+    loginAsideLead: "在一处安全地管理邀请、VPN 订阅与凭据。",
+    loginFeatures: [
+      "签发邀请并绑定订阅账号",
+      "管理 Marzban VPN 订阅",
+      "访问共享密码库",
+    ],
+    loginEyebrow: "管理员登录",
+    loginTitle: "登录",
+    loginSub: "使用您的 Ruyin 管理凭据继续。",
+    loginUsername: "管理员用户名",
+    loginPassword: "管理员密码",
+    loginSubmit: "登录",
+    toastInvalidCreds: "管理员凭据无效。",
   },
 };
 
@@ -169,11 +208,8 @@ function SectionHeading({
   );
 }
 
-const LOGIN_FEATURES: { icon: IconName; label: string }[] = [
-  { icon: "users", label: "Issue invites and bind subscriber accounts" },
-  { icon: "shield-check", label: "Manage Marzban VPN subscriptions" },
-  { icon: "key", label: "Reach the shared password vault" },
-];
+/** Icons pair positionally with copy.loginFeatures (label text is localized). */
+const LOGIN_FEATURE_ICONS: IconName[] = ["users", "shield-check", "key"];
 
 async function api<T>(url: string, init?: RequestInit): Promise<T> {
   const response = await fetch(url, {
@@ -249,7 +285,7 @@ export function AdminApp() {
       setPassword("");
       await refresh();
     } catch {
-      toast({ tone: "error", title: "Invalid admin credentials." });
+      toast({ tone: "error", title: m.toastInvalidCreds });
     } finally {
       setBusy("");
     }
@@ -335,17 +371,15 @@ export function AdminApp() {
           <div className="admin-login-card">
             <aside className="admin-login-aside">
               <div className="admin-login-aside-text">
-                <p className="admin-login-eyebrow">Management console</p>
+                <p className="admin-login-eyebrow">{m.loginAsideEyebrow}</p>
                 <h2 className="admin-login-aside-title">{ruyinBrand.productName}</h2>
-                <p className="admin-login-aside-lead">
-                  One secure place to operate invites, VPN subscriptions, and credentials.
-                </p>
+                <p className="admin-login-aside-lead">{m.loginAsideLead}</p>
               </div>
               <ul className="admin-login-features">
-                {LOGIN_FEATURES.map((feature) => (
-                  <li key={feature.label}>
-                    <Icon name={feature.icon} size="sm" />
-                    <span>{feature.label}</span>
+                {LOGIN_FEATURE_ICONS.map((icon, i) => (
+                  <li key={icon}>
+                    <Icon name={icon} size="sm" />
+                    <span>{m.loginFeatures[i]}</span>
                   </li>
                 ))}
               </ul>
@@ -353,15 +387,13 @@ export function AdminApp() {
 
             <div className="admin-login-main">
               <div className="admin-login-head">
-                <p className="admin-login-eyebrow">Admin access</p>
-                <h1 className="admin-login-title">Sign in</h1>
-                <p className="admin-login-sub">
-                  Use your Ruyin management credential to continue.
-                </p>
+                <p className="admin-login-eyebrow">{m.loginEyebrow}</p>
+                <h1 className="admin-login-title">{m.loginTitle}</h1>
+                <p className="admin-login-sub">{m.loginSub}</p>
               </div>
               <form className="form" onSubmit={login}>
                 <label className="field">
-                  Admin username
+                  {m.loginUsername}
                   <Input
                     autoComplete="username"
                     value={username}
@@ -370,7 +402,7 @@ export function AdminApp() {
                   />
                 </label>
                 <label className="field">
-                  Admin password
+                  {m.loginPassword}
                   <Input
                     type="password"
                     autoComplete="current-password"
@@ -381,7 +413,7 @@ export function AdminApp() {
                 </label>
                 <Button type="submit" disabled={busy === "login"}>
                   <Icon name="arrow-right" size="sm" />
-                  Sign in
+                  {m.loginSubmit}
                 </Button>
               </form>
             </div>
