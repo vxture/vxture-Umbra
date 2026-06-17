@@ -132,9 +132,6 @@ services:
       MARZBAN_ADMIN_USER: "${MARZBAN_ADMIN_USER}"
       MARZBAN_ADMIN_PASSWORD: "${MARZBAN_ADMIN_PASSWORD}"
       SUB_PROFILE_PREFIX: "${SUB_PROFILE_PREFIX:-Ruyin}"
-      JWT_SECRET: "${JWT_SECRET}"
-      VXTURE_LOGIN_URL: "${VXTURE_LOGIN_URL}"
-      VXTURE_SSO_URL: "${VXTURE_SSO_URL:-}"
       PUBLIC_ACCOUNT_URL: "https://${CONSOLE_DOMAIN}"
       RUYIN_COOKIE_DOMAIN: "${RUYIN_COOKIE_DOMAIN:-}"
     volumes:
@@ -148,7 +145,7 @@ services:
       retries: 3
       start_period: 15s
 
-  # -- Account Web: Vxture SSO + invite-bound subscription UI -----------------
+  # -- Account Web: OIDC RP / app-bff + invite-bound subscription UI ----------
   umbra-account-web:
     image: ${IMAGE_REGISTRY}/${IMAGE_NAMESPACE}/ruyin-console:${IMAGE_TAG:-latest}
     container_name: umbra-account-web
@@ -173,13 +170,6 @@ services:
       # Opaque, token-less session cookie shared across ruyin's own first-party
       # zone (apex + every *.ruyin.ai app) so one login covers the whole site.
       RP_SESSION_COOKIE_DOMAIN: "${RP_SESSION_COOKIE_DOMAIN:-}"
-      # -- Legacy cross-domain handoff (removed in cutover PR) -----------------
-      AUTH_BFF_URL: "${AUTH_BFF_URL}"
-      AUTH_INTERNAL_TOKEN: "${AUTH_INTERNAL_TOKEN}"
-      VXTURE_SSO_URL: "${VXTURE_SSO_URL:-}"
-      NEXT_PUBLIC_RUYIN_ACCOUNT_URL: "https://${CONSOLE_DOMAIN}"
-      RUYIN_COOKIE_DOMAIN: "${RUYIN_COOKIE_DOMAIN:-}"
-      VXTURE_COOKIE_ACCESS: "${VXTURE_COOKIE_ACCESS:-ry_access_token}"
     networks:
       - umbra-net
     healthcheck:

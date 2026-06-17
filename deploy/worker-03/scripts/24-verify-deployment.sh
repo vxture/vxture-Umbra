@@ -149,15 +149,15 @@ check_http "$WWW_DOMAIN"         "https://$WWW_DOMAIN"
 check_http_body_contains "$CONSOLE_DOMAIN account home" "https://$CONSOLE_DOMAIN/" "Ruyin Account"
 check_http "$CONSOLE_DOMAIN account login" "https://$CONSOLE_DOMAIN/login"
 check_http "$CONSOLE_DOMAIN account registration" "https://$CONSOLE_DOMAIN/register"
-if [[ -n "${VXTURE_SSO_URL:-}" ]]; then
+if [[ -n "${OIDC_ISSUER:-}" ]]; then
   sso_headers="$(mktemp)"
-  sso_code=$(curl -sk --max-time 10 -D "$sso_headers" -o /dev/null -w "%{http_code}" "https://$CONSOLE_DOMAIN/auth/start" || true)
+  sso_code=$(curl -sk --max-time 10 -D "$sso_headers" -o /dev/null -w "%{http_code}" "https://$CONSOLE_DOMAIN/auth/login" || true)
   if [[ "$sso_code" =~ ^(301|302|303|307|308)$ ]] \
-     && grep -Fqi "location: $VXTURE_SSO_URL?ctx=" "$sso_headers"; then
-    log_ok "$CONSOLE_DOMAIN SSO start redirects to Vxture ($sso_code)"
+     && grep -Fqi "location: $OIDC_ISSUER/oidc/authorize?" "$sso_headers"; then
+    log_ok "$CONSOLE_DOMAIN OIDC login redirects to authorize ($sso_code)"
     (( ++PASS ))
   else
-    log_fail "$CONSOLE_DOMAIN SSO start redirect invalid (got $sso_code)"
+    log_fail "$CONSOLE_DOMAIN OIDC login redirect invalid (got $sso_code)"
     sed -n '1,20p' "$sso_headers" || true
     (( ++FAIL ))
   fi

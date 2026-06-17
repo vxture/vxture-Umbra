@@ -38,7 +38,6 @@ export interface AccountBinding {
 export interface SessionPayload {
   status: "anonymous" | "active";
   loginUrl?: string;
-  ssoUrl?: string;
   user?: VxtureUser;
   account?: AccountBinding | null;
 }

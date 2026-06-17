@@ -1,227 +1,152 @@
-# Vxture SSO Integration Design
+# Vxture SSO Integration Design (OIDC RP)
 
-This document defines the SSO handoff between Umbra/Ruyin and the Vxture
-console.
+How ruyin.ai authenticates against the Vxture identity platform. ruyin is the
+first cross-domain application and integrates as a standard OIDC Relying Party.
+The authoritative external contract is
+[`identity-app-integration-standard.md`](../../identity-app-integration-standard.md)
+(Vxture App Integration Standard v1.0); this document records how ruyin
+implements it in this repo.
 
 ## Status
 
-Umbra already has:
+ruyin is an **OIDC Authorization-Code + PKCE(S256) RP** against
+`accounts.vxture.com` (the single identity center for the whole product).
 
-- A Next.js account web app on `https://console.ruyin.ai`.
-- An invite console on `https://admin.ruyin.ai/invites`.
-- A server callback route at `GET /auth/callback`.
-- Account APIs that can read the Vxture access cookie and bind it to an
-  existing Marzban invite.
+- `client_id`: `ruyin`, `realm`: `tenant`, mode B (cross-domain).
+- `redirect_uri`: `https://ruyin.ai/auth/callback`.
+- `back_channel_logout_uri`: `https://ruyin.ai/auth/backchannel-logout`.
+- `scopes`: `openid profile ruyin`.
 
-Use the shared Vxture SSO start endpoint:
+The console portal (`umbra-account-web`) is the RP / app-bff. OIDC tokens live
+server-side in Redis; the browser only ever holds an opaque `vx_rp_session`
+cookie. The Python account service (`umbra-account`) reads the RP-verified
+identity claims from Redis to authenticate `/api/account/*` requests.
 
-```env
-VXTURE_SSO_URL=https://console.vxture.com/zh-CN/sso/start
-```
-
-If the endpoint is unavailable in an environment, set `VXTURE_SSO_URL=` to keep
-the old fallback login link behavior.
+This replaces the previous custom cross-domain token handoff (the `ctx` JSON
+start parameter, the one-time `token` callback, and the `auth-bff`
+`crossdomain/verify` + `internal/sign` calls that minted an HS256
+`ry_access_token`). That scheme and its env (`AUTH_BFF_URL`,
+`AUTH_INTERNAL_TOKEN`, `VXTURE_SSO_URL`, `JWT_SECRET`, `VXTURE_COOKIE_ACCESS`)
+have been removed.
 
 ## Goals
 
-- Let a user start login from `console.ruyin.ai`.
-- Redirect the user to Vxture SSO with a structured `ctx` parameter.
-- Receive a cross-domain token from Vxture at the Umbra callback route.
-- Exchange the cross-domain token for normal Vxture auth cookies.
-- Redirect the user to the logged-in Umbra account page.
-- Protect the callback against CSRF with a server-generated `state`.
+- Let a user start login from any ruyin surface and authenticate at
+  accounts.vxture.com without ruyin implementing a login UI.
+- Keep all OIDC tokens server-side; the browser sees only an opaque session
+  cookie.
+- Verify every token (id/access/logout) with RS256 + JWKS (iss/aud/exp/nonce).
+- Support refresh rotation and global logout (IdP `end_session` +
+  back-channel logout).
+- One login shared across ruyin.ai and every *.ruyin.ai app.
 
 ## Non-Goals
 
-- Do not implement a separate Umbra identity provider.
-- Do not store Vxture passwords in Umbra.
-- Do not expose `AUTH_INTERNAL_TOKEN` or auth-bff credentials to the browser.
-- Do not depend on client-side state storage for CSRF protection.
+- Do not implement a separate ruyin identity provider or store Vxture passwords.
+- Do not expose OIDC tokens or the client secret to the browser.
+- Do not depend on cross-registered-domain cookie sharing or iframe/XHR silent
+  authorization.
 
-## Public Contract
+## Endpoints (RP / app-bff, on the console portal)
 
-### Start URL
+| Endpoint | Responsibility |
+|---|---|
+| `GET /auth/login` | Generate PKCE(S256) + state + nonce, store the authreq in Redis, top-level redirect to `{issuer}/oidc/authorize`. Honors an allowlisted `returnTo` and carries an `invite` through. |
+| `GET /auth/callback` | Validate state, fetch+delete the authreq, exchange the code (with the PKCE verifier), verify id_token (nonce) + access_token, create the RP session, set the opaque cookie, redirect to `returnTo` (or `/register?invite=`). |
+| `GET /auth/session` | Resolve the opaque cookie to identity claims; refresh the access token server-side when near expiry (rotating the refresh token); tear the session down if the refresh family is revoked. |
+| `POST /auth/logout` | Destroy the RP session, clear the cookie, redirect to `{issuer}/oidc/end_session` for global logout. |
+| `POST /auth/backchannel-logout` | Verify the `logout_token` (RS256, backchannel-logout event, `sid`, no `nonce`) and destroy every RP session for that central `sid`. |
 
-Umbra should start SSO through a server route:
+The RP library lives under `portals/console/app/auth/lib/`
+(`config`, `pkce`, `oidc`, `claims`, `cookie`, `return-to`, `session-store`).
 
-```text
-GET https://console.ruyin.ai/auth/start
-```
+## Session store (Redis)
 
-The route redirects to:
+Four key families in `umbra-redis`:
 
-```text
-https://console.vxture.com/zh-CN/sso/start?ctx=<json>
-```
+- `authreq:<state>` - short-lived login->callback handshake (PKCE verifier,
+  nonce, returnTo, invite). TTL ~600s, single-use (fetched with `GETDEL`).
+- `rpsess:<rpsid>` - verified **identity claims only** (sub, sid, email, phone,
+  active_tenant + role/type/status, account_status). **Read by both** the
+  console BFF and the account service. TTL = `RP_SESSION_TTL`.
+- `rptok:<rpsid>` - the OIDC token bundle (access/refresh/access_exp/id_claims).
+  **Console BFF only**; never read by the account service or the browser.
+- `sid:<sid>` - SET of `rpsid` for back-channel logout (one central session can
+  map to several RP sessions across the ruyin zone).
 
-The `ctx` JSON object:
+## Cookie model
 
-```json
-{
-  "from": "ruyin",
-  "returnTo": "https://console.ruyin.ai/auth/callback",
-  "caller": "Ruyin",
-  "state": "<uuid>"
-}
-```
+- `vx_rp_session`: opaque random id pointing at the server-side session;
+  `HttpOnly; Secure; SameSite=Lax; Path=/`, `Domain=.ruyin.ai` (host-only in
+  dev). No tokens or claims in the browser.
+- The standard's `__Host-` isolation intent is preserved: ruyin's cookie never
+  reaches vxture.com and `vx_sid` never reaches ruyin. Within ruyin's own
+  first-party zone the cookie is deliberately parent-scoped so one login covers
+  apex + every *.ruyin.ai app.
 
-Notes:
+## Token verification (RP must enforce)
 
-- Umbra should send only `ctx`; it should not append a separate `returnTo`
-  query parameter.
-- `state` is generated server-side by Umbra.
-- `ctx` is JSON-stringified and URL-encoded as the `ctx` query parameter.
+For id_token / access_token / logout_token: `alg` must be RS256 (reject
+`none`/HS*); resolve `kid` from `{issuer}/oidc/jwks` (cached, one refresh on
+miss); `iss === https://accounts.vxture.com`; `aud === ruyin`; `exp` with 60s
+skew; id_token `nonce` must equal the request nonce; logout_token must carry the
+backchannel-logout event + `sid` and must not carry `nonce`.
 
-### Callback URL
-
-Vxture redirects back to:
-
-```text
-GET https://console.ruyin.ai/auth/callback?token=<token>&state=<state>
-```
-
-The callback route must:
-
-1. Validate `state` against the HttpOnly state cookie before token exchange.
-2. Call `AUTH_BFF_URL/auth/crossdomain/verify` with the received token and
-   `source: "ruyin.ai"`.
-3. Call `AUTH_BFF_URL/auth/internal/sign` with `source: "ruyin"` after token
-   verification.
-4. Forward every returned `Set-Cookie` header to the browser.
-5. Redirect to `/dashboard`.
-
-The two source values are intentionally different:
-
-- `crossdomain/verify.source = "ruyin.ai"` identifies the target domain and
-  must match the token's allowed `targetDomain`.
-- `internal/sign.source = "ruyin"` selects the Ruyin cookie namespace such as
-  `ry_access_token` and `ry_refresh_token`.
-
-## Server-Side State Design
-
-`/auth/start` must:
-
-1. Generate a cryptographically random UUID state.
-2. Store the state in a short-lived HttpOnly cookie.
-3. Build the `ctx` object.
-4. Redirect to `VXTURE_SSO_URL` with `ctx`.
-5. Reject invalid `VXTURE_SSO_URL` values by redirecting to
-   `/?sso=bad_config` before sending the user to Vxture.
-
-Production must not infer the public app URL from `Host`. Compose injects:
+## Environment variables (app-bff)
 
 ```env
-NEXT_PUBLIC_RUYIN_ACCOUNT_URL=https://${CONSOLE_DOMAIN}
+OIDC_ISSUER=https://accounts.vxture.com
+OIDC_CLIENT_ID=ruyin
+OIDC_CLIENT_SECRET=<provisioned via secret manager; never committed>
+OIDC_REDIRECT_URI=https://ruyin.ai/auth/callback
+OIDC_SCOPES=openid profile ruyin
+OIDC_POST_LOGOUT_REDIRECT_URI=https://ruyin.ai/
+REDIS_URL=redis://umbra-redis:6379
+RP_SESSION_TTL=2592000
+RP_SESSION_COOKIE_NAME=vx_rp_session
+RP_SESSION_COOKIE_DOMAIN=.ruyin.ai
 ```
 
-If this value is missing in production, `/auth/start` and `/auth/callback`
-return `500` instead of constructing redirects from the request host.
-
-Recommended cookie:
-
-```text
-Name: umbra_sso_state
-HttpOnly: true
-Secure: true
-SameSite: Lax
-Path: /auth
-Max-Age: 300
-```
-
-`/auth/callback` must:
-
-1. Read `state` from the query string.
-2. Read `umbra_sso_state` from the request cookie.
-3. Compare both values with a constant-time comparison.
-4. Clear `umbra_sso_state` after validation, including failure cases.
-5. Reject the request before token exchange if state validation fails.
-6. Accept Vxture error callbacks such as
-   `/auth/callback?error=sso_token_failed&state=<state>` and redirect to
-   `/login?sso=sso_token_failed`.
-
-Failure response:
-
-```text
-HTTP 302 Location: /login?sso=state
-```
-
-## Environment Variables
-
-Required in the server `.env` for SSO:
-
-```env
-VXTURE_SSO_URL=https://console.vxture.com/zh-CN/sso/start
-AUTH_BFF_URL=<vxture-auth-bff-origin>
-AUTH_INTERNAL_TOKEN=<internal-sign-token>
-JWT_SECRET=<same-secret-used-for-ry_access_token>
-VXTURE_LOGIN_URL=https://console.vxture.com/zh-CN/signin
-```
-
-`NEXT_PUBLIC_RUYIN_ACCOUNT_URL` is not a server `.env` value. Compose injects
-it into `umbra-account-web` as:
-
-```env
-NEXT_PUBLIC_RUYIN_ACCOUNT_URL=https://${CONSOLE_DOMAIN}
-```
-
-Current deployment may keep `VXTURE_SSO_URL=` empty until the Vxture endpoint
-is ready. In that mode the login button falls back to `VXTURE_LOGIN_URL`.
+`OIDC_ISSUER` + `OIDC_CLIENT_SECRET` must both be present for login to work; the
+deploy runtime check (`11-check-runtime-environment.sh`) enforces this.
 
 ## Sequence
 
 ```text
 Browser
-  -> GET console.ruyin.ai/auth/start
+  -> GET ruyin surface (anonymous) -> GET console.ruyin.ai/auth/login
 
-Umbra account web
-  -> generate state
-  -> Set-Cookie: umbra_sso_state=<state>; HttpOnly; Secure; SameSite=Lax
-  -> 302 VXTURE_SSO_URL?ctx=<json>
+Account web (RP)
+  -> generate PKCE(S256) + state + nonce; store authreq:<state> in Redis
+  -> 302 accounts.vxture.com/oidc/authorize?response_type=code&...&code_challenge=...
 
-Browser
-  -> GET console.vxture.com/zh-CN/sso/start?ctx=<json>
+accounts.vxture.com
+  -> browser is first-party here; if vx_sid present, issue code silently
+  -> 302 https://ruyin.ai/auth/callback?code=<code>&state=<state>
 
-Vxture SSO
-  -> authenticate user if needed
-  -> issue cross-domain token
-  -> 302 https://console.ruyin.ai/auth/callback?token=<token>&state=<state>
-
-Umbra account web
-  -> validate state cookie
-  -> POST AUTH_BFF_URL/auth/crossdomain/verify { token, source: "ruyin.ai" }
-  -> POST AUTH_BFF_URL/auth/internal/sign { source: "ruyin", ...verifiedPayload }
-  -> forward Set-Cookie
-  -> 302 /dashboard
+Account web (RP)
+  -> validate state; GETDEL authreq:<state>
+  -> POST /oidc/token (code + verifier + redirect_uri, client_secret_basic)
+  -> verify id_token (nonce) + access_token (RS256/iss/aud/exp)
+  -> store rpsess:<rpsid> (claims) + rptok:<rpsid> (tokens); index sid:<sid>
+  -> 302 returnTo + Set-Cookie vx_rp_session=<rpsid>
 ```
 
-## Invite Activation Flow
+## Invite activation flow
 
-Ruyin intentionally uses a two-step activation model:
+Identity and VPN entitlement remain separate:
 
-1. The user signs in with Vxture SSO.
-2. Inside Ruyin, the signed-in user enters a one-time invite code.
-3. Ruyin binds the Vxture account id to the target Marzban user and reveals the
-   subscription URL.
-
-This is safer than embedding invite data into SSO because identity and VPN
-entitlement remain separate:
-
-- Vxture proves who the user is.
-- Ruyin invite codes decide whether that identity can activate a VPN
-  subscription.
-
-The simpler user experience is an invite link, not a different security model:
-
-```text
-https://console.ruyin.ai/register?invite=<code>
-```
+1. The user signs in via OIDC.
+2. Inside ruyin, the signed-in user enters a one-time invite code.
+3. ruyin binds the Vxture account id (`sub`) to the target Marzban user and
+   reveals the subscription URL.
 
 Invite-link handling:
 
-- If anonymous, store the invite code in a short-lived pending activation cookie
-  and send the user through `/auth/start`; after callback, land on `/register`
-  with the code prefilled.
-- If already signed in, show the bind form with the code prefilled.
+- If anonymous, the invite code is carried through `/auth/login?invite=<code>`
+  (persisted in the server-side authreq, not a browser cookie); after callback
+  the user lands on `/register` with the code prefilled.
+- If already signed in, the bind form shows with the code prefilled.
 - The final binding happens only through `POST /api/account/bind-invite` after
   Vxture identity is present.
 
@@ -229,14 +154,3 @@ Invite admins distribute invite links, not bare codes. The invite console shows
 the link in the `Subscription / Invite link` column after an invite is
 generated; the primary copy action copies the full invite link, and a secondary
 action may copy the bare code for compatibility.
-
-## Confirmed Vxture Contract
-
-- Vxture expects `ctx` as raw JSON URL-encoded by `URLSearchParams`.
-- Vxture returns `state` as a top-level query parameter named `state`.
-- Vxture routes `from: "ruyin"` through the Ruyin policy.
-- Vxture redirects back to `returnTo` with:
-
-```text
-?token=<one-time-token>&state=<same-state>
-```

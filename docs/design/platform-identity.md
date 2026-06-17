@@ -156,25 +156,34 @@ Browser (*.ruyin.ai:443)
   -> umbra-nginx (SNI + vhost)
        console.ruyin.ai/              -> umbra-account-web (launcher + app views)
        console.ruyin.ai/api/account/* -> umbra-account (identity broker + auth DB + module brokers)
-       console.ruyin.ai/auth/*        -> umbra-account-web (SSO start/callback)
+       console.ruyin.ai/auth/*        -> umbra-account-web (OIDC RP / app-bff)
        vpn.ruyin.ai/                  -> 444 (web retired; VPN node is REALITY on :443)
        pass.ruyin.ai/                 -> umbra-vaultwarden (later)
-  umbra-account -> umbra-marzban (VPN source of truth)
-External: Vxture SSO + auth-bff (identity provider; signs/verifies ry_access_token)
+  umbra-account     -> umbra-marzban (VPN source of truth)
+  umbra-account-web -> umbra-redis (OIDC RP session store)
+  umbra-account     -> umbra-redis (reads RP session identity claims)
+External: accounts.vxture.com (OIDC IdP; issues RS256 id/access/refresh tokens)
 ```
 
 ### Authentication and session (one identity across subdomains)
 
+ruyin is an OIDC Authorization-Code + PKCE(S256) RP against accounts.vxture.com
+(see `vxture-sso.md` and `identity-app-integration-standard.md`). The console
+portal (`umbra-account-web`) is the app-bff: tokens live server-side in Redis and
+the browser only ever holds an opaque `vx_rp_session` cookie.
+
 ```
-Any entry -> /auth/start -> Vxture SSO -> /auth/callback
-  -> set ry_access_token (Domain=.ruyin.ai, shared by console/vpn/pass)
-  -> every /api/account/* call: umbra-account verifies the JWT
-     (stateless; no server-side user session)
+Any entry -> /auth/login -> accounts.vxture.com/oidc/authorize -> /auth/callback
+  -> RP verifies id/access tokens (RS256/JWKS, iss/aud/exp/nonce)
+  -> store identity claims at rpsess:<rpsid>, tokens at rptok:<rpsid> (Redis)
+  -> set vx_rp_session (opaque; Domain=.ruyin.ai, shared by console/vpn/pass)
+  -> every /api/account/* call: umbra-account reads rpsess:<rpsid> for identity
 ```
 
-There is no local user session; the user surface authenticates purely from the
-Vxture JWT. On each callback/session the account row is upserted from JWT claims
-to keep display fields fresh.
+Tokens never reach the browser. The account service does not parse tokens; it
+trusts the RP-verified identity claims in Redis. On each session the account row
+is upserted from those claims to keep display fields fresh. Global logout flows
+through `/auth/logout` -> IdP `end_session` plus back-channel logout.
 
 ### Module broker abstraction
 
@@ -234,5 +243,5 @@ identity (handled case by case later).
    application can issue grants.
 3. One binding per application per identity for now (relax later for
    multi-resource).
-4. `ry_access_token` scoped to `Domain=.ruyin.ai` for single sign-on across
-   subdomains (requires Vxture sign-side cooperation).
+4. Opaque `vx_rp_session` cookie scoped to `Domain=.ruyin.ai` for single sign-on
+   across subdomains; the OIDC tokens it points at stay server-side in Redis.
