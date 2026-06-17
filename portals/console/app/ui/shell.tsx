@@ -25,14 +25,16 @@ function initials(name: string): string {
   return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
 }
 
-async function logout(): Promise<void> {
-  try {
-    await fetch("/api/account/logout", { method: "POST", credentials: "include" });
-  } catch {
-    // Ignore: redirect regardless - an expired/missing cookie already means
-    // logged out, and the anonymous view will re-prompt SSO sign-in.
-  }
-  window.location.href = "/";
+function logout(): void {
+  // Global logout: top-level POST to the RP logout route, which destroys the
+  // server-side session, clears the opaque cookie, and redirects to the IdP
+  // end_session endpoint so the central session (vx_sid) is also torn down -
+  // otherwise the next login would silently re-authenticate.
+  const form = document.createElement("form");
+  form.method = "POST";
+  form.action = "/auth/logout";
+  document.body.appendChild(form);
+  form.submit();
 }
 
 /**
