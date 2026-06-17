@@ -49,11 +49,10 @@ MARZBAN_ADMIN_PASSWORD = os.environ.get("MARZBAN_ADMIN_PASSWORD", "")
 ACCOUNT_ADMIN_USERNAME = os.environ.get("ACCOUNT_ADMIN_USERNAME", "")
 ACCOUNT_ADMIN_PASSWORD = os.environ.get("ACCOUNT_ADMIN_PASSWORD", "")
 PROFILE_PREFIX = (os.environ.get("SUB_PROFILE_PREFIX", "Ruyin").strip() or "Ruyin")
-VXTURE_JWT_SECRET = os.environ.get("VXTURE_JWT_SECRET", os.environ.get("JWT_SECRET", ""))
-VXTURE_COOKIE_ACCESS = os.environ.get("VXTURE_COOKIE_ACCESS", "ry_access_token")
-VXTURE_LOGIN_URL = os.environ.get("VXTURE_LOGIN_URL", "https://accounts.vxture.com/signin")
-VXTURE_SSO_URL = os.environ.get("VXTURE_SSO_URL", "")
 PUBLIC_ACCOUNT_URL = os.environ.get("PUBLIC_ACCOUNT_URL", f"https://{os.environ.get('CONSOLE_DOMAIN', 'console.ruyin.ai')}").rstrip("/")
+# OIDC RP login entry on the console app-bff (it generates PKCE+state+nonce, then
+# redirects to accounts.vxture.com/oidc/authorize). Returned to anonymous clients.
+LOGIN_URL = f"{PUBLIC_ACCOUNT_URL}/auth/login"
 # Parent domain the session cookie is shared on (one login across ruyin.ai +
 # every *.ruyin.ai app). Logout must clear the cookie on this same domain.
 RUYIN_COOKIE_DOMAIN = os.environ.get("RUYIN_COOKIE_DOMAIN", "").strip()
@@ -132,32 +131,6 @@ def verify_payload(value: str | None) -> dict[str, Any] | None:
         return None
     exp = int(payload.get("exp", 0) or 0)
     if exp and exp < int(time.time()):
-        return None
-    return payload
-
-
-def verify_vxture_jwt(value: str | None) -> dict[str, Any] | None:
-    if not VXTURE_JWT_SECRET or not value or value.count(".") != 2:
-        return None
-    header_text, body_text, sig_text = value.split(".")
-    try:
-        header = json.loads(unb64url(header_text).decode("utf-8"))
-        if header.get("alg") != "HS256":
-            return None
-        expected = hmac.new(
-            VXTURE_JWT_SECRET.encode("utf-8"),
-            f"{header_text}.{body_text}".encode("ascii"),
-            hashlib.sha256,
-        ).digest()
-        if not hmac.compare_digest(sig_text, b64url(expected)):
-            return None
-        payload = json.loads(unb64url(body_text).decode("utf-8"))
-    except Exception:
-        return None
-    exp = int(payload.get("exp", 0) or 0)
-    if exp and exp < int(time.time()):
-        return None
-    if payload.get("userType") != "tenant_user" or payload.get("authScope") != "tenant-console":
         return None
     return payload
 
@@ -935,13 +908,10 @@ class AccountHandler(BaseHTTPRequestHandler):
         return payload if isinstance(payload, dict) else {}
 
     def current_vxture_payload(self) -> dict[str, Any] | None:
+        # OIDC RP session: opaque vx_rp_session cookie -> Redis identity claims
+        # (verified RS256 by the console app-bff at callback time).
         cookie_header = self.headers.get("Cookie")
-        # Prefer the OIDC RP session: opaque cookie -> Redis identity claims.
-        payload = vxture_payload_from_session(get_cookie(cookie_header, RP_SESSION_COOKIE_NAME))
-        if payload:
-            return payload
-        # Legacy HS256 access cookie (removed in the cleanup phase).
-        return verify_vxture_jwt(get_cookie(cookie_header, VXTURE_COOKIE_ACCESS))
+        return vxture_payload_from_session(get_cookie(cookie_header, RP_SESSION_COOKIE_NAME))
 
     def current_vxture_user(self) -> dict[str, Any] | None:
         payload = self.current_vxture_payload()
@@ -1018,13 +988,13 @@ class AccountHandler(BaseHTTPRequestHandler):
         self.text(404, "not found\n")
 
     def api_unauthorized(self) -> None:
-        self.json(401, {"status": "anonymous", "loginUrl": VXTURE_LOGIN_URL, "ssoUrl": VXTURE_SSO_URL})
+        self.json(401, {"status": "anonymous", "loginUrl": LOGIN_URL})
 
     def api_forbidden(self) -> None:
         self.json(403, {"status": "forbidden"})
 
     def api_session(self) -> None:
-        auth_config = {"loginUrl": VXTURE_LOGIN_URL, "ssoUrl": VXTURE_SSO_URL}
+        auth_config = {"loginUrl": LOGIN_URL}
         user = self.current_vxture_user()
         if not user:
             self.json(200, {"status": "anonymous", **auth_config})
@@ -1042,19 +1012,17 @@ class AccountHandler(BaseHTTPRequestHandler):
         )
 
     def api_logout(self) -> None:
-        # Clear the Vxture SSO access cookie this portal reads. The session is
-        # shared across ruyin.ai + every *.ruyin.ai app via a parent-domain
-        # cookie (RUYIN_COOKIE_DOMAIN), so clear it on that domain. Also clear a
-        # legacy host-only copy so older sessions sign out cleanly. The client
-        # then reloads, which (being anonymous) auto-redirects to SSO.
+        # Local cookie-clear fallback. The canonical logout is the console RP
+        # route (POST /auth/logout), which also destroys the server-side session
+        # and triggers global end_session. Here we just clear the opaque
+        # vx_rp_session cookie on the shared first-party domain (RUYIN_COOKIE_DOMAIN)
+        # and a host-only copy so a direct hit signs the browser out cleanly.
         body = b'{"status":"ok"}'
         self.send_response(200)
         self.send_header("Content-Type", "application/json; charset=utf-8")
         self.send_header("Cache-Control", "no-store")
-        self.clear_cookie(VXTURE_COOKIE_ACCESS, path="/")
         self.clear_cookie(RP_SESSION_COOKIE_NAME, path="/")
         if RUYIN_COOKIE_DOMAIN:
-            self.clear_cookie(VXTURE_COOKIE_ACCESS, path="/", domain=RUYIN_COOKIE_DOMAIN)
             self.clear_cookie(RP_SESSION_COOKIE_NAME, path="/", domain=RUYIN_COOKIE_DOMAIN)
         self.send_header("Content-Length", str(len(body)))
         self.end_headers()
