@@ -28,6 +28,11 @@ from http import cookies
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from typing import Any
 
+try:
+    import redis as _redis
+except ImportError:  # pragma: no cover - only needed once the OIDC RP is active
+    _redis = None
+
 
 LISTEN_HOST = os.environ.get("ACCOUNT_HOST", "0.0.0.0")
 LISTEN_PORT = int(os.environ.get("ACCOUNT_PORT", "3281"))
@@ -52,6 +57,11 @@ PUBLIC_ACCOUNT_URL = os.environ.get("PUBLIC_ACCOUNT_URL", f"https://{os.environ.
 # Parent domain the session cookie is shared on (one login across ruyin.ai +
 # every *.ruyin.ai app). Logout must clear the cookie on this same domain.
 RUYIN_COOKIE_DOMAIN = os.environ.get("RUYIN_COOKIE_DOMAIN", "").strip()
+# OIDC RP session store. The console app-bff writes verified identity claims to
+# rpsess:<rpsid>; this service reads them to authenticate requests. Tokens stay
+# in the BFF and are never read here.
+REDIS_URL = os.environ.get("REDIS_URL", "").strip()
+RP_SESSION_COOKIE_NAME = os.environ.get("RP_SESSION_COOKIE_NAME", "vx_rp_session").strip()
 
 USER_RE = re.compile(r"^[A-Za-z][A-Za-z0-9_-]{1,63}$")
 INVITE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
@@ -150,6 +160,60 @@ def verify_vxture_jwt(value: str | None) -> dict[str, Any] | None:
     if payload.get("userType") != "tenant_user" or payload.get("authScope") != "tenant-console":
         return None
     return payload
+
+
+_redis_client = None
+
+
+def _redis_conn():
+    global _redis_client
+    if not REDIS_URL or _redis is None:
+        return None
+    if _redis_client is None:
+        try:
+            _redis_client = _redis.Redis.from_url(
+                REDIS_URL, socket_timeout=2, socket_connect_timeout=2, decode_responses=True
+            )
+        except Exception:
+            _redis_client = None
+    return _redis_client
+
+
+def vxture_payload_from_session(rpsid: str | None) -> dict[str, Any] | None:
+    """Resolve the opaque OIDC RP session cookie to identity claims via Redis.
+
+    The console app-bff verified these claims (RS256) at callback time and stored
+    only the identity subset under rpsess:<rpsid>; presence here implies a live,
+    non-expired session (Redis enforces the TTL). OIDC tokens are never read here.
+    """
+    if not rpsid:
+        return None
+    conn = _redis_conn()
+    if conn is None:
+        return None
+    try:
+        raw = conn.get(f"rpsess:{rpsid}")
+    except Exception:
+        return None
+    if not raw:
+        return None
+    try:
+        data = json.loads(raw)
+    except (ValueError, TypeError):
+        return None
+    if not isinstance(data, dict):
+        return None
+    sub = str(data.get("sub") or "")
+    if not sub:
+        return None
+    return {
+        "sub": sub,
+        "email": str(data.get("email") or ""),
+        "phone": str(data.get("phone") or ""),
+        "tenantId": str(data.get("active_tenant") or ""),
+        "role": str(data.get("active_tenant_role") or "member"),
+        "account_status": str(data.get("account_status") or ""),
+    }
 
 
 def public_vxture_user(payload: dict[str, Any]) -> dict[str, Any]:
@@ -871,7 +935,13 @@ class AccountHandler(BaseHTTPRequestHandler):
         return payload if isinstance(payload, dict) else {}
 
     def current_vxture_payload(self) -> dict[str, Any] | None:
-        return verify_vxture_jwt(get_cookie(self.headers.get("Cookie"), VXTURE_COOKIE_ACCESS))
+        cookie_header = self.headers.get("Cookie")
+        # Prefer the OIDC RP session: opaque cookie -> Redis identity claims.
+        payload = vxture_payload_from_session(get_cookie(cookie_header, RP_SESSION_COOKIE_NAME))
+        if payload:
+            return payload
+        # Legacy HS256 access cookie (removed in the cleanup phase).
+        return verify_vxture_jwt(get_cookie(cookie_header, VXTURE_COOKIE_ACCESS))
 
     def current_vxture_user(self) -> dict[str, Any] | None:
         payload = self.current_vxture_payload()
@@ -982,8 +1052,10 @@ class AccountHandler(BaseHTTPRequestHandler):
         self.send_header("Content-Type", "application/json; charset=utf-8")
         self.send_header("Cache-Control", "no-store")
         self.clear_cookie(VXTURE_COOKIE_ACCESS, path="/")
+        self.clear_cookie(RP_SESSION_COOKIE_NAME, path="/")
         if RUYIN_COOKIE_DOMAIN:
             self.clear_cookie(VXTURE_COOKIE_ACCESS, path="/", domain=RUYIN_COOKIE_DOMAIN)
+            self.clear_cookie(RP_SESSION_COOKIE_NAME, path="/", domain=RUYIN_COOKIE_DOMAIN)
         self.send_header("Content-Length", str(len(body)))
         self.end_headers()
         self.wfile.write(body)

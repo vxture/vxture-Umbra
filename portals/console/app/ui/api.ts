@@ -17,9 +17,8 @@ export async function fetchJson<T>(url: string, init?: RequestInit): Promise<T> 
   return payload;
 }
 
-export function ssoStartUrl(session: SessionPayload, invite?: string) {
-  if (session.ssoUrl) {
-    return invite ? `/auth/start?invite=${encodeURIComponent(invite)}` : "/auth/start";
-  }
-  return session.loginUrl || "https://accounts.vxture.com/signin";
+export function ssoStartUrl(_session: SessionPayload, invite?: string) {
+  // OIDC RP login entry (server route generates PKCE+state+nonce, then top-level
+  // redirects to accounts.vxture.com/oidc/authorize). Always available.
+  return invite ? `/auth/login?invite=${encodeURIComponent(invite)}` : "/auth/login";
 }

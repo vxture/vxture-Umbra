@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { ruyinBrand } from "@/lib/brand";
 
 /**
  * Unified session for the public site. ruyin.ai shares one login with every
@@ -49,12 +50,14 @@ export function useSession(): Session {
   return session;
 }
 
-export async function logout(): Promise<void> {
-  try {
-    await fetch("/api/account/logout", { method: "POST", credentials: "include" });
-  } catch {
-    // Ignore: clearing the cookie may already have signed the user out; the
-    // reload re-reads the (now anonymous) session either way.
-  }
-  window.location.reload();
+export function logout(): void {
+  // Global logout via the console RP logout route: it destroys the server-side
+  // session, clears the opaque cookie on the shared .ruyin.ai domain, and
+  // redirects to the IdP end_session endpoint so the central session is also
+  // torn down. A top-level POST (not XHR) is required to follow that redirect.
+  const form = document.createElement("form");
+  form.method = "POST";
+  form.action = `${ruyinBrand.consoleUrl}/auth/logout`;
+  document.body.appendChild(form);
+  form.submit();
 }

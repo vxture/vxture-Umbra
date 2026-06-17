@@ -47,11 +47,12 @@ function initials(name: string): string {
   return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
 }
 
-/** All login entries route through the unified Vxture account center and come
- *  back to this site (failure stays at the account center, never loops here). */
-function authStartUrl(hint: "login" | "signup"): string {
+/** All login entries route through the OIDC RP login on the console (which
+ *  redirects to accounts.vxture.com) and come back to this site. The IdP hosts
+ *  the login/signup UI, so the screen hint is no longer forwarded. */
+function authStartUrl(_hint: "login" | "signup"): string {
   const returnTo = encodeURIComponent(ruyinBrand.siteUrl);
-  return `${ruyinBrand.consoleUrl}/auth/start?returnTo=${returnTo}&screen_hint=${hint}`;
+  return `${ruyinBrand.consoleUrl}/auth/login?returnTo=${returnTo}`;
 }
 
 export function SiteHeader() {
