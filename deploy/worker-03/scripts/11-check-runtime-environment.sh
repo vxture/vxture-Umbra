@@ -188,6 +188,35 @@ else
   fail "VXTURE_SSO_URL must be empty or an http(s) URL"
 fi
 
+# -- OIDC RP (optional until cutover) ------------------------------------------
+# The OIDC Authorization-Code + PKCE RP stays dormant until both OIDC_ISSUER and
+# OIDC_CLIENT_SECRET are set. Validate formats only when configured so the new
+# path can be staged without forcing the secret before the platform provisions it.
+if [[ -z "${OIDC_ISSUER:-}" ]]; then
+  log_ok "OIDC_ISSUER is empty; OIDC RP is dormant (legacy SSO active)"
+else
+  if [[ "${OIDC_ISSUER:-}" =~ ^https?://[^[:space:]]+$ ]]; then
+    log_ok "OIDC_ISSUER is valid"
+  else
+    fail "OIDC_ISSUER must be an http(s) URL"
+  fi
+  if [[ "${OIDC_REDIRECT_URI:-}" =~ ^https?://[^[:space:]]+/auth/callback$ ]]; then
+    log_ok "OIDC_REDIRECT_URI is valid"
+  else
+    fail "OIDC_REDIRECT_URI must be an http(s) URL ending in /auth/callback"
+  fi
+  if [[ -n "${OIDC_CLIENT_SECRET:-}" ]]; then
+    log_ok "OIDC_CLIENT_SECRET is set; OIDC RP is active"
+  else
+    log_warn "OIDC_CLIENT_SECRET is empty; OIDC RP stays dormant until provisioned"
+  fi
+  if [[ "${REDIS_URL:-}" =~ ^redis://[^[:space:]]+$ ]]; then
+    log_ok "REDIS_URL is valid"
+  else
+    fail "REDIS_URL must be a redis:// URL when OIDC RP is configured"
+  fi
+fi
+
 if [[ "${REALITY_DEST:-}" =~ ^([^[:space:]:]+):([0-9]+)$ ]] && (( 10#${BASH_REMATCH[2]} >= 1 && 10#${BASH_REMATCH[2]} <= 65535 )); then
   log_ok "REALITY_DEST has host:port format"
 else

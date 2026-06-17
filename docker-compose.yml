@@ -89,6 +89,27 @@ services:
       retries: 3
       start_period: 10s
 
+  # -- Redis: server-side OIDC RP session store --------------------------------
+  # Holds the OIDC authreq handshake, RP sessions (identity claims), the
+  # token bundle (BFF-only), and the sid->rpsid back-channel logout index.
+  # OIDC tokens never reach the browser; the browser holds only an opaque
+  # vx_rp_session cookie that points at a key here.
+  umbra-redis:
+    image: redis:7-alpine
+    container_name: umbra-redis
+    restart: always
+    command: ["redis-server", "--appendonly", "yes", "--save", "", "--maxmemory-policy", "noeviction"]
+    volumes:
+      - ${DATA_DIR}/redis:/data
+    networks:
+      - umbra-net
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
   # -- Account Portal: invite-bound user subscription dashboard ----------------
   umbra-account:
     image: ${IMAGE_REGISTRY}/${IMAGE_NAMESPACE}/ruyin-account-api:${IMAGE_TAG:-latest}
@@ -96,7 +117,10 @@ services:
     restart: always
     depends_on:
       - umbra-marzban
+      - umbra-redis
     environment:
+      REDIS_URL: "${REDIS_URL:-redis://umbra-redis:6379}"
+      RP_SESSION_COOKIE_NAME: "${RP_SESSION_COOKIE_NAME:-vx_rp_session}"
       ACCOUNT_DB_PATH: "/var/lib/umbra-account/account.db"
       ACCOUNT_SESSION_SECRET: "${ACCOUNT_SESSION_SECRET}"
       ACCOUNT_INVITE_SECRET: "${ACCOUNT_INVITE_SECRET}"
@@ -131,14 +155,29 @@ services:
     restart: always
     depends_on:
       - umbra-account
+      - umbra-redis
     environment:
       PORT: "3220"
+      # -- OIDC RP (Vxture App Integration Standard v1.0) ----------------------
+      # The console portal is ruyin's OIDC Authorization-Code + PKCE RP / app-bff.
+      # Tokens live server-side in Redis; the browser holds only vx_rp_session.
+      OIDC_ISSUER: "${OIDC_ISSUER:-}"
+      OIDC_CLIENT_ID: "${OIDC_CLIENT_ID:-ruyin}"
+      OIDC_CLIENT_SECRET: "${OIDC_CLIENT_SECRET:-}"
+      OIDC_REDIRECT_URI: "${OIDC_REDIRECT_URI:-}"
+      OIDC_SCOPES: "${OIDC_SCOPES:-openid profile ruyin}"
+      OIDC_POST_LOGOUT_REDIRECT_URI: "${OIDC_POST_LOGOUT_REDIRECT_URI:-}"
+      REDIS_URL: "${REDIS_URL:-redis://umbra-redis:6379}"
+      RP_SESSION_TTL: "${RP_SESSION_TTL:-2592000}"
+      RP_SESSION_COOKIE_NAME: "${RP_SESSION_COOKIE_NAME:-vx_rp_session}"
+      # Opaque, token-less session cookie shared across ruyin's own first-party
+      # zone (apex + every *.ruyin.ai app) so one login covers the whole site.
+      RP_SESSION_COOKIE_DOMAIN: "${RP_SESSION_COOKIE_DOMAIN:-}"
+      # -- Legacy cross-domain handoff (removed in cutover PR) -----------------
       AUTH_BFF_URL: "${AUTH_BFF_URL}"
       AUTH_INTERNAL_TOKEN: "${AUTH_INTERNAL_TOKEN}"
       VXTURE_SSO_URL: "${VXTURE_SSO_URL:-}"
       NEXT_PUBLIC_RUYIN_ACCOUNT_URL: "https://${CONSOLE_DOMAIN}"
-      # Session shared across ruyin.ai + every *.ruyin.ai app: the callback
-      # rewrites the access cookie onto this parent domain (one login, whole site).
       RUYIN_COOKIE_DOMAIN: "${RUYIN_COOKIE_DOMAIN:-}"
       VXTURE_COOKIE_ACCESS: "${VXTURE_COOKIE_ACCESS:-ry_access_token}"
     networks:
