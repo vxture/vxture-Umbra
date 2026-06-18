@@ -1,4 +1,4 @@
-import { NetworkCanvas } from "@/components/network-canvas";
+import { BgCanvas } from "@/components/bg-canvas";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { HeroSection } from "@/components/hero-section";
@@ -11,7 +11,7 @@ import { HeroSection } from "@/components/hero-section";
 export default function HomePage() {
   return (
     <div className="ruyin-page">
-      <NetworkCanvas />
+      <BgCanvas />
       <SiteHeader />
       <HeroSection />
       <SiteFooter />
