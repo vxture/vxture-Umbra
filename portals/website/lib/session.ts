@@ -58,14 +58,10 @@ export function useSession(): Session {
 }
 
 export function logout(): void {
-  // Local (ruyin-only) logout. The apex serves /auth/* (proxied to the RP), so
-  // POST same-origin to /auth/logout - same pattern the console uses. (A
-  // cross-subdomain POST to console.ruyin.ai did not reliably sign the user out;
-  // same-origin always carries the session cookie and follows the redirect.) The
-  // route destroys the RP session, clears the cookie, and redirects to the home.
-  const form = document.createElement("form");
-  form.method = "POST";
-  form.action = "/auth/logout";
-  document.body.appendChild(form);
-  form.submit();
+  // Local (ruyin-only) logout via a plain top-level GET navigation. /auth/logout
+  // (served same-origin on the apex, proxied to the RP) destroys the RP session,
+  // clears the cookie, and 303-redirects home. Navigation - not a form.submit() -
+  // is reliable from inside the popover account menu, which unmounts on click and
+  // would race a programmatic submit.
+  window.location.assign("/auth/logout");
 }

@@ -14,8 +14,13 @@ export const runtime = "nodejs";
  * code from the live central session without a prompt) - the expected semantics
  * of "log out of this app only". Global logout still reaches ruyin inbound via
  * /auth/backchannel-logout.
+ *
+ * Accepts both GET and POST so the UI can sign out with a plain top-level
+ * navigation (reliable from inside a popover menu, where a programmatic
+ * form.submit() races the menu unmount). GET logout only ends the local session
+ * (low-risk if triggered cross-site - at worst an unwanted sign-out).
  */
-export async function POST(request: NextRequest) {
+async function handleLogout(request: NextRequest): Promise<NextResponse> {
   const cfg = getOidcConfig();
   if (!cfg) {
     return new NextResponse("OIDC RP is not configured", {
@@ -33,4 +38,12 @@ export async function POST(request: NextRequest) {
   const res = NextResponse.redirect(dest, { status: 303 });
   clearSessionCookie(res, cfg);
   return res;
+}
+
+export function GET(request: NextRequest) {
+  return handleLogout(request);
+}
+
+export function POST(request: NextRequest) {
+  return handleLogout(request);
 }
