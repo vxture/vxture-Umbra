@@ -9,30 +9,15 @@ import {
   ShellLegalFooter,
   ShellLocaleSwitcher,
   ShellThemeToggle,
-  ShellUserMenu,
   useTheme,
 } from "@vxture/design-system";
 import type { IconName } from "@vxture/design-system";
 import type { Locale } from "@vxture/shared";
 import { useLocale } from "../locale-provider";
 import { markSrc, ruyinBrand } from "../../lib/brand";
+import { OrgDropdown } from "./org-dropdown";
+import { UserDropdown } from "./user-dropdown";
 import type { VxtureUser } from "./types";
-
-function initials(name: string): string {
-  const parts = name.trim().split(/\s+/).filter(Boolean);
-  if (parts.length === 0) return "?";
-  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
-  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
-}
-
-function logout(): void {
-  // Local (ruyin-only) logout via a plain top-level GET navigation. /auth/logout
-  // destroys the RP session, clears the cookie, and 303-redirects home; it does
-  // not call end_session, so the central session stays alive (next login is
-  // silent). Navigation - not a form.submit() - is reliable from inside the
-  // popover account menu, which unmounts on click and would race a submit.
-  window.location.assign("/auth/logout");
-}
 
 /**
  * Console chrome - the same header/footer treatment as the marketing site
@@ -61,8 +46,6 @@ export function Shell({
     return () => window.removeEventListener("scroll", update);
   }, []);
 
-  const displayName = user?.displayName || user?.username || user?.email || "";
-
   return (
     <div className="app-page">
       <header className={`site-header${isScrolled ? " is-scrolled" : ""}`}>
@@ -75,43 +58,29 @@ export function Shell({
             labelClassName="site-brand-name"
           />
           <div className="site-actions">
-            <div className="site-tools" aria-label="Display controls">
-              <ShellThemeToggle
-                currentTheme={theme}
-                buttonLabel="Switch theme"
-                onThemeChange={(next) => setTheme(next)}
-              />
-              <ShellLocaleSwitcher
-                currentLocale={locale as Locale}
-                buttonLabel="Language"
-                onLocaleChange={(next) => setLocale(next)}
-              />
-            </div>
             {actions}
             {user ? (
-              <ShellUserMenu
-                openLabel="Account menu"
-                user={{
-                  displayName,
-                  uniqueLine: user.email,
-                  avatarSrc: user.avatarUrl,
-                  avatarAlt: displayName,
-                  avatarFallback: initials(displayName),
-                  badges: user.role ? [{ key: "role", label: user.role }] : undefined,
-                }}
-                actions={[
-                  {
-                    key: "profile",
-                    label: "Personal info",
-                    icon: "user",
-                    onClick: () => {
-                      window.location.href = "/account";
-                    },
-                  },
-                  { key: "logout", label: "Log out", icon: "sign-out", onClick: logout },
-                ]}
-              />
-            ) : null}
+              // Signed-in: org/workspace + user dropdowns (theme/locale live
+              // inside the user dropdown).
+              <div className="header-modules">
+                <OrgDropdown user={user} />
+                <UserDropdown user={user} />
+              </div>
+            ) : (
+              // Anonymous / admin views: standalone display controls.
+              <div className="site-tools" aria-label="Display controls">
+                <ShellThemeToggle
+                  currentTheme={theme}
+                  buttonLabel="Switch theme"
+                  onThemeChange={(next) => setTheme(next)}
+                />
+                <ShellLocaleSwitcher
+                  currentLocale={locale as Locale}
+                  buttonLabel="Language"
+                  onLocaleChange={(next) => setLocale(next)}
+                />
+              </div>
+            )}
           </div>
         </div>
       </header>
