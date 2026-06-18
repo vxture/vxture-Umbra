@@ -104,6 +104,13 @@ a {
   color: var(--vx-control-brand);
 }
 
+/* Keep the account avatar (DS user-menu trigger) at least 24px from the button
+   area; the shared .site-actions gap alone (~8px) sits it too close to the
+   Workspace button. */
+.site-actions .vx-shell-user-trigger {
+  margin-inline-start: 24px;
+}
+
 .site-tools {
   display: flex;
   align-items: center;

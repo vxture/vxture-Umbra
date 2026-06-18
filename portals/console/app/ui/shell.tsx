@@ -26,15 +26,12 @@ function initials(name: string): string {
 }
 
 function logout(): void {
-  // Global logout: top-level POST to the RP logout route, which destroys the
-  // server-side session, clears the opaque cookie, and redirects to the IdP
-  // end_session endpoint so the central session (vx_sid) is also torn down -
-  // otherwise the next login would silently re-authenticate.
-  const form = document.createElement("form");
-  form.method = "POST";
-  form.action = "/auth/logout";
-  document.body.appendChild(form);
-  form.submit();
+  // Local (ruyin-only) logout via a plain top-level GET navigation. /auth/logout
+  // destroys the RP session, clears the cookie, and 303-redirects home; it does
+  // not call end_session, so the central session stays alive (next login is
+  // silent). Navigation - not a form.submit() - is reliable from inside the
+  // popover account menu, which unmounts on click and would race a submit.
+  window.location.assign("/auth/logout");
 }
 
 /**
