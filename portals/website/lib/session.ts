@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ruyinBrand } from "@/lib/brand";
 
 /**
  * Unified session for the public site. ruyin.ai shares one login with every
@@ -59,13 +58,14 @@ export function useSession(): Session {
 }
 
 export function logout(): void {
-  // Global logout via the console RP logout route: it destroys the server-side
-  // session, clears the opaque cookie on the shared .ruyin.ai domain, and
-  // redirects to the IdP end_session endpoint so the central session is also
-  // torn down. A top-level POST (not XHR) is required to follow that redirect.
+  // Local (ruyin-only) logout. The apex serves /auth/* (proxied to the RP), so
+  // POST same-origin to /auth/logout - same pattern the console uses. (A
+  // cross-subdomain POST to console.ruyin.ai did not reliably sign the user out;
+  // same-origin always carries the session cookie and follows the redirect.) The
+  // route destroys the RP session, clears the cookie, and redirects to the home.
   const form = document.createElement("form");
   form.method = "POST";
-  form.action = `${ruyinBrand.consoleUrl}/auth/logout`;
+  form.action = "/auth/logout";
   document.body.appendChild(form);
   form.submit();
 }

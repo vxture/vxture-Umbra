@@ -110,7 +110,7 @@ export function SiteHeader() {
 
           {session.status === "loading" ? null : session.status === "active" && user ? (
             <>
-              <Button asChild>
+              <Button variant="outline" asChild>
                 <a href={ruyinBrand.consoleUrl}>{text.workspace}</a>
               </Button>
               <ShellUserMenu
