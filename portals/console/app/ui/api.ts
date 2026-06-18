@@ -19,6 +19,13 @@ export async function fetchJson<T>(url: string, init?: RequestInit): Promise<T> 
 
 export function ssoStartUrl(_session: SessionPayload, invite?: string) {
   // OIDC RP login entry (server route generates PKCE+state+nonce, then top-level
-  // redirects to accounts.vxture.com/oidc/authorize). Always available.
-  return invite ? `/auth/login?invite=${encodeURIComponent(invite)}` : "/auth/login";
+  // redirects to accounts.vxture.com/oidc/authorize). Served same-origin on the
+  // console (its catch-all proxies to umbra-account-web). The OIDC callback lands
+  // on the apex (the registered redirect host), so pass returnTo = this console
+  // URL (allowlisted to *.ruyin.ai) to come back here after sign-in.
+  const params = new URLSearchParams();
+  if (typeof window !== "undefined") params.set("returnTo", window.location.href);
+  if (invite) params.set("invite", invite);
+  const qs = params.toString();
+  return qs ? `/auth/login?${qs}` : "/auth/login";
 }

@@ -47,12 +47,13 @@ function initials(name: string): string {
   return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
 }
 
-/** All login entries route through the OIDC RP login on the console (which
- *  redirects to accounts.vxture.com) and come back to this site. The IdP hosts
- *  the login/signup UI, so the screen hint is no longer forwarded. */
+/** All login entries route through the OIDC RP login on the apex front door
+ *  (ruyin.ai/auth/*, proxied to umbra-account-web), which redirects to
+ *  accounts.vxture.com and comes back to this site. The IdP hosts the
+ *  login/signup UI, so the screen hint is no longer forwarded. */
 function authStartUrl(_hint: "login" | "signup"): string {
   const returnTo = encodeURIComponent(ruyinBrand.siteUrl);
-  return `${ruyinBrand.consoleUrl}/auth/login?returnTo=${returnTo}`;
+  return `${ruyinBrand.siteUrl}/auth/login?returnTo=${returnTo}`;
 }
 
 export function SiteHeader() {
