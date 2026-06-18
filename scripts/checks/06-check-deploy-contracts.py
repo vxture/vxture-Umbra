@@ -1526,7 +1526,35 @@ def check_brand_assets_use_png_and_ico() -> list[str]:
     return problems
 
 
+def check_env_example_is_source_safe() -> list[str]:
+    # The worker-03 deploy sources .env via bash (set -a; source .env). A bare
+    # multi-word value like `KEY=a b c` makes bash run `b c` as a command (exit
+    # 127), aborting the deploy. docker compose --env-file does not word-split, so
+    # this slips past compose validation; guard it here. Values with whitespace
+    # must be quoted.
+    problems: list[str] = []
+    path = PROJECT_ROOT / ".env.example"
+    if not path.exists():
+        return ["[.env.example] not found"]
+    assign = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*=(.*)$")
+    for line_no, raw in enumerate(read(path).splitlines(), start=1):
+        line = raw.strip()
+        if not line or line.startswith("#"):
+            continue
+        m = assign.match(line)
+        if not m:
+            continue
+        value = m.group(1)
+        if not value:
+            continue
+        quoted = (value[0] == value[-1] and value[0] in ("'", '"') and len(value) >= 2)
+        if not quoted and any(ch.isspace() for ch in value):
+            problems.append(f".env.example:{line_no}: unquoted value with whitespace breaks `source`: {line}")
+    return problems
+
+
 CUSTOM_CHECKS = (
+    ("env.example is bash-source-safe", check_env_example_is_source_safe),
     ("compose owned image mapping is exact", check_compose_owned_image_mapping),
     ("docker build matrix publishes the exact owned images", check_docker_build_image_matrix),
     ("worker deploy fallback contract is valid", check_worker_deploy_fallback_contract),
