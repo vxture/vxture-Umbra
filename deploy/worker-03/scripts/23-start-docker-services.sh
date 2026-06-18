@@ -170,4 +170,17 @@ if [[ -n "$PROBLEMS" ]]; then
   exit 1
 fi
 
+# Reclaim disk from images left by previous releases. Each release pulls fresh
+# owned images; the superseded tags pile up in /var/lib/docker and will fill the
+# disk over time (a full disk fails the next deploy at `git fetch`). This runs
+# only after the new containers are confirmed healthy, so prior images remain
+# available for rollback until the new deployment is proven. Images referenced by
+# running containers are never removed; worker-03 only pulls (no build cache).
+log_step "Pruning unused images to reclaim disk (running images are kept)..."
+if docker image prune -af >/tmp/umbra-prune.out 2>&1; then
+  grep -i "reclaimed" /tmp/umbra-prune.out 2>/dev/null | sed 's/^/  /' || true
+else
+  log_warn "Image prune skipped (non-fatal)"
+fi
+
 log_ok "All services started."
