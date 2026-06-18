@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getOidcConfig } from "../lib/config";
-import { buildEndSessionUrl } from "../lib/oidc";
-import { randomToken } from "../lib/pkce";
 import { destroySession } from "../lib/session-store";
 import { clearSessionCookie } from "../lib/cookie";
 
@@ -9,10 +7,13 @@ export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
 /**
- * Local logout + global SLO trigger. Destroys this RP session, clears the
- * opaque cookie, then top-level redirects to the IdP end_session endpoint so the
- * central session and every other RP are torn down (303 so the POST becomes a
- * GET navigation).
+ * Local (ruyin-only) logout. Destroys this RP session and clears the opaque
+ * cookie, then redirects to the ruyin home. It deliberately does NOT call the
+ * IdP end_session endpoint, so the central vx_sid session and other apps stay
+ * signed in. Consequence: the next ruyin login is silent (the IdP re-issues a
+ * code from the live central session without a prompt) - the expected semantics
+ * of "log out of this app only". Global logout still reaches ruyin inbound via
+ * /auth/backchannel-logout.
  */
 export async function POST(request: NextRequest) {
   const cfg = getOidcConfig();
@@ -26,7 +27,10 @@ export async function POST(request: NextRequest) {
   const rpsid = request.cookies.get(cfg.cookieName)?.value;
   if (rpsid) await destroySession(cfg, rpsid);
 
-  const res = NextResponse.redirect(buildEndSessionUrl(cfg, randomToken(16)), { status: 303 });
+  // Land on the ruyin first-party zone (apex home), never the IdP.
+  const apex = cfg.cookieDomain.replace(/^\./, "").trim();
+  const dest = apex ? `https://${apex}/` : new URL("/", request.nextUrl.origin).toString();
+  const res = NextResponse.redirect(dest, { status: 303 });
   clearSessionCookie(res, cfg);
   return res;
 }

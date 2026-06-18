@@ -45,8 +45,8 @@ have been removed.
 - Keep all OIDC tokens server-side; the browser sees only an opaque session
   cookie.
 - Verify every token (id/access/logout) with RS256 + JWKS (iss/aud/exp/nonce).
-- Support refresh rotation and global logout (IdP `end_session` +
-  back-channel logout).
+- Support refresh rotation. Ruyin's own logout button is local (ruyin-only);
+  global logout still reaches ruyin inbound via back-channel logout.
 - One login shared across ruyin.ai and every *.ruyin.ai app.
 
 ## Non-Goals
@@ -63,7 +63,7 @@ have been removed.
 | `GET /auth/login` | Generate PKCE(S256) + state + nonce, store the authreq in Redis, top-level redirect to `{issuer}/oidc/authorize`. Honors an allowlisted `returnTo` and carries an `invite` through. |
 | `GET /auth/callback` | Validate state, fetch+delete the authreq, exchange the code (with the PKCE verifier), verify id_token (nonce) + access_token, create the RP session, set the opaque cookie, redirect to `returnTo` (or `/register?invite=`). |
 | `GET /auth/session` | Resolve the opaque cookie to identity claims; refresh the access token server-side when near expiry (rotating the refresh token); tear the session down if the refresh family is revoked. |
-| `POST /auth/logout` | Destroy the RP session, clear the cookie, redirect to `{issuer}/oidc/end_session` for global logout. |
+| `POST /auth/logout` | Local (ruyin-only) logout: destroy the RP session, clear the cookie, redirect to the ruyin home. Does NOT call `end_session`, so the central session and other apps stay signed in (next ruyin login is therefore silent). |
 | `POST /auth/backchannel-logout` | Verify the `logout_token` (RS256, backchannel-logout event, `sid`, no `nonce`) and destroy every RP session for that central `sid`. |
 
 The RP library lives under `portals/console/app/auth/lib/`
