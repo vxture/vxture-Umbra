@@ -112,6 +112,88 @@ body {
   margin-inline-end: var(--vx-space-xl);
 }
 
+/* -- Header dropdown modules (org / workspace + user) ----------------------- */
+.header-modules {
+  display: flex;
+  align-items: center;
+  gap: 24px; /* even spacing between the header modules */
+}
+
+/* Shared trigger button for both dropdowns (DS DropdownMenuTrigger = <button>). */
+.hdr-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--vx-space-xs);
+  padding: var(--vx-space-2xs) var(--vx-space-sm);
+  border: none;
+  background: transparent;
+  border-radius: var(--vx-radius-md);
+  color: var(--vx-color-text-primary);
+  font: inherit;
+  cursor: pointer;
+  transition: background var(--vx-duration-fast) var(--vx-ease-standard);
+}
+.hdr-trigger:hover,
+.hdr-trigger[data-state="open"] {
+  background: var(--vx-color-surface-muted);
+}
+.hdr-trigger-text {
+  font-size: var(--vx-typography-body-sm-size);
+  white-space: nowrap;
+  max-width: 18ch;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.hdr-trigger-caret,
+.hdr-trigger-lead {
+  color: var(--vx-color-text-muted);
+  flex: none;
+}
+.hdr-avatar {
+  width: 28px;
+  height: 28px;
+  flex: none;
+}
+
+/* DS DropdownMenuContent already supplies background / radius / shadow. */
+.hdr-menu {
+  min-width: 248px;
+}
+.hdr-menu-title,
+.hdr-group-title {
+  color: var(--vx-color-text-muted);
+  font-size: var(--vx-typography-body-sm-size);
+}
+.hdr-identity {
+  display: flex;
+  flex-direction: column;
+  gap: var(--vx-space-2xs);
+}
+.hdr-identity-name {
+  font-weight: 600;
+}
+.hdr-identity-line {
+  color: var(--vx-color-text-muted);
+  font-size: var(--vx-typography-body-sm-size);
+}
+.hdr-info-row {
+  display: flex;
+  align-items: center;
+  gap: var(--vx-space-sm);
+  padding: var(--vx-space-2xs) var(--vx-space-sm);
+}
+.hdr-info-label {
+  color: var(--vx-color-text-muted);
+  font-size: var(--vx-typography-body-sm-size);
+  flex: none;
+  min-width: 56px;
+}
+.hdr-info-value {
+  font-size: var(--vx-typography-body-sm-size);
+  overflow-wrap: anywhere;
+  flex: 1 1 auto;
+}
+
 /* Brand wordmark: Funnel Display at the DS heading-3 size with the DS logo
    tracking - identical to the website portal. */
 .site-brand-name {
