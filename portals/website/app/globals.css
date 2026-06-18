@@ -109,8 +109,10 @@ a {
   align-items: center;
   justify-content: flex-end;
   gap: var(--vx-space-sm);
-  /* Separate the display tools (theme/locale) from the sign up / log in CTAs. */
-  margin-inline-end: var(--vx-space-xl);
+  /* Separate the display tools (theme/locale) from the account area (workspace /
+     avatar, or the sign up / log in CTAs). Fixed 24px per the header design spec
+     (--vx-space-xl is density-fluid 20-28px, so it is not reliably 24px). */
+  margin-inline-end: 24px;
 }
 
 /* Brand wordmark: DS ShellBrand's label uses neither the brand typeface nor a
