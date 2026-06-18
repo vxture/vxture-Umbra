@@ -32,7 +32,7 @@ function tokenToRgb(value: string) {
   return match ? match[1].split(",").slice(0, 3).join(",") : "";
 }
 
-export function NetworkCanvas() {
+export function BgCanvas() {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
   useEffect(() => {
@@ -118,5 +118,5 @@ export function NetworkCanvas() {
     };
   }, []);
 
-  return <canvas ref={canvasRef} className="ruyin-network" aria-hidden="true" />;
+  return <canvas ref={canvasRef} className="bg-canvas" aria-hidden="true" />;
 }
