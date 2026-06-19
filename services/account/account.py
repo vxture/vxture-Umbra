@@ -184,6 +184,7 @@ def vxture_payload_from_session(rpsid: str | None) -> dict[str, Any] | None:
         "sub": sub,
         "display_name": str(data.get("display_name") or ""),
         "username": str(data.get("username") or ""),
+        "avatar_url": str(data.get("avatar_url") or ""),
         "email": str(data.get("email") or ""),
         "email_verified": bool(data.get("email_verified")),
         "phone": str(data.get("phone") or ""),
@@ -198,10 +199,12 @@ def vxture_payload_from_session(rpsid: str | None) -> dict[str, Any] | None:
 
 def public_vxture_user(payload: dict[str, Any]) -> dict[str, Any]:
     # Public identity DTO surfaced to the portals. Human identifiers come from the
-    # platform claims: displayName (name) and username (preferred_username) ride
-    # the profile scope; email/phone need the email/phone scopes and an account
-    # value. avatarUrl (picture) is not wired yet (pending platform release).
-    # Tenant context is org/workspace/roles. See docs/design/platform-identity.md.
+    # platform claims: displayName (name), username (preferred_username) and
+    # avatarUrl (picture) ride the profile scope; email/phone need the email/phone
+    # scopes and an account value. avatarUrl is a cross-domain URL the browser
+    # loads directly (never proxied) and is empty until the platform emits picture
+    # (UI falls back to initials). Tenant context is org/workspace/roles. See
+    # docs/design/platform-identity.md.
     roles = payload.get("roles") if isinstance(payload.get("roles"), list) else []
     roles = [str(r) for r in roles]
     org = str(payload.get("active_org") or "")
@@ -219,8 +222,7 @@ def public_vxture_user(payload: dict[str, Any]) -> dict[str, Any]:
         "userType": str(payload.get("user_type") or ""),
         "username": str(payload.get("username") or ""),
         "displayName": str(payload.get("display_name") or ""),
-        # picture claim not carried yet; populated when the platform releases it.
-        "avatarUrl": "",
+        "avatarUrl": str(payload.get("avatar_url") or ""),
         # Legacy aliases so existing bindings keep working.
         "tenantId": org,
         "permissions": roles,

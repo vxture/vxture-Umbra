@@ -20,15 +20,17 @@ export interface AuthRequest {
 
 /** Identity subset shared with account.py; keep field names stable. Sourced from
  * the verified access_token. Human identifiers: display_name (name),
- * username (preferred_username), email, phone. email/phone are present only when
- * the account has them and the email/phone scopes were granted; picture (avatar)
- * is intentionally not carried yet (pending the platform release). Tenant context
- * uses org/workspace/roles (the live claim names). */
+ * username (preferred_username), email, phone, avatar_url (picture). email/phone
+ * are present only when the account has them and the email/phone scopes were
+ * granted; avatar_url is empty until the platform emits the picture claim, and
+ * the UI falls back to initials. Tenant context uses org/workspace/roles (the
+ * live claim names). */
 export interface IdentityClaims {
   sub: string;
   sid: string;
   display_name: string;
   username: string;
+  avatar_url: string;
   email: string;
   email_verified: boolean;
   phone: string;
