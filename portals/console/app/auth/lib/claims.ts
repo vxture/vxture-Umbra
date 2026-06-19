@@ -27,10 +27,12 @@ export function toIdentityClaims(idClaims: JWTPayload, accessClaims: JWTPayload)
   return {
     sub: str(accessClaims.sub) || str(idClaims.sub),
     sid,
-    // name / preferred_username ride the profile scope; email / phone need the
-    // email / phone scopes (and an account value) to be present.
+    // name / preferred_username / picture ride the profile scope; email / phone
+    // need the email / phone scopes (and an account value) to be present. picture
+    // is a cross-domain avatar URL the browser loads directly (never proxied).
     display_name: str(accessClaims.name),
     username: str(accessClaims.preferred_username),
+    avatar_url: str(accessClaims.picture),
     email: str(accessClaims.email),
     email_verified: bool(accessClaims.email_verified),
     phone: str(accessClaims.phone),

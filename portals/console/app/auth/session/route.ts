@@ -50,6 +50,9 @@ export async function GET(request: NextRequest) {
     authenticated: true,
     user: {
       sub: identity.sub,
+      displayName: identity.display_name,
+      username: identity.username,
+      avatarUrl: identity.avatar_url,
       email: identity.email,
       emailVerified: identity.email_verified,
       phone: identity.phone,
