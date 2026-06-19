@@ -1508,16 +1508,26 @@ def check_brand_assets_use_png_and_ico() -> list[str]:
         PROJECT_ROOT / "portals/admin/public/assets/brand",
     )
 
+    # The hero wordmark is rendered as an inline-SVG React component (themed via
+    # currentColor for instant theme switching); brand/ruyin-hero.svg is its
+    # source-of-record and is the one allowed SVG. All other brand assets that are
+    # served as <img> / favicon / og:image must stay raster (PNG/ICO).
     svg_files: list[str] = []
     for root in roots:
         if root.exists():
-            svg_files.extend(path.relative_to(PROJECT_ROOT).as_posix() for path in root.rglob("*.svg"))
+            svg_files.extend(
+                path.relative_to(PROJECT_ROOT).as_posix()
+                for path in root.rglob("*.svg")
+                if path.name != "ruyin-hero.svg"
+            )
     if svg_files:
         problems.append(f"Ruyin brand assets must be PNG/ICO, not SVG: {svg_files!r}")
 
+    # ruyin-hero-light.png is kept as the og:image / twitter:image (social cards
+    # need a raster image). ruyin-hero-dark.png is retired: the on-page hero is now
+    # the inline SVG, so a dark hero raster is no longer needed.
     required = (
         PROJECT_ROOT / "brand/favicon.ico",
-        PROJECT_ROOT / "brand/ruyin-hero-dark.png",
         PROJECT_ROOT / "brand/ruyin-hero-light.png",
         PROJECT_ROOT / "brand/ruyin-symbol-dark.png",
         PROJECT_ROOT / "brand/ruyin-symbol-light.png",

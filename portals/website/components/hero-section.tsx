@@ -1,8 +1,8 @@
 "use client";
 
-import { useTheme } from "@vxture/design-system";
 import { useLocale } from "@/lib/locale-provider";
-import { ruyinBrand, signatureSrc } from "@/lib/brand";
+import { ruyinBrand } from "@/lib/brand";
+import { HeroSignature } from "@/components/hero-signature";
 import type { Locale } from "@vxture/shared";
 
 const HERO_TEXT: Record<Locale, { lead: string; action: string }> = {
@@ -23,7 +23,6 @@ const HERO_TEXT: Record<Locale, { lead: string; action: string }> = {
  * eyebrow -> signature artwork -> accessible title -> lead -> CTA.
  */
 export function HeroSection() {
-  const { theme } = useTheme(); // resolved light/dark
   const { locale } = useLocale();
   const text = HERO_TEXT[locale] ?? HERO_TEXT["en-US"];
 
@@ -36,11 +35,7 @@ export function HeroSection() {
           <span className="eyebrow-product">Ruyin Agent</span>
         </p>
         <div className="hero-signature">
-          <img
-            className="hero-signature-art"
-            src={signatureSrc(theme)}
-            alt={ruyinBrand.fullName}
-          />
+          <HeroSignature />
         </div>
         <h1 id="hero-title" className="hero-title">
           {ruyinBrand.fullName}
