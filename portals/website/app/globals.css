@@ -69,7 +69,7 @@ a {
   width: min(100%, var(--ruyin-shell-max-width));
   height: var(--ruyin-header-height);
   margin: 0 auto;
-  padding: 0 32px;
+  padding: 0;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -83,6 +83,16 @@ a {
   gap: var(--vx-space-sm);
 }
 
+/* DS buttons are compact by default (padding-inline ~14px, font-size 0.84rem, no
+   min-width), which reads too narrow/small for the header auth CTAs. Widen and
+   bump the label via DS tokens (spacing + typography), not raw values, so they
+   track the density/type scale - DS exposes no wider button size or fullWidth
+   prop. */
+.site-actions .vx-btn {
+  padding-inline: var(--vx-space-2xl);
+  font-size: var(--vx-typography-body-size);
+}
+
 /* DS Button asChild renders an <a>, but both this file's and the DS
    globals-base's `a { color: inherit }` (specificity 0,0,1) outrank the DS
    button's own zero-specificity :where(.vx-btn--*) color - so the filled Log in
@@ -94,15 +104,31 @@ a {
   color: var(--vx-control-on-brand);
 }
 
-.site-actions .vx-btn--ghost,
 .site-actions .vx-btn--outline {
   color: var(--vx-control-brand);
 }
 
-/* Keep the account menu trigger at least 24px from the button area; the shared
-   .site-actions gap alone (~8px) sits it too close to the Workspace button. */
+/* Register (ghost): fully transparent background + no border (DS ghost otherwise
+   carries a faint brand-soft wash). Quiet, harmonious secondary label color from
+   DS - text-secondary adapts per theme (dark gray on light, soft cool gray on
+   dark) and lets the filled Log in stay the primary action. */
+.site-actions .vx-btn--ghost {
+  background: transparent;
+  color: var(--vx-color-text-secondary);
+}
+
+/* Hover/active affordance: reuse the exact DS shell tool-button hover wash so the
+   three transparent header controls (theme toggle, language switcher, register)
+   share one identical active state. */
+.site-actions .vx-btn--ghost:hover {
+  background: var(--vx-shell-tool-button-hover-background);
+}
+
+/* Separate the account menu trigger from the button area (the shared
+   .site-actions gap alone, ~8px, sits it too close to the Workspace button).
+   DS spacing token (density-fluid 20-28px). */
 .site-actions .acct-trigger {
-  margin-inline-start: 24px;
+  margin-inline-start: var(--vx-space-xl);
 }
 
 /* -- Signed-in account menu (DS DropdownMenu; trigger = <button>) ------------
@@ -203,10 +229,6 @@ a {
   align-items: center;
   justify-content: flex-end;
   gap: var(--vx-space-sm);
-  /* Separate the display tools (theme/locale) from the account area (workspace /
-     avatar, or the sign up / log in CTAs). Fixed 24px per the header design spec
-     (--vx-space-xl is density-fluid 20-28px, so it is not reliably 24px). */
-  margin-inline-end: 24px;
 }
 
 /* Brand wordmark: DS ShellBrand's label uses neither the brand typeface nor a
@@ -394,10 +416,10 @@ a {
   border-top: 1px solid var(--vx-color-border);
   margin: 0 auto;
   /* Compact 48px band (DS inner is align-items:center). */
-  padding: 0 32px;
+  padding: 0;
   /* Small, muted legal text (the DS footer sets no base size/color). Copyright
      and links both inherit this. */
-  font-size: 14px;
+  font-size: var(--vx-typography-body-sm-size);
   color: var(--vx-color-text-muted);
 }
 
