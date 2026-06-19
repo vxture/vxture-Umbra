@@ -1,11 +1,13 @@
 /**
  * Hero signature wordmark ("Ruyin" calligraphy) as an inline SVG. Inlining lets
  * it recolor instantly with the theme instead of swapping a per-theme PNG, which
- * reloaded an image and stuttered on every theme toggle. Per-theme look (matching
- * the original artwork): light = brand blue via currentColor; dark = the metallic
- * gold gradient below (applied by .dark .hero-signature-art in globals.css via
- * fill: url(#ruyin-hero-gold)). Decorative: the accessible name is the sr-only
- * <h1> in hero-section.tsx, so this is aria-hidden. Source: brand/ruyin-hero.svg.
+ * reloaded an image and stuttered on every theme toggle. Per-theme look: light =
+ * solid brand blue via currentColor; dark = a luminous cool-blue metallic
+ * gradient (the #ruyin-hero-dark-fill gradient below, applied by
+ * .dark .hero-signature-art in globals.css) that glows against the dark navy
+ * background while staying in the brand hue. Decorative: the accessible name is
+ * the sr-only <h1> in hero-section.tsx, so this is aria-hidden. Source:
+ * brand/ruyin-hero.svg.
  */
 export function HeroSignature() {
   return (
@@ -18,13 +20,14 @@ export function HeroSignature() {
       xmlns="http://www.w3.org/2000/svg"
     >
       <defs>
-        <linearGradient id="ruyin-hero-gold" x1="0%" y1="0%" x2="100%" y2="100%">
-          {/* Bespoke hero metallic-gold stops (matches the original dark-theme
-              calligraphy); no DS token exists for this artwork color. */}
-          <stop offset="0%" stopColor="#f7e08c" />{/* ds-allow: hero gold artwork */}
-          <stop offset="40%" stopColor="#e3b24a" />{/* ds-allow: hero gold artwork */}
-          <stop offset="55%" stopColor="#cf9a2f" />{/* ds-allow: hero gold artwork */}
-          <stop offset="100%" stopColor="#f4d680" />{/* ds-allow: hero gold artwork */}
+        {/* Dark-theme fill: a luminous cool-blue metallic gradient built from DS
+            brand-scale tokens, so it stays in sync with the palette and needs no
+            raw colors. Highlight -> vivid -> deep -> highlight gives the sheen. */}
+        <linearGradient id="ruyin-hero-dark-fill" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="var(--vx-color-brand-200)" />
+          <stop offset="40%" stopColor="var(--vx-color-brand-400)" />
+          <stop offset="58%" stopColor="var(--vx-color-brand-500)" />
+          <stop offset="100%" stopColor="var(--vx-color-brand-300)" />
         </linearGradient>
       </defs>
       <path d="m281 82 3 7 7 20c2 7 4 16 6 19 4 11 4 12-3 13q-6 0-2 11 0 10 8 1c9-8 25-16 19-9l-9 11-10 10q-8 5-4 11c1 5 1 6-13 15q-17 12-11 20c3 3 14 1 18-3 3-3 3-3 19-3 18 1 19 0 20-23 1-11 1-11 7-18l12-14q16-21 9-7l-5 13-5 10c-4 7 0 16 5 11 9-7 16-7 12 1-5 11-7 14-11 17q-8 7-5 14c2 6 1 6 17 2 6-1 0 4-35 27a160 160 0 0 1-128 27c-2 3 35 14 44 14l5 1q1 3 18-1c11-3 11-3 9-1q-6 4 5 0l17-8 3-2c2 0 18-9 25-15 7-5 18-12 25-15l7-4 6-3c4 0 13-5 12-7l4-5c8-8 2-25-8-21q-7 3-3-3c6-8 11-21 8-22l-1-3c0-6-11-12-16-9-7 3-6-1 6-26l5-5q7-2 1-7-8-6-12 0l-3 4-9 8c-16 15-16 15-18 14h-6l-2 1-1 1-1 1c-1-1 18-20 21-22q3-2 1-4-3-3 2-9 12-15 10-24c-4-15-53-3-53 12q-1 7-3-1c-2-16-15-31-19-22m67 10c5 1-10 29-17 31q-7 3-4-6 3-4 1-9-3-15-5 0c0 8-11 25-14 20-2-3-2-19 0-22 4-9 28-18 39-14m-26 93-2 9c-2 2-22 5-22 3q1-4 12-12l9-7q4-6 3 7m240-76c-5 4-16 16-16 18q0 3 4-2c5-8 18-13 17-7l-4 10-17 28q-9 15 12 8 20-7-6 15-11 9-7 13 3 5 5 1c1-2 19-10 20-9 2 3-21 20-29 22l-6 1-12 2q-15 1-24 9-3 4 5 1c5-1 24 0 28 2 3 2 17 1 24-2l6-7 7-10c12-14 14-19 10-23q-3-6-9-1-15 7-6-3 24-26 4-22-7 1-1-5 24-28 7-39-6-6-12 0" />
