@@ -3,6 +3,7 @@
 import { Avatar, AvatarFallback, AvatarImage, StatusBadge } from "@vxture/design-system";
 import { useLocale } from "../locale-provider";
 import type { VxtureUser } from "./types";
+import { DefaultAvatar } from "./default-avatar";
 
 const COPY = {
   "en-US": {
@@ -35,13 +36,6 @@ const COPY = {
   },
 } as const;
 
-function initials(name: string): string {
-  const parts = name.trim().split(/\s+/).filter(Boolean);
-  if (parts.length === 0) return "?";
-  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
-  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
-}
-
 /**
  * Personal-info body (avatar + identity rows) from the OIDC session - no extra
  * Vxture call. Shows every claim the IdP provides (it exposes no name/username,
@@ -66,7 +60,9 @@ export function PersonalInfo({ user }: { user?: VxtureUser }) {
       <div className="info-head">
         <Avatar>
           {user.avatarUrl ? <AvatarImage src={user.avatarUrl} alt="" /> : null}
-          <AvatarFallback>{initials(name)}</AvatarFallback>
+          <AvatarFallback>
+            <DefaultAvatar />
+          </AvatarFallback>
         </Avatar>
         <div className="info-head-text">
           <strong>{name}</strong>

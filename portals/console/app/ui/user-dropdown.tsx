@@ -19,6 +19,7 @@ import {
 import type { Locale } from "@vxture/shared";
 import { useLocale } from "../locale-provider";
 import type { VxtureUser } from "./types";
+import { DefaultAvatar } from "./default-avatar";
 
 const COPY = {
   "en-US": {
@@ -55,13 +56,6 @@ const COPY = {
 
 const LOCALE_LABELS: Record<string, string> = { "en-US": "English", "zh-CN": "简体中文" };
 
-function initials(name: string): string {
-  const parts = name.trim().split(/\s+/).filter(Boolean);
-  if (parts.length === 0) return "?";
-  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
-  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
-}
-
 /**
  * User module (middle header dropdown). All real data: identity (no IdP name
  * claim, so email/phone are the identifiers), language + theme preferences, and
@@ -79,7 +73,9 @@ export function UserDropdown({ user }: { user: VxtureUser }) {
       <DropdownMenuTrigger className="hdr-trigger" aria-label={t.account}>
         <Avatar className="hdr-avatar">
           {user.avatarUrl ? <AvatarImage src={user.avatarUrl} alt="" /> : null}
-          <AvatarFallback>{initials(name)}</AvatarFallback>
+          <AvatarFallback>
+            <DefaultAvatar />
+          </AvatarFallback>
         </Avatar>
         <span className="hdr-trigger-text">{name}</span>
         <Icon name="arrow-down" size="sm" className="hdr-trigger-caret" />

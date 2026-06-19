@@ -16,6 +16,7 @@ import {
 import { useLocale } from "@/lib/locale-provider";
 import { ruyinBrand } from "@/lib/brand";
 import { logout, type SessionUser } from "@/lib/session";
+import { DefaultAvatar } from "@/components/default-avatar";
 
 const COPY = {
   "en-US": {
@@ -54,13 +55,6 @@ const COPY = {
   },
 } as const;
 
-function initials(name: string): string {
-  const parts = name.trim().split(/\s+/).filter(Boolean);
-  if (parts.length === 0) return "?";
-  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
-  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
-}
-
 /**
  * Signed-in account menu for the public site header. The IdP exposes no
  * name/username/picture claim, so email + phone are the identifiers; this panel
@@ -81,7 +75,9 @@ export function UserDropdown({ user }: { user: SessionUser }) {
       <DropdownMenuTrigger className="acct-trigger" aria-label={t.account}>
         <Avatar className="acct-avatar">
           {user.avatarUrl ? <AvatarImage src={user.avatarUrl} alt="" /> : null}
-          <AvatarFallback>{initials(name)}</AvatarFallback>
+          <AvatarFallback>
+            <DefaultAvatar />
+          </AvatarFallback>
         </Avatar>
         <Icon name="arrow-down" size="sm" className="acct-caret" />
       </DropdownMenuTrigger>

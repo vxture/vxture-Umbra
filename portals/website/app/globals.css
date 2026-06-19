@@ -132,6 +132,16 @@ a {
   flex: none;
 }
 
+/* Default account silhouette, shown when the session carries no picture (no
+   custom or imported avatar). Inline SVG so it inherits currentColor; fills the
+   avatar circle in a muted tone. See components/default-avatar.tsx. */
+.vx-default-avatar {
+  display: block;
+  width: 100%;
+  height: 100%;
+  color: var(--vx-color-text-muted);
+}
+
 .acct-caret {
   color: var(--vx-color-text-muted);
   flex: none;
