@@ -290,11 +290,18 @@ a {
   display: block;
   width: 100%;
   height: auto;
-  /* Inline SVG wordmark: fill follows the theme brand color via currentColor, so
-     a theme toggle is an instant CSS recolor (no per-theme image to reload). */
+  /* Inline SVG wordmark: theme recolor is instant CSS (no per-theme image to
+     reload). Light = brand blue via currentColor; dark is overridden below to the
+     metallic gold gradient, matching the original per-theme artwork. */
   color: var(--vx-color-primary);
   fill: currentColor;
   filter: drop-shadow(0 18px 48px color-mix(in srgb, var(--vx-color-black) 28%, transparent));
+}
+
+/* Dark theme: gold metallic calligraphy (the gradient is defined inside the
+   inline SVG; here we just point fill at it). next-themes sets .dark on <html>. */
+.dark .hero-signature-art {
+  fill: url(#ruyin-hero-gold);
 }
 
 /* Visual title is the signature artwork; keep an accessible text title for SR /
