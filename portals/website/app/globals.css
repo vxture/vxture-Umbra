@@ -290,6 +290,10 @@ a {
   display: block;
   width: 100%;
   height: auto;
+  /* Inline SVG wordmark: fill follows the theme brand color via currentColor, so
+     a theme toggle is an instant CSS recolor (no per-theme image to reload). */
+  color: var(--vx-color-primary);
+  fill: currentColor;
   filter: drop-shadow(0 18px 48px color-mix(in srgb, var(--vx-color-black) 28%, transparent));
 }
 

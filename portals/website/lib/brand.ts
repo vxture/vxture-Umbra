@@ -5,13 +5,6 @@ export function markSrc(resolved: string): string {
     : "/assets/brand/ruyin-symbol-light.png";
 }
 
-/** Absolute URL to the Ruyin hero PNG for the given resolved theme. */
-export function signatureSrc(resolved: string): string {
-  return resolved === "dark"
-    ? "/assets/brand/ruyin-hero-dark.png"
-    : "/assets/brand/ruyin-hero-light.png";
-}
-
 export const ruyinBrand = {
   productName: "Ruyin",
   localName: "如影",
