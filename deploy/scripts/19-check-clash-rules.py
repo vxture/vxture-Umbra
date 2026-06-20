@@ -13,7 +13,7 @@ import sys
 from pathlib import Path
 
 
-PROJECT_ROOT = Path(__file__).resolve().parents[3]
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
 RULE_RE = re.compile(r"^\s*-\s*(DOMAIN|DOMAIN-SUFFIX|IP-CIDR),([^,]+),(DIRECT|PROXY)\b")
 
 

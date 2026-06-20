@@ -297,18 +297,37 @@ jobs:
         run: |
           set -euo pipefail
           port="${WORKER_03_PORT:-22}"
-          repo_dir="${WORKER_03_REPO_DIR:-/srv/vxture/repo/umbra}"
+          deploy_dir="${WORKER_03_REPO_DIR:-/srv/umbra/deploy}"
           short_sha="${PASSED_SHA::7}"
           image_tag="sha-$short_sha"
+
+          # No git clone on the server. Push only the deploy subset (deploy/,
+          # configs/, docker-compose.yml) with rsync; the runner checkout is the
+          # exact built SHA, so a VERSION file records provenance in place of a
+          # remote `git rev-parse`. The server-side .env is protected from --delete.
+          ssh -i ~/.ssh/worker_03 -p "$port" \
+            -o ServerAliveInterval=30 \
+            -o ServerAliveCountMax=20 \
+            -o ConnectTimeout=30 \
+            "$WORKER_03_USER@$WORKER_03_HOST" "mkdir -p '$deploy_dir'"
+
+          rsync_srcs=(deploy/ configs docker-compose.yml)
+          [ -d docs-site ] && rsync_srcs+=(docs-site)
+          rsync -az --delete --exclude='.env' --exclude='VERSION' \
+            -e "ssh -i ~/.ssh/worker_03 -p $port -o ServerAliveInterval=30 -o ServerAliveCountMax=20 -o ConnectTimeout=30" \
+            "${rsync_srcs[@]}" \
+            "$WORKER_03_USER@$WORKER_03_HOST:$deploy_dir/"
+
+          ssh -i ~/.ssh/worker_03 -p "$port" \
+            -o ServerAliveInterval=30 \
+            -o ServerAliveCountMax=20 \
+            -o ConnectTimeout=30 \
+            "$WORKER_03_USER@$WORKER_03_HOST" "printf '%s\n' '$PASSED_SHA' > '$deploy_dir/VERSION'"
 
           cat > /tmp/deploy.sh <<'REMOTE_SCRIPT'
           set -euo pipefail
 
           cd "$REPO_DIR"
-          git fetch origin main
-          git checkout main
-          git merge --ff-only origin/main
-          test "$(git rev-parse HEAD)" = "$PASSED_SHA"
 
           export IMAGE_REGISTRY="$GHCR_REGISTRY"
           export IMAGE_NAMESPACE="$GHCR_NAMESPACE"
@@ -339,8 +358,8 @@ jobs:
           export FALLBACK_IMAGE_REGISTRY="$ALIYUN_ACR_REGISTRY"
           export FALLBACK_IMAGE_NAMESPACE="$ALIYUN_ACR_NAMESPACE"
 
-          bash deploy/worker-03/deploy.sh all
-          bash deploy/worker-03/deploy.sh verify
+          bash deploy.sh all
+          bash deploy.sh verify
           REMOTE_SCRIPT
 
           scp -i ~/.ssh/worker_03 -P "$port" \
@@ -351,7 +370,7 @@ jobs:
             "$WORKER_03_USER@$WORKER_03_HOST:/tmp/deploy.sh"
 
           remote_env=(
-            "REPO_DIR=$repo_dir"
+            "REPO_DIR=$deploy_dir"
             "PASSED_SHA=$PASSED_SHA"
             "IMAGE_TAG=$image_tag"
             "ALIYUN_ACR_REGISTRY=$ALIYUN_ACR_REGISTRY"

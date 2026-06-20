@@ -9,14 +9,14 @@ source "$SCRIPT_DIR/../lib/00-log.sh"
 
 if [[ "${1:-}" == "--help" ]] || [[ "${1:-}" == "-h" ]]; then
   echo ""
-  echo "  Usage: bash deploy/worker-03/deploy.sh reality-keys"
+  echo "  Usage: bash deploy/deploy.sh reality-keys"
   echo ""
   echo "  Generates REALITY x25519 keypair and shortIds, saves to"
   echo "  DATA_DIR/private/reality.json. Skips if file already exists"
   echo "  to preserve existing client configurations."
   echo ""
-  echo "  Called automatically by: bash deploy/worker-03/deploy.sh all"
-  echo "  Run standalone:          bash deploy/worker-03/deploy.sh reality-keys"
+  echo "  Called automatically by: bash deploy/deploy.sh all"
+  echo "  Run standalone:          bash deploy/deploy.sh reality-keys"
   echo ""
   exit 0
 fi

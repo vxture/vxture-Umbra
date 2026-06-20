@@ -42,7 +42,7 @@ CASES = [
     ("subproxy service", ["services/subproxy/subproxy.py"], True, ["ruyin-subproxy"]),
     ("nginx dockerfile", ["docker/ruyin-nginx.Dockerfile"], True, ["ruyin-nginx"]),
     ("configs only (deploy, no rebuild)", ["configs/nginx/nginx.conf"], True, []),
-    ("deploy script only (deploy, no rebuild)", ["deploy/worker-03/deploy.sh"], True, []),
+    ("deploy script only (deploy, no rebuild)", ["deploy/deploy.sh"], True, []),
     ("compose only (deploy, no rebuild)", ["docker-compose.yml"], True, []),
     ("mixed source + docs", ["portals/website/app/x.tsx", "docs/y.md"], True, ["ruyin-website"]),
     ("multi-image", ["portals/website/app/x.tsx", "services/subproxy/subproxy.py"], True,

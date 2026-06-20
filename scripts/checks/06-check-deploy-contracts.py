@@ -45,19 +45,19 @@ ROOT_OWNED_DEPLOY_DEPENDENCIES = (
     Path("services/account"),
 )
 FORBIDDEN_WORKER_DEPLOY_COPIES = (
-    Path("deploy/worker-03/docker-compose.yml"),
-    Path("deploy/worker-03/configs"),
-    Path("deploy/worker-03/services"),
+    Path("deploy/docker-compose.yml"),
+    Path("deploy/configs"),
+    Path("deploy/services"),
 )
 DEPLOY_STEPS_WITH_HELP = (
-    Path("deploy/worker-03/scripts/11-check-runtime-environment.sh"),
-    Path("deploy/worker-03/scripts/12-prepare-runtime-directories.sh"),
-    Path("deploy/worker-03/scripts/13-generate-runtime-secrets.sh"),
-    Path("deploy/worker-03/scripts/20-issue-tls-certificates.sh"),
-    Path("deploy/worker-03/scripts/21-issue-self-signed-certificates.sh"),
-    Path("deploy/worker-03/scripts/23-start-docker-services.sh"),
-    Path("deploy/worker-03/scripts/24-verify-deployment.sh"),
-    Path("deploy/worker-03/scripts/55-backup-runtime-state.sh"),
+    Path("deploy/scripts/11-check-runtime-environment.sh"),
+    Path("deploy/scripts/12-prepare-runtime-directories.sh"),
+    Path("deploy/scripts/13-generate-runtime-secrets.sh"),
+    Path("deploy/scripts/20-issue-tls-certificates.sh"),
+    Path("deploy/scripts/21-issue-self-signed-certificates.sh"),
+    Path("deploy/scripts/23-start-docker-services.sh"),
+    Path("deploy/scripts/24-verify-deployment.sh"),
+    Path("deploy/scripts/55-backup-runtime-state.sh"),
 )
 
 # The repository can contain local runtime files on a server checkout
@@ -135,16 +135,16 @@ CHECKS: list[tuple[str, Path, list[str]]] = [
     ),
     (
         "deploy config checks rendered certificate paths before nginx reload",
-        Path("deploy/worker-03/deploy.sh"),
+        Path("deploy/deploy.sh"),
         [
             "check_rendered_nginx_cert_paths",
             "Missing certificate file required by rendered nginx config",
-            "bash deploy/worker-03/ops.sh certs --upgrade",
+            "bash deploy/ops.sh certs --upgrade",
         ],
     ),
     (
         "config renderer prunes retired vhosts",
-        Path("deploy/worker-03/scripts/22-render-runtime-configs.py"),
+        Path("deploy/scripts/22-render-runtime-configs.py"),
         [
             "rendered_vhosts",
             "stale vhost",
@@ -153,7 +153,7 @@ CHECKS: list[tuple[str, Path, list[str]]] = [
     ),
     (
         "deploy check validates environment formats",
-        Path("deploy/worker-03/scripts/11-check-runtime-environment.sh"),
+        Path("deploy/scripts/11-check-runtime-environment.sh"),
         [
             '${1:-}',
             "Checking environment value formats",
@@ -177,7 +177,7 @@ CHECKS: list[tuple[str, Path, list[str]]] = [
     ),
     (
         "deploy config prints nginx -t output",
-        Path("deploy/worker-03/deploy.sh"),
+        Path("deploy/deploy.sh"),
         [
             'nginx_test_output="$(docker exec "$NGINX_CONTAINER" nginx -t 2>&1)"',
             'printf \'%s\\n\' "$nginx_test_output"',
@@ -185,7 +185,7 @@ CHECKS: list[tuple[str, Path, list[str]]] = [
     ),
     (
         "ops reload prints nginx -t output",
-        Path("deploy/worker-03/ops.sh"),
+        Path("deploy/ops.sh"),
         [
             'nginx_test_output="$(docker exec "$NGINX_CONTAINER" nginx -t 2>&1)"',
             'Nginx config test failed; nginx was not reloaded',
@@ -193,7 +193,7 @@ CHECKS: list[tuple[str, Path, list[str]]] = [
     ),
     (
         "renewal does not swallow nginx -t output",
-        Path("deploy/worker-03/scripts/53-manage-certificates.sh"),
+        Path("deploy/scripts/53-manage-certificates.sh"),
         [
             'nginx_test_output="$(docker exec "$NGINX_CONTAINER" nginx -t 2>&1)"',
             "Nginx config test failed after renewal",
@@ -201,7 +201,7 @@ CHECKS: list[tuple[str, Path, list[str]]] = [
     ),
     (
         "renewal checks active cert names only",
-        Path("deploy/worker-03/scripts/53-manage-certificates.sh"),
+        Path("deploy/scripts/53-manage-certificates.sh"),
         [
             'for domain in "${DOMAINS[@]}"; do',
             '--cert-name "$domain"',
@@ -210,7 +210,7 @@ CHECKS: list[tuple[str, Path, list[str]]] = [
     ),
     (
         "retired certificate cleanup preserves active domains",
-        Path("deploy/worker-03/scripts/53-manage-certificates.sh"),
+        Path("deploy/scripts/53-manage-certificates.sh"),
         [
             "--clean-retired-lineages",
             "clean_retired_cert_lineages",
@@ -220,7 +220,7 @@ CHECKS: list[tuple[str, Path, list[str]]] = [
     ),
     (
         "certificate upgrade uses staged activation and rollback",
-        Path("deploy/worker-03/scripts/53-manage-certificates.sh"),
+        Path("deploy/scripts/53-manage-certificates.sh"),
         [
             'STAGED_NAME="letsencrypt.staged"',
             "prepare_staged_certs",
@@ -232,7 +232,7 @@ CHECKS: list[tuple[str, Path, list[str]]] = [
     ),
     (
         "full reset validates destructive targets",
-        Path("deploy/worker-03/scripts/60-reset-runtime-services.sh"),
+        Path("deploy/scripts/60-reset-runtime-services.sh"),
         [
             "resolve_reset_target",
             "Refusing reset target outside ROOT_DIR",
@@ -241,7 +241,7 @@ CHECKS: list[tuple[str, Path, list[str]]] = [
     ),
     (
         "port freeing does not kill foreign processes by default",
-        Path("deploy/worker-03/scripts/60-reset-runtime-services.sh"),
+        Path("deploy/scripts/60-reset-runtime-services.sh"),
         [
             'FORCE_FREE_PORTS:-false',
             "not killing automatically",
@@ -249,7 +249,7 @@ CHECKS: list[tuple[str, Path, list[str]]] = [
     ),
     (
         "backup creates backup dir and prunes with null-safe find",
-        Path("deploy/worker-03/scripts/55-backup-runtime-state.sh"),
+        Path("deploy/scripts/55-backup-runtime-state.sh"),
         [
             'mkdir -p "$BACKUP_DIR"',
             'cp "$REPO_DIR/.env" "$ENV_BACKUP"',
@@ -261,7 +261,7 @@ CHECKS: list[tuple[str, Path, list[str]]] = [
     ),
     (
         "backup archives root-owned certificate state",
-        Path("deploy/worker-03/scripts/55-backup-runtime-state.sh"),
+        Path("deploy/scripts/55-backup-runtime-state.sh"),
         [
             "Backing up Let's Encrypt state",
             '$LE_DIR:/data/letsencrypt:ro',
@@ -270,7 +270,7 @@ CHECKS: list[tuple[str, Path, list[str]]] = [
     ),
     (
         "backup archives account portal data",
-        Path("deploy/worker-03/scripts/55-backup-runtime-state.sh"),
+        Path("deploy/scripts/55-backup-runtime-state.sh"),
         [
             "Backing up account portal data",
             "account-data-${TIMESTAMP}.tar.gz",
@@ -279,7 +279,7 @@ CHECKS: list[tuple[str, Path, list[str]]] = [
     ),
     (
         "deploy all rejects root",
-        Path("deploy/worker-03/scripts/30-run-full-deployment.sh"),
+        Path("deploy/scripts/30-run-full-deployment.sh"),
         [
             'if [[ "$EUID" -eq 0 ]]',
             "Do not run as root",
@@ -287,66 +287,66 @@ CHECKS: list[tuple[str, Path, list[str]]] = [
     ),
     (
         "standalone deployment steps tolerate no help argument",
-        Path("deploy/worker-03/scripts/12-prepare-runtime-directories.sh"),
+        Path("deploy/scripts/12-prepare-runtime-directories.sh"),
         [
             '${1:-}',
         ],
     ),
     (
         "reality key step tolerates no help argument",
-        Path("deploy/worker-03/scripts/13-generate-runtime-secrets.sh"),
+        Path("deploy/scripts/13-generate-runtime-secrets.sh"),
         [
             '${1:-}',
         ],
     ),
     (
         "certificate issue step tolerates no help argument",
-        Path("deploy/worker-03/scripts/20-issue-tls-certificates.sh"),
+        Path("deploy/scripts/20-issue-tls-certificates.sh"),
         [
             '${1:-}',
         ],
     ),
     (
         "self-signed certificate step tolerates no help argument",
-        Path("deploy/worker-03/scripts/21-issue-self-signed-certificates.sh"),
+        Path("deploy/scripts/21-issue-self-signed-certificates.sh"),
         [
             '${1:-}',
         ],
     ),
     (
         "docker start step tolerates no help argument",
-        Path("deploy/worker-03/scripts/23-start-docker-services.sh"),
+        Path("deploy/scripts/23-start-docker-services.sh"),
         [
             '${1:-}',
         ],
     ),
     (
         "verify step tolerates no help argument",
-        Path("deploy/worker-03/scripts/24-verify-deployment.sh"),
+        Path("deploy/scripts/24-verify-deployment.sh"),
         [
             '${1:-}',
         ],
     ),
     (
         "backup operation tolerates no help argument",
-        Path("deploy/worker-03/scripts/55-backup-runtime-state.sh"),
+        Path("deploy/scripts/55-backup-runtime-state.sh"),
         [
             '${1:-}',
         ],
     ),
     (
         "deploy all installs cron before final verification",
-        Path("deploy/worker-03/scripts/30-run-full-deployment.sh"),
+        Path("deploy/scripts/30-run-full-deployment.sh"),
         [
             "Configuring cron jobs",
-            'CRON_LINE="17 3 * * * $REPO_DIR/deploy/worker-03/ops.sh certs --renew',
-            'BACKUP_CRON_LINE="0 2 * * * $REPO_DIR/deploy/worker-03/ops.sh backup',
+            'CRON_LINE="17 3 * * * $REPO_DIR/ops.sh certs --renew',
+            'BACKUP_CRON_LINE="0 2 * * * $REPO_DIR/ops.sh backup',
             'run_step_warn "24-verify-deployment.sh"',
         ],
     ),
     (
         "deploy verify checks cron installation",
-        Path("deploy/worker-03/scripts/24-verify-deployment.sh"),
+        Path("deploy/scripts/24-verify-deployment.sh"),
         [
             "Certificate renewal cron installed",
             "Backup cron installed",
@@ -356,7 +356,7 @@ CHECKS: list[tuple[str, Path, list[str]]] = [
     ),
     (
         "deploy verify checks account portal",
-        Path("deploy/worker-03/scripts/24-verify-deployment.sh"),
+        Path("deploy/scripts/24-verify-deployment.sh"),
         [
             "umbra-account",
             "umbra-account-web",
@@ -374,7 +374,7 @@ CHECKS: list[tuple[str, Path, list[str]]] = [
     ),
     (
         "deploy verify checks every active certificate domain",
-        Path("deploy/worker-03/scripts/24-verify-deployment.sh"),
+        Path("deploy/scripts/24-verify-deployment.sh"),
         [
             'for domain in "$APEX_DOMAIN" "$WWW_DOMAIN" "$EDGE_DOMAIN" "$SUB_DOMAIN" "$CONSOLE_DOMAIN" "$ADMIN_DOMAIN" "$PASS_DOMAIN"; do',
             "cert valid until",
@@ -382,7 +382,7 @@ CHECKS: list[tuple[str, Path, list[str]]] = [
     ),
     (
         "wizard rejects root",
-        Path("deploy/worker-03/scripts/25-run-post-deploy-wizard.sh"),
+        Path("deploy/scripts/25-run-post-deploy-wizard.sh"),
         [
             'if [[ "$EUID" -eq 0 ]]',
             "Do not run as root",
@@ -390,7 +390,7 @@ CHECKS: list[tuple[str, Path, list[str]]] = [
     ),
     (
         "full reset requires explicit YES",
-        Path("deploy/worker-03/scripts/60-reset-runtime-services.sh"),
+        Path("deploy/scripts/60-reset-runtime-services.sh"),
         [
             "Type YES to confirm full reset",
             '[[ "$confirm" != "YES" ]]',
@@ -398,7 +398,7 @@ CHECKS: list[tuple[str, Path, list[str]]] = [
     ),
     (
         "soft reset includes account portal container",
-        Path("deploy/worker-03/scripts/60-reset-runtime-services.sh"),
+        Path("deploy/scripts/60-reset-runtime-services.sh"),
         [
             "umbra-account",
         ],
@@ -413,14 +413,14 @@ CHECKS: list[tuple[str, Path, list[str]]] = [
     ),
     (
         "certificate scripts use collected active domains",
-        Path("deploy/worker-03/scripts/20-issue-tls-certificates.sh"),
+        Path("deploy/scripts/20-issue-tls-certificates.sh"),
         [
             "umbra_collect_cert_domains",
         ],
     ),
     (
         "cert helper collects active domains",
-        Path("deploy/worker-03/lib/02-certs.sh"),
+        Path("deploy/lib/02-certs.sh"),
         [
             "umbra_collect_active_cert_domains",
             "umbra_collect_cert_domains",
@@ -428,31 +428,31 @@ CHECKS: list[tuple[str, Path, list[str]]] = [
     ),
     (
         "worker env loader resolves repository root from deploy package",
-        Path("deploy/worker-03/lib/01-env.sh"),
+        Path("deploy/lib/01-env.sh"),
         [
             'WORKER_DEPLOY_DIR="$(cd "$_UMBRA_LIB_DIR/.." && pwd)"',
-            'PROJECT_ROOT="$(cd "$_UMBRA_LIB_DIR/../../.." && pwd)"',
+            'PROJECT_ROOT="$(cd "$_UMBRA_LIB_DIR/.." && pwd)"',
             'source "$PROJECT_ROOT/.env"',
             'source "$WORKER_DEPLOY_DIR/.env"',
         ],
     ),
     (
         "worker python scripts resolve repository root from deploy package",
-        Path("deploy/worker-03/scripts/22-render-runtime-configs.py"),
+        Path("deploy/scripts/22-render-runtime-configs.py"),
         [
-            "PROJECT_ROOT = Path(__file__).resolve().parents[3]",
+            "PROJECT_ROOT = Path(__file__).resolve().parents[1]",
         ],
     ),
     (
         "worker clash validator resolves repository root from deploy package",
-        Path("deploy/worker-03/scripts/19-check-clash-rules.py"),
+        Path("deploy/scripts/19-check-clash-rules.py"),
         [
-            "PROJECT_ROOT = Path(__file__).resolve().parents[3]",
+            "PROJECT_ROOT = Path(__file__).resolve().parents[1]",
         ],
     ),
     (
         "ops certs use collected domains",
-        Path("deploy/worker-03/scripts/53-manage-certificates.sh"),
+        Path("deploy/scripts/53-manage-certificates.sh"),
         [
             "umbra_collect_cert_domains",
         ],
@@ -735,8 +735,8 @@ CHECKS: list[tuple[str, Path, list[str]]] = [
             "export IMAGE_TAG=\"$IMAGE_TAG\"",
             "export FALLBACK_IMAGE_REGISTRY=\"$ALIYUN_ACR_REGISTRY\"",
             "export FALLBACK_IMAGE_NAMESPACE=\"$ALIYUN_ACR_NAMESPACE\"",
-            "bash deploy/worker-03/deploy.sh all",
-            "bash deploy/worker-03/deploy.sh verify",
+            "bash deploy.sh all",
+            "bash deploy.sh verify",
         ],
     ),
     (
@@ -752,7 +752,7 @@ CHECKS: list[tuple[str, Path, list[str]]] = [
     ),
     (
         "deploy start pulls images and checks managed containers",
-        Path("deploy/worker-03/scripts/23-start-docker-services.sh"),
+        Path("deploy/scripts/23-start-docker-services.sh"),
         [
             "compose_pull_with_retry",
             "pull_images_for_current_registry",
@@ -770,7 +770,7 @@ CHECKS: list[tuple[str, Path, list[str]]] = [
     ),
     (
         "deploy start pins image digests and removes orphans for minimal recreate",
-        Path("deploy/worker-03/scripts/23-start-docker-services.sh"),
+        Path("deploy/scripts/23-start-docker-services.sh"),
         [
             "26-pin-image-digests.py",
             "docker-compose.digests.yml",
@@ -780,7 +780,7 @@ CHECKS: list[tuple[str, Path, list[str]]] = [
     ),
     (
         "digest pinner resolves owned and external image digests",
-        Path("deploy/worker-03/scripts/26-pin-image-digests.py"),
+        Path("deploy/scripts/26-pin-image-digests.py"),
         [
             "_service_images",
             "_running_repo_digest",
@@ -992,7 +992,7 @@ CHECKS: list[tuple[str, Path, list[str]]] = [
     ),
     (
         "deploy verify checks the admin app at root and Marzban at /dashboard/",
-        Path("deploy/worker-03/scripts/24-verify-deployment.sh"),
+        Path("deploy/scripts/24-verify-deployment.sh"),
         [
             "$ADMIN_DOMAIN/",
             "$ADMIN_DOMAIN admin app home",
@@ -1006,7 +1006,7 @@ CHECKS: list[tuple[str, Path, list[str]]] = [
     ),
     (
         "deploy verify checks Marzban internal API over HTTPS",
-        Path("deploy/worker-03/scripts/24-verify-deployment.sh"),
+        Path("deploy/scripts/24-verify-deployment.sh"),
         [
             "ssl._create_unverified_context()",
             "https://localhost:8000/api/inbounds",
@@ -1015,7 +1015,7 @@ CHECKS: list[tuple[str, Path, list[str]]] = [
     ),
     (
         "deploy verify checks subscription display name",
-        Path("deploy/worker-03/scripts/24-verify-deployment.sh"),
+        Path("deploy/scripts/24-verify-deployment.sh"),
         [
             "curl_saved_subscription",
             "for attempt in 1 2 3 4 5",
@@ -1073,7 +1073,7 @@ CHECKS: list[tuple[str, Path, list[str]]] = [
 FORBIDDEN: list[tuple[str, Path, str]] = [
     (
         "renewal must not hide nginx -t stderr",
-        Path("deploy/worker-03/scripts/53-manage-certificates.sh"),
+        Path("deploy/scripts/53-manage-certificates.sh"),
         'nginx -t >/dev/null 2>&1',
     ),
     (
@@ -1118,12 +1118,12 @@ FORBIDDEN: list[tuple[str, Path, str]] = [
     ),
     (
         "deploy verify must not treat console 403 as expected",
-        Path("deploy/worker-03/scripts/24-verify-deployment.sh"),
+        Path("deploy/scripts/24-verify-deployment.sh"),
         "403=public blocked",
     ),
     (
         "deploy verify must not call console access controlled",
-        Path("deploy/worker-03/scripts/24-verify-deployment.sh"),
+        Path("deploy/scripts/24-verify-deployment.sh"),
         "$CONSOLE_DOMAIN access control",
     ),
     (
@@ -1413,7 +1413,7 @@ def check_docker_build_image_matrix() -> list[str]:
 
 def check_worker_deploy_fallback_contract() -> list[str]:
     workflow = read(PROJECT_ROOT / RELEASE_WORKFLOW)
-    start_script = read(PROJECT_ROOT / "deploy/worker-03/scripts/23-start-docker-services.sh")
+    start_script = read(PROJECT_ROOT / "deploy/scripts/23-start-docker-services.sh")
     problems: list[str] = []
 
     if "GHCR_TOKEN: ${{ github.token }}" in workflow and "packages: read" not in workflow:
@@ -1481,7 +1481,7 @@ def check_worker_deploy_dependency_boundary() -> list[str]:
             f"{misplaced!r}"
         )
 
-    render_script = read(PROJECT_ROOT / "deploy/worker-03/scripts/22-render-runtime-configs.py")
+    render_script = read(PROJECT_ROOT / "deploy/scripts/22-render-runtime-configs.py")
     required_renderer_refs = (
         'REPO_DIR = Path(env.get("REPO_DIR", str(PROJECT_ROOT)))',
         'configs_dir = REPO_DIR / "configs"',
@@ -1492,8 +1492,8 @@ def check_worker_deploy_dependency_boundary() -> list[str]:
     if missing_refs:
         problems.append(f"config renderer must read shared root configs: missing {missing_refs!r}")
 
-    env_loader = read(PROJECT_ROOT / "deploy/worker-03/lib/01-env.sh")
-    if 'PROJECT_ROOT="$(cd "$_UMBRA_LIB_DIR/../../.." && pwd)"' not in env_loader:
+    env_loader = read(PROJECT_ROOT / "deploy/lib/01-env.sh")
+    if 'PROJECT_ROOT="$(cd "$_UMBRA_LIB_DIR/.." && pwd)"' not in env_loader:
         problems.append("worker env loader must resolve PROJECT_ROOT to the repo root")
 
     return problems

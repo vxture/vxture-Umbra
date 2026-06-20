@@ -52,7 +52,7 @@ run_step_warn() {
   log_step "[$step] $label"
   bash "$SCRIPT_DIR/$step" || {
     log_warn "Step $step reported failures - services may still be running."
-    log_warn "Check manually: bash deploy/worker-03/deploy.sh verify"
+    log_warn "Check manually: bash deploy/deploy.sh verify"
   }
   echo ""
 }
@@ -100,7 +100,7 @@ run_step "13-generate-runtime-secrets.sh"    "Generate REALITY keys"
 
 # -- Certificate step: real or self-signed -------------------------------------
 # Set CERTBOT_SKIP=true in .env to use self-signed certs (no DNS required).
-# Upgrade later: bash deploy/worker-03/ops.sh certs --upgrade
+# Upgrade later: bash deploy/ops.sh certs --upgrade
 if [[ "${CERTBOT_SKIP:-false}" == "true" ]]; then
   run_step "21-issue-self-signed-certificates.sh"            "Generate self-signed certificates (debug)"
 elif needs_staged_cert_upgrade; then
@@ -132,8 +132,8 @@ run_step "23-start-docker-services.sh"    "Build images and start services"
 # -- Configure cert renewal and backup cron ------------------------------------
 log_step "Configuring cron jobs..."
 
-CRON_LINE="17 3 * * * $REPO_DIR/deploy/worker-03/ops.sh certs --renew >> /var/log/umbra-cert-renew.log 2>&1"
-BACKUP_CRON_LINE="0 2 * * * $REPO_DIR/deploy/worker-03/ops.sh backup >> /var/log/umbra-backup.log 2>&1"
+CRON_LINE="17 3 * * * $REPO_DIR/ops.sh certs --renew >> /var/log/umbra-cert-renew.log 2>&1"
+BACKUP_CRON_LINE="0 2 * * * $REPO_DIR/ops.sh backup >> /var/log/umbra-backup.log 2>&1"
 
 add_cron() {
   local line="$1"
@@ -153,7 +153,7 @@ remove_legacy_cron() {
   fi
 }
 
-remove_legacy_cron "$REPO_DIR/deploy/worker-03/scripts/91-compat-deploy-certs.sh"
+remove_legacy_cron "$REPO_DIR/scripts/91-compat-deploy-certs.sh"
 remove_legacy_cron "$REPO_DIR/scripts/steps/07-backup.sh"
 add_cron "$CRON_LINE"
 add_cron "$BACKUP_CRON_LINE"
@@ -165,7 +165,7 @@ if [[ "$SKIP_BACKUP" == "true" ]]; then
 else
   bash "$SCRIPT_DIR/55-backup-runtime-state.sh" || {
     log_warn "Post-deployment backup reported warnings - services may still be running."
-    log_warn "Check manually: bash deploy/worker-03/ops.sh backup"
+    log_warn "Check manually: bash deploy/ops.sh backup"
   }
   echo ""
 fi
@@ -189,7 +189,7 @@ echo "  Marzban:       https://$ADMIN_DOMAIN/dashboard/"
 echo "  Password Mgr:  https://$PASS_DOMAIN"
 echo ""
 echo "  Next steps:"
-echo "  1. Run post-deploy wizard: bash deploy/worker-03/deploy.sh wizard"
+echo "  1. Run post-deploy wizard: bash deploy/deploy.sh wizard"
 echo "  2. Open https://$ADMIN_DOMAIN/invites to generate user invites"
 echo "  3. (Optional) set up external uptime monitoring - BetterStack or UptimeRobot"
 echo ""

@@ -8,13 +8,13 @@ source "$SCRIPT_DIR/../lib/00-log.sh"
 
 if [[ "${1:-}" == "--help" ]] || [[ "${1:-}" == "-h" ]]; then
   echo ""
-  echo "  Usage: bash deploy/worker-03/deploy.sh directories"
+  echo "  Usage: bash deploy/deploy.sh directories"
   echo ""
   echo "  Creates DATA_DIR and BACKUP_DIR directory structure"
   echo "  with correct permissions. Copies nginx.conf and snippets."
   echo ""
-  echo "  Called automatically by: bash deploy/worker-03/deploy.sh all"
-  echo "  Run standalone:          bash deploy/worker-03/deploy.sh directories"
+  echo "  Called automatically by: bash deploy/deploy.sh all"
+  echo "  Run standalone:          bash deploy/deploy.sh directories"
   echo ""
   exit 0
 fi
@@ -26,13 +26,17 @@ mk() {
   log_ok "mkdir -p $1"
 }
 
-# -- Data directories ----------------------------------------------------------
+# -- Runtime directories (rendered nginx config; regenerable, not backed up) ---
+log_step "Creating RUNTIME_DIR structure at $RUNTIME_DIR ..."
+
+mk "$RUNTIME_DIR/nginx/conf.d"
+mk "$RUNTIME_DIR/nginx/stream.d"
+mk "$RUNTIME_DIR/nginx/private"
+mk "$RUNTIME_DIR/nginx/logs"
+
+# -- Data directories (persistent state; the only tree that is backed up) ------
 log_step "Creating DATA_DIR structure at $DATA_DIR ..."
 
-mk "$DATA_DIR/nginx/conf.d"
-mk "$DATA_DIR/nginx/stream.d"
-mk "$DATA_DIR/nginx/private"
-mk "$DATA_DIR/nginx/logs"
 mk "$DATA_DIR/marzban/templates/clash"
 mk "$DATA_DIR/marzban/templates/v2ray"
 mk "$DATA_DIR/marzban/logs"
@@ -57,8 +61,8 @@ log_ok "chmod 700 $DATA_DIR/private"
 chmod 700 "$DATA_DIR/account"
 log_ok "chmod 700 $DATA_DIR/account"
 
-chmod 711 "$DATA_DIR/nginx/private"
-log_ok "chmod 711 $DATA_DIR/nginx/private"
+chmod 711 "$RUNTIME_DIR/nginx/private"
+log_ok "chmod 711 $RUNTIME_DIR/nginx/private"
 
 chmod 700 "$BACKUP_DIR"
 log_ok "chmod 700 $BACKUP_DIR"
@@ -66,16 +70,16 @@ log_ok "chmod 700 $BACKUP_DIR"
 # -- Copy nginx.conf (plain file, no templating needed) ------------------------
 # Always overwrite so repo changes (e.g. map blocks) propagate to the running config.
 REPO_NGINX_CONF="$REPO_DIR/configs/nginx/nginx.conf"
-DATA_NGINX_CONF="$DATA_DIR/nginx/nginx.conf"
+RUNTIME_NGINX_CONF="$RUNTIME_DIR/nginx/nginx.conf"
 
 if [[ -f "$REPO_NGINX_CONF" ]]; then
-  cp "$REPO_NGINX_CONF" "$DATA_NGINX_CONF"
-  log_ok "Copied nginx.conf to $DATA_NGINX_CONF"
+  cp "$REPO_NGINX_CONF" "$RUNTIME_NGINX_CONF"
+  log_ok "Copied nginx.conf to $RUNTIME_NGINX_CONF"
 fi
 
 # -- Copy snippet configs ------------------------------------------------------
 SNIPPETS_SRC="$REPO_DIR/configs/nginx/snippets"
-SNIPPETS_DST="$DATA_DIR/nginx/snippets"
+SNIPPETS_DST="$RUNTIME_DIR/nginx/snippets"
 mk "$SNIPPETS_DST"
 
 for f in "$SNIPPETS_SRC"/*.conf; do

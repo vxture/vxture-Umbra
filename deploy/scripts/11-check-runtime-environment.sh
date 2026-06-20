@@ -9,13 +9,13 @@ source "$SCRIPT_DIR/../lib/02-certs.sh"
 
 if [[ "${1:-}" == "--help" ]] || [[ "${1:-}" == "-h" ]]; then
   echo ""
-  echo "  Usage: bash deploy/worker-03/deploy.sh environment"
+  echo "  Usage: bash deploy/deploy.sh environment"
   echo ""
   echo "  Validates all environment variables, Docker availability, DNS"
   echo "  resolution, and port availability before deployment."
   echo ""
-  echo "  Called automatically by: bash deploy/worker-03/deploy.sh all"
-  echo "  Run standalone:          bash deploy/worker-03/deploy.sh environment"
+  echo "  Called automatically by: bash deploy/deploy.sh all"
+  echo "  Run standalone:          bash deploy/deploy.sh environment"
   echo ""
   exit 0
 fi
@@ -52,7 +52,7 @@ log_step "Checking required environment variables..."
 
 REQUIRED_VARS=(
   PROJECT_NAME NODE_NAME
-  ROOT_DIR REPO_DIR DATA_DIR BACKUP_DIR
+  ROOT_DIR REPO_DIR RUNTIME_DIR DATA_DIR BACKUP_DIR
   APEX_DOMAIN WWW_DOMAIN EDGE_DOMAIN SUB_DOMAIN
   CONSOLE_DOMAIN ADMIN_DOMAIN PASS_DOMAIN
   REALITY_SNI REALITY_DEST XRAY_INTERNAL_PORT REALITY_SHORT_ID_LENGTH

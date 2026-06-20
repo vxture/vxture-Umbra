@@ -1,4 +1,4 @@
-# Runtime env files contain production values and must stay local to worker-03.
+# Runtime env files contain production values and must stay local to the deploy host.
 .env
 .env.*
 !.env.example

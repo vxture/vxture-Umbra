@@ -2,12 +2,12 @@
 # Certificate lifecycle management.
 #
 # Usage:
-#   bash deploy/worker-03/ops.sh certs --renew      # run renewal check (cron default)
-#   bash deploy/worker-03/ops.sh certs --upgrade    # replace self-signed with real LE certs
-#   bash deploy/worker-03/ops.sh certs --status     # show cert expiry for all domains
-#   bash deploy/worker-03/ops.sh certs --clean-renewal-state
-#   bash deploy/worker-03/ops.sh certs --clean-workdirs
-#   bash deploy/worker-03/ops.sh certs --clean-retired-lineages
+#   bash deploy/ops.sh certs --renew      # run renewal check (cron default)
+#   bash deploy/ops.sh certs --upgrade    # replace self-signed with real LE certs
+#   bash deploy/ops.sh certs --status     # show cert expiry for all domains
+#   bash deploy/ops.sh certs --clean-renewal-state
+#   bash deploy/ops.sh certs --clean-workdirs
+#   bash deploy/ops.sh certs --clean-retired-lineages
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -485,7 +485,7 @@ fi
 
 if [[ -n "$MODE" ]] && [[ "$MODE" != "--renew" ]]; then
   log_error "Unknown certs mode: $MODE"
-  log_info "Usage: bash deploy/worker-03/ops.sh certs [--renew|--status|--upgrade|--clean-renewal-state|--clean-workdirs|--clean-retired-lineages]"
+  log_info "Usage: bash deploy/ops.sh certs [--renew|--status|--upgrade|--clean-renewal-state|--clean-workdirs|--clean-retired-lineages]"
   exit 1
 fi
 

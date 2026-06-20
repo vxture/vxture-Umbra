@@ -2,7 +2,7 @@
 # Generate self-signed certificates for all domains.
 # Use this when DNS is not yet pointed to this server and real certs
 # cannot be issued. Allows the rest of the deployment to proceed.
-# Replace with real certs: bash deploy/worker-03/ops.sh certs --upgrade
+# Replace with real certs: bash deploy/ops.sh certs --upgrade
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -12,15 +12,15 @@ source "$SCRIPT_DIR/../lib/02-certs.sh"
 
 if [[ "${1:-}" == "--help" ]] || [[ "${1:-}" == "-h" ]]; then
   echo ""
-  echo "  Usage: bash deploy/worker-03/deploy.sh certificates  (preferred)"
-  echo "         bash deploy/worker-03/scripts/21-issue-self-signed-certificates.sh"
+  echo "  Usage: bash deploy/deploy.sh certificates  (preferred)"
+  echo "         bash deploy/scripts/21-issue-self-signed-certificates.sh"
   echo ""
   echo "  Generates self-signed certificates for all domains."
   echo "  Use when DNS is not yet pointed to this server."
   echo "  Set MARZBAN_SSL_CA_TYPE=private in .env."
   echo ""
   echo "  Replace with real certs later:"
-  echo "    bash deploy/worker-03/ops.sh certs --upgrade"
+  echo "    bash deploy/ops.sh certs --upgrade"
   echo ""
   exit 0
 fi
@@ -70,4 +70,4 @@ fi
 
 log_ok "All self-signed certificates ready."
 log_info "To upgrade to real certs once DNS is ready:"
-log_info "  bash deploy/worker-03/ops.sh certs --upgrade"
+log_info "  bash deploy/ops.sh certs --upgrade"

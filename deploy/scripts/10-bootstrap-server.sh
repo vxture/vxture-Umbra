@@ -10,16 +10,16 @@ source "$SCRIPT_DIR/../lib/00-log.sh"
 
 if [[ "$1" == "--help" ]] || [[ "$1" == "-h" ]]; then
   echo ""
-  echo "  Usage: bash deploy/worker-03/server.sh init"
+  echo "  Usage: bash deploy/server.sh init"
   echo ""
   echo "  Bootstraps a new server: installs Docker and docker compose,"
   echo "  creates admin user (default: stone), copies SSH keys from"
   echo "  root, configures UFW firewall (22, 80, 443), and sets up"
-  echo "  /srv/vxture directory structure."
+  echo "  /srv/umbra directory structure."
   echo ""
   echo "  Must run as root. Safe to re-run."
   echo ""
-  echo "  Run: sudo bash deploy/worker-03/server.sh init"
+  echo "  Run: sudo bash deploy/server.sh init"
   echo ""
   exit 0
 fi
@@ -43,6 +43,7 @@ command -v openssl &>/dev/null || PKGS+=(openssl)
 command -v dig     &>/dev/null || PKGS+=(dnsutils)
 command -v python3 &>/dev/null || PKGS+=(python3)
 command -v git     &>/dev/null || PKGS+=(git)
+command -v rsync   &>/dev/null || PKGS+=(rsync)
 
 if [[ ${#PKGS[@]} -gt 0 ]]; then
   apt-get install -y "${PKGS[@]}" -qq
@@ -114,16 +115,17 @@ else
 fi
 
 # -- Directory ownership -------------------------------------------------------
-log_step "Setting up /srv/vxture ..."
+log_step "Setting up /srv/umbra ..."
 
-# Pre-create both repo and data dirs so the chown below covers them
-# even before deploy.sh runs and creates the full DATA_DIR structure.
-mkdir -p /srv/vxture/repo /srv/vxture/data
+# Pre-create the four top-level dirs so the chown below covers them, and so the
+# first CI rsync (which writes the deploy subset to /srv/umbra/deploy) and the
+# subsequent deploy.sh run (which fills runtime/data/backup) both succeed.
+mkdir -p /srv/umbra/deploy /srv/umbra/runtime /srv/umbra/data /srv/umbra/backup
 
 # Always chown recursively - safe to repeat; fixes root-owned files from
 # any previous accidental root invocation of deploy scripts.
-chown -R "$ADMIN_USER:$ADMIN_USER" /srv/vxture
-log_ok "/srv/vxture owned by $ADMIN_USER (repo + data)"
+chown -R "$ADMIN_USER:$ADMIN_USER" /srv/umbra
+log_ok "/srv/umbra owned by $ADMIN_USER (deploy + runtime + data + backup)"
 
 # -- Firewall ------------------------------------------------------------------
 log_step "Configuring firewall..."
@@ -137,30 +139,18 @@ else
   log_info "UFW not installed - skipping firewall config"
 fi
 
-# -- Git safe directory --------------------------------------------------------
-log_step "Configuring git..."
-
-REPO_PATH="/srv/vxture/repo/umbra"
-if ! git config --global --get-all safe.directory 2>/dev/null | grep -qF "$REPO_PATH"; then
-  git config --global --add safe.directory "$REPO_PATH"
-  log_ok "git safe.directory configured for $REPO_PATH"
-else
-  log_ok "git safe.directory already configured for $REPO_PATH"
-fi
-
 # -- Done ----------------------------------------------------------------------
 echo ""
 log_banner "Server Init Complete"
 log_ok "Admin user : $ADMIN_USER  (sudo + docker)"
 log_ok "Docker     : $(docker --version | cut -d' ' -f3 | tr -d ',')"
-log_ok "Data dir   : /srv/vxture (owned by $ADMIN_USER)"
+log_ok "Root dir   : /srv/umbra (owned by $ADMIN_USER)"
 echo ""
-log_info "Next steps (SSH in as $ADMIN_USER):"
-log_info "  git clone https://github.com/vxture/umbra.git /srv/vxture/repo/umbra"
-log_info "  cd /srv/vxture/repo/umbra"
-log_info "  cp .env.example .env && nano .env"
-log_info "  bash deploy/worker-03/deploy.sh all"
-log_info "  bash deploy/worker-03/deploy.sh wizard"
+log_info "No git clone is used. CI rsyncs the deploy subset (deploy/, configs/,"
+log_info "docker-compose.yml) to /srv/umbra/deploy on the next release, then runs"
+log_info "deploy.sh all over SSH. Before that first release:"
+log_info "  create /srv/umbra/deploy/.env with real secrets (copy from old server)"
+log_info "  ensure DNS for the domains points at this host (or set CERTBOT_SKIP=true)"
 echo ""
 log_info "After confirming $ADMIN_USER SSH login works, optionally harden SSH:"
 log_info "  sed -i 's/^#\\?PermitRootLogin.*/PermitRootLogin no/' /etc/ssh/sshd_config && systemctl reload sshd"

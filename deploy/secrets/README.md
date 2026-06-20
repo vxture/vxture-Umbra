@@ -1,6 +1,6 @@
-# worker-03 secrets
+# Deploy secrets
 
-Store real worker-03 secret files here only on the server.
+Store real secret files here only on the server.
 
 Do not commit real secret files. Commit only `*.example`, this README, and
 `.gitkeep`.

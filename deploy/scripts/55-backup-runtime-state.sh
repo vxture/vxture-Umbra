@@ -8,7 +8,7 @@ source "$SCRIPT_DIR/../lib/00-log.sh"
 
 if [[ "${1:-}" == "--help" ]] || [[ "${1:-}" == "-h" ]]; then
   echo ""
-  echo "  Usage: bash deploy/worker-03/ops.sh backup"
+  echo "  Usage: bash deploy/ops.sh backup"
   echo ""
   echo "  Creates timestamped backup archives of all runtime data:"
   echo "    - .env file"
@@ -21,7 +21,7 @@ if [[ "${1:-}" == "--help" ]] || [[ "${1:-}" == "-h" ]]; then
   echo ""
   echo "  Archives older than 30 days are automatically pruned."
   echo ""
-  echo "  Run: bash deploy/worker-03/ops.sh backup"
+  echo "  Run: bash deploy/ops.sh backup"
   echo ""
   exit 0
 fi
@@ -146,12 +146,10 @@ fi
 # -- Config archive -------------------------------------------------------------
 log_step "Archiving configs and private data..."
 
-# Items to include in the config archive (excluding DB data files for size)
+# Items to include in the config archive (excluding DB data files for size).
+# Nginx configs live in RUNTIME_DIR now and are regenerated from templates on
+# every deploy, so they are intentionally not archived here.
 BACKUP_ITEMS=(
-  "$DATA_DIR/nginx/conf.d"
-  "$DATA_DIR/nginx/stream.d"
-  "$DATA_DIR/nginx/nginx.conf"
-  "$DATA_DIR/nginx/private"
   "$DATA_DIR/marzban/templates"
   "$DATA_DIR/marzban/xray_config.json"
   "$DATA_DIR/private"

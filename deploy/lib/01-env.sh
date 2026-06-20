@@ -5,7 +5,9 @@ _ENV_LOADED="${_UMBRA_ENV_LOADED:-0}"
 if [[ "$_ENV_LOADED" == "0" ]]; then
   _UMBRA_LIB_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
   WORKER_DEPLOY_DIR="$(cd "$_UMBRA_LIB_DIR/.." && pwd)"
-  PROJECT_ROOT="$(cd "$_UMBRA_LIB_DIR/../../.." && pwd)"
+  # Flat deploy package: lib/ sits directly under the deploy dir, which is also
+  # the project root (holds .env + configs after CI rsyncs the deploy subset).
+  PROJECT_ROOT="$(cd "$_UMBRA_LIB_DIR/.." && pwd)"
 
   if [[ -f "$PROJECT_ROOT/.env" ]]; then
     set -a

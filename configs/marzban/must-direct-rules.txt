@@ -106,4 +106,4 @@ IP-CIDR,2606:B740:1::/48
 
 # Current VPN/VPS public endpoint. Keep an exact IP direct rule because some
 # clients may resolve the edge host before applying domain rules.
-IP-CIDR,207.148.95.189/32
+IP-CIDR,167.179.73.161/32

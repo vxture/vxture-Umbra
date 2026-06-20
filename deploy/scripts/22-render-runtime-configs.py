@@ -17,14 +17,14 @@ from pathlib import Path
 if "--help" in sys.argv or "-h" in sys.argv:
     print(__doc__)
     print("""
-Usage: python3 deploy/worker-03/scripts/22-render-runtime-configs.py
+Usage: python3 deploy/scripts/22-render-runtime-configs.py
 
 Renders all configuration templates from configs/ into DATA_DIR.
 Template syntax: {{ VARIABLE_NAME }}
 Variables sourced from: .env + DATA_DIR/private/reality.json
 
-Called automatically by: bash deploy/worker-03/deploy.sh config
-Run standalone:          bash deploy/worker-03/deploy.sh config
+Called automatically by: bash deploy/deploy.sh config
+Run standalone:          bash deploy/deploy.sh config
 """)
     sys.exit(0)
 
@@ -47,7 +47,7 @@ TEXT_ASSET_SUFFIXES = {
 
 # -- Paths ---------------------------------------------------------------------
 SCRIPT_DIR = Path(__file__).resolve().parent
-PROJECT_ROOT = Path(__file__).resolve().parents[3]
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
 
 
 def load_env(env_path: Path) -> dict:
@@ -158,10 +158,15 @@ if not env_file.exists():
 
 env = load_env(env_file)
 DATA_DIR = Path(env.get("DATA_DIR", ""))
+RUNTIME_DIR = Path(env.get("RUNTIME_DIR", ""))
 REPO_DIR = Path(env.get("REPO_DIR", str(PROJECT_ROOT)))
 
 if not DATA_DIR:
     print("[ERROR] DATA_DIR not set in .env", file=sys.stderr)
+    sys.exit(1)
+
+if not RUNTIME_DIR:
+    print("[ERROR] RUNTIME_DIR not set in .env", file=sys.stderr)
     sys.exit(1)
 
 reality = load_reality(DATA_DIR / "private" / "reality.json")
@@ -189,13 +194,13 @@ variables["CLASH_MUST_DIRECT_RULES"] = render_clash_rule_lines(
 print("\n-- Rendering Nginx stream config ----------------------------------------")
 render_file(
     configs_dir / "nginx" / "stream.conf.template",
-    DATA_DIR / "nginx" / "stream.d" / "stream.conf",
+    RUNTIME_DIR / "nginx" / "stream.d" / "stream.conf",
     variables,
 )
 
 print("\n-- Rendering Nginx virtual host configs ---------------------------------")
 vhosts_src = configs_dir / "nginx" / "vhosts"
-vhosts_dst = DATA_DIR / "nginx" / "conf.d"
+vhosts_dst = RUNTIME_DIR / "nginx" / "conf.d"
 rendered_vhosts = set()
 for tmpl in sorted(vhosts_src.glob("*.conf.template")):
     out_name = tmpl.name.replace(".template", "")
@@ -208,13 +213,13 @@ for stale in sorted(vhosts_dst.glob("*.conf")):
 
 print("\n-- Copying Nginx snippets ------------------------------------------------")
 snippets_src = configs_dir / "nginx" / "snippets"
-snippets_dst = DATA_DIR / "nginx" / "snippets"
+snippets_dst = RUNTIME_DIR / "nginx" / "snippets"
 for snippet in snippets_src.glob("*.conf"):
     copy_file(snippet, snippets_dst / snippet.name)
 
 print("\n-- Copying Nginx nginx.conf ----------------------------------------------")
 nginx_conf_src = configs_dir / "nginx" / "nginx.conf"
-nginx_conf_dst = DATA_DIR / "nginx" / "nginx.conf"
+nginx_conf_dst = RUNTIME_DIR / "nginx" / "nginx.conf"
 if nginx_conf_src.exists():
     copy_file(nginx_conf_src, nginx_conf_dst)
 

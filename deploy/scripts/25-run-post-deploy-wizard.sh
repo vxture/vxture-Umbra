@@ -3,7 +3,7 @@
 # Interactive: guides through Marzban user creation, DNS check, and account setup.
 #
 # Usage:
-#   bash deploy/worker-03/deploy.sh wizard
+#   bash deploy/deploy.sh wizard
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -325,7 +325,7 @@ else
   log_warn "Some domains are not yet pointing to this server."
   echo ""
   echo "  After updating DNS, run:"
-  echo "  $ bash deploy/worker-03/ops.sh certs --upgrade"
+  echo "  $ bash deploy/ops.sh certs --upgrade"
 fi
 
 # -- [4/4] Vaultwarden Account Setup ------------------------------------------

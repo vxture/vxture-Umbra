@@ -8,8 +8,8 @@
 #   Requires typing YES to confirm. Use before reprovisioning from scratch.
 #
 # Usage:
-#   bash deploy/worker-03/server.sh reset           # soft: stop containers only
-#   bash deploy/worker-03/server.sh reset --full    # destructive: destroy runtime data
+#   bash deploy/server.sh reset           # soft: stop containers only
+#   bash deploy/server.sh reset --full    # destructive: destroy runtime data
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -60,7 +60,7 @@ resolve_reset_target() {
   fi
 
   resolved="$(realpath -m "$target")"
-  root_resolved="$(realpath -m "${ROOT_DIR:-/srv/vxture}")"
+  root_resolved="$(realpath -m "${ROOT_DIR:-/srv/umbra}")"
   repo_resolved="$(realpath -m "$REPO_DIR")"
 
   case "$resolved" in
@@ -248,13 +248,13 @@ if [[ "$MODE" == "--full" ]]; then
   verify_full_reset
   echo ""
   log_info "To redeploy from scratch:"
-  log_info "  bash deploy/worker-03/deploy.sh all"
+  log_info "  bash deploy/deploy.sh all"
   exit 0
 fi
 
 if [[ -n "$MODE" ]]; then
   log_error "Unknown reset mode: $MODE"
-  log_info "Usage: bash deploy/worker-03/server.sh reset [--full]"
+  log_info "Usage: bash deploy/server.sh reset [--full]"
   exit 1
 fi
 
@@ -271,4 +271,4 @@ log_step "Verification phase"
 verify_soft_reset
 echo ""
 log_info "To redeploy:"
-log_info "  bash deploy/worker-03/deploy.sh all"
+log_info "  bash deploy/deploy.sh all"
