@@ -156,22 +156,16 @@ a {
   height: var(--vx-avatar-size);
   flex: none;
   border-radius: var(--vx-radius-full);
-  transition:
-    box-shadow var(--vx-duration-fast) var(--vx-ease-standard),
-    transform var(--vx-duration-fast) var(--vx-ease-standard);
+  transition: box-shadow var(--vx-duration-fast) var(--vx-ease-standard);
 }
 
-/* Hover/open halo: a crisp brand ring hugging the avatar, a soft brand glow
-   diffusing outward, and a faint drop glow under it, with a small lift. All
-   brand-token driven so it tracks the theme (color-mix derives the translucent
-   halo layers from the same brand token). */
+/* Hover/open halo: just a soft, diffuse brand glow around the avatar - no crisp
+   ring, no lift. Brand-token driven via color-mix so it tracks the theme. */
 .acct-trigger:hover .acct-avatar,
 .acct-trigger[data-state="open"] .acct-avatar {
-  transform: scale(1.05);
   box-shadow:
-    0 0 0 2px var(--vx-control-brand),
-    0 0 0 5px color-mix(in srgb, var(--vx-control-brand) 28%, transparent),
-    0 4px 16px color-mix(in srgb, var(--vx-control-brand) 38%, transparent);
+    0 0 0 4px color-mix(in srgb, var(--vx-control-brand) 12%, transparent),
+    0 0 12px color-mix(in srgb, var(--vx-control-brand) 18%, transparent);
 }
 
 /* Default account silhouette, shown when the session carries no picture (no
