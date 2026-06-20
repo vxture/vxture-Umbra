@@ -304,7 +304,8 @@ jobs:
           # No git clone on the server. Push only the deploy subset (deploy/,
           # configs/, docker-compose.yml) with rsync; the runner checkout is the
           # exact built SHA, so a VERSION file records provenance in place of a
-          # remote `git rev-parse`. The server-side .env is protected from --delete.
+          # remote `git rev-parse`. deploy/ is disposable: the operator .env lives
+          # at /srv/umbra/etc/.env, outside the rsync target, so --delete is safe.
           ssh -i ~/.ssh/worker_03 -p "$port" \
             -o ServerAliveInterval=30 \
             -o ServerAliveCountMax=20 \
@@ -313,7 +314,7 @@ jobs:
 
           rsync_srcs=(deploy/ configs docker-compose.yml)
           [ -d docs-site ] && rsync_srcs+=(docs-site)
-          rsync -az --delete --exclude='.env' --exclude='VERSION' \
+          rsync -az --delete --exclude='VERSION' \
             -e "ssh -i ~/.ssh/worker_03 -p $port -o ServerAliveInterval=30 -o ServerAliveCountMax=20 -o ConnectTimeout=30" \
             "${rsync_srcs[@]}" \
             "$WORKER_03_USER@$WORKER_03_HOST:$deploy_dir/"

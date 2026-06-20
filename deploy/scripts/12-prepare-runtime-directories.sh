@@ -52,8 +52,16 @@ mk "$DATA_DIR/private"
 log_step "Creating BACKUP_DIR at $BACKUP_DIR ..."
 mk "$BACKUP_DIR"
 
+# -- Operator config dir (persistent home for .env; survives deploy re-pulls) --
+# The deploy/ dir is disposable (CI rsyncs it fresh), so the hand-maintained
+# .env lives here instead. The operator places .env; this only ensures the dir.
+mk "$ROOT_DIR/etc"
+
 # -- Permissions: sensitive directories ---------------------------------------
 log_step "Setting permissions on sensitive directories..."
+
+chmod 700 "$ROOT_DIR/etc"
+log_ok "chmod 700 $ROOT_DIR/etc"
 
 chmod 700 "$DATA_DIR/private"
 log_ok "chmod 700 $DATA_DIR/private"

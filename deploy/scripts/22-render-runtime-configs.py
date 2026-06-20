@@ -46,8 +46,10 @@ TEXT_ASSET_SUFFIXES = {
 }
 
 # -- Paths ---------------------------------------------------------------------
+# scripts/ sits under the deploy dir; PROJECT_ROOT is the persistent /srv/umbra
+# root (parents[2]) that holds etc/.env. Repo configs come from REPO_DIR (.env).
 SCRIPT_DIR = Path(__file__).resolve().parent
-PROJECT_ROOT = Path(__file__).resolve().parents[1]
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
 
 
 def load_env(env_path: Path) -> dict:
@@ -151,7 +153,7 @@ def first_existing_path(*candidates: Path) -> Path | None:
 
 
 # -- Load variables -------------------------------------------------------------
-env_file = PROJECT_ROOT / ".env"
+env_file = PROJECT_ROOT / "etc" / ".env"
 if not env_file.exists():
     print(f"[ERROR] .env not found at {env_file}", file=sys.stderr)
     sys.exit(1)

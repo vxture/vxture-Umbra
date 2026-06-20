@@ -117,15 +117,16 @@ fi
 # -- Directory ownership -------------------------------------------------------
 log_step "Setting up /srv/umbra ..."
 
-# Pre-create the four top-level dirs so the chown below covers them, and so the
+# Pre-create the top-level dirs so the chown below covers them, and so the
 # first CI rsync (which writes the deploy subset to /srv/umbra/deploy) and the
 # subsequent deploy.sh run (which fills runtime/data/backup) both succeed.
-mkdir -p /srv/umbra/deploy /srv/umbra/runtime /srv/umbra/data /srv/umbra/backup
+# etc/ is the persistent home for the operator .env (deploy/ is disposable).
+mkdir -p /srv/umbra/etc /srv/umbra/deploy /srv/umbra/runtime /srv/umbra/data /srv/umbra/backup
 
 # Always chown recursively - safe to repeat; fixes root-owned files from
 # any previous accidental root invocation of deploy scripts.
 chown -R "$ADMIN_USER:$ADMIN_USER" /srv/umbra
-log_ok "/srv/umbra owned by $ADMIN_USER (deploy + runtime + data + backup)"
+log_ok "/srv/umbra owned by $ADMIN_USER (etc + deploy + runtime + data + backup)"
 
 # -- Firewall ------------------------------------------------------------------
 log_step "Configuring firewall..."
@@ -149,7 +150,7 @@ echo ""
 log_info "No git clone is used. CI rsyncs the deploy subset (deploy/, configs/,"
 log_info "docker-compose.yml) to /srv/umbra/deploy on the next release, then runs"
 log_info "deploy.sh all over SSH. Before that first release:"
-log_info "  create /srv/umbra/deploy/.env with real secrets (copy from old server)"
+log_info "  create /srv/umbra/etc/.env with real secrets (copy from old server)"
 log_info "  ensure DNS for the domains points at this host (or set CERTBOT_SKIP=true)"
 echo ""
 log_info "After confirming $ADMIN_USER SSH login works, optionally harden SSH:"

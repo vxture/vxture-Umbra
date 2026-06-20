@@ -252,7 +252,7 @@ CHECKS: list[tuple[str, Path, list[str]]] = [
         Path("deploy/scripts/55-backup-runtime-state.sh"),
         [
             'mkdir -p "$BACKUP_DIR"',
-            'cp "$REPO_DIR/.env" "$ENV_BACKUP"',
+            'cp "$ROOT_DIR/etc/.env" "$ENV_BACKUP"',
             'tar -czf "$ARCHIVE" -C "$DATA_DIR"',
             'find "$BACKUP_DIR" -type f',
             "-print0",
@@ -431,8 +431,8 @@ CHECKS: list[tuple[str, Path, list[str]]] = [
         Path("deploy/lib/01-env.sh"),
         [
             'WORKER_DEPLOY_DIR="$(cd "$_UMBRA_LIB_DIR/.." && pwd)"',
-            'PROJECT_ROOT="$(cd "$_UMBRA_LIB_DIR/.." && pwd)"',
-            'source "$PROJECT_ROOT/.env"',
+            'PROJECT_ROOT="$(cd "$_UMBRA_LIB_DIR/../.." && pwd)"',
+            'source "$PROJECT_ROOT/etc/.env"',
             'source "$WORKER_DEPLOY_DIR/.env"',
         ],
     ),
@@ -440,7 +440,7 @@ CHECKS: list[tuple[str, Path, list[str]]] = [
         "worker python scripts resolve repository root from deploy package",
         Path("deploy/scripts/22-render-runtime-configs.py"),
         [
-            "PROJECT_ROOT = Path(__file__).resolve().parents[1]",
+            "PROJECT_ROOT = Path(__file__).resolve().parents[2]",
         ],
     ),
     (
@@ -1493,8 +1493,8 @@ def check_worker_deploy_dependency_boundary() -> list[str]:
         problems.append(f"config renderer must read shared root configs: missing {missing_refs!r}")
 
     env_loader = read(PROJECT_ROOT / "deploy/lib/01-env.sh")
-    if 'PROJECT_ROOT="$(cd "$_UMBRA_LIB_DIR/.." && pwd)"' not in env_loader:
-        problems.append("worker env loader must resolve PROJECT_ROOT to the repo root")
+    if 'PROJECT_ROOT="$(cd "$_UMBRA_LIB_DIR/../.." && pwd)"' not in env_loader:
+        problems.append("worker env loader must resolve PROJECT_ROOT to the persistent root (etc/.env)")
 
     return problems
 

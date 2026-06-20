@@ -37,12 +37,12 @@ ARCHIVE="$BACKUP_DIR/umbra-config-${TIMESTAMP}.tar.gz"
 # -- Environment ---------------------------------------------------------------
 log_step "Backing up environment file..."
 ENV_BACKUP="$BACKUP_DIR/env-${TIMESTAMP}.txt"
-if [[ -f "$REPO_DIR/.env" ]]; then
-  cp "$REPO_DIR/.env" "$ENV_BACKUP"
+if [[ -f "$ROOT_DIR/etc/.env" ]]; then
+  cp "$ROOT_DIR/etc/.env" "$ENV_BACKUP"
   chmod 600 "$ENV_BACKUP"
   log_ok "Environment -> $(basename "$ENV_BACKUP")"
 else
-  log_warn "Environment file not found at $REPO_DIR/.env - skipping"
+  log_warn "Environment file not found at $ROOT_DIR/etc/.env - skipping"
 fi
 
 # -- SQLite database copies ----------------------------------------------------
