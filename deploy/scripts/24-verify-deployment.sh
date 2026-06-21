@@ -8,14 +8,14 @@ source "$SCRIPT_DIR/../lib/00-log.sh"
 
 if [[ "${1:-}" == "--help" ]] || [[ "${1:-}" == "-h" ]]; then
   echo ""
-  echo "  Usage: bash deploy/worker-03/deploy.sh verify"
+  echo "  Usage: bash deploy/deploy.sh verify"
   echo ""
   echo "  Runs post-deployment verification: container health, HTTPS"
   echo "  endpoints, SQLite databases, Marzban API, cron jobs, and"
   echo "  TLS certificate expiry. All checks are read-only."
   echo ""
-  echo "  Called automatically by: bash deploy/worker-03/deploy.sh all"
-  echo "  Run standalone:          bash deploy/worker-03/deploy.sh verify"
+  echo "  Called automatically by: bash deploy/deploy.sh all"
+  echo "  Run standalone:          bash deploy/deploy.sh verify"
   echo ""
   exit 0
 fi
@@ -318,8 +318,8 @@ fi
 # -- Cron jobs -----------------------------------------------------------------
 log_step "Cron jobs..."
 
-CERT_CRON="17 3 * * * $REPO_DIR/deploy/worker-03/ops.sh certs --renew >> /var/log/umbra-cert-renew.log 2>&1"
-BACKUP_CRON="0 2 * * * $REPO_DIR/deploy/worker-03/ops.sh backup >> /var/log/umbra-backup.log 2>&1"
+CERT_CRON="17 3 * * * $REPO_DIR/ops.sh certs --renew >> /var/log/umbra-cert-renew.log 2>&1"
+BACKUP_CRON="0 2 * * * $REPO_DIR/ops.sh backup >> /var/log/umbra-backup.log 2>&1"
 CRONTAB_CONTENT="$(crontab -l 2>/dev/null || true)"
 
 if grep -Fxq "$CERT_CRON" <<< "$CRONTAB_CONTENT"; then

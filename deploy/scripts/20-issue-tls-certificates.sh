@@ -10,19 +10,19 @@ source "$SCRIPT_DIR/../lib/02-certs.sh"
 
 if [[ "${1:-}" == "--help" ]] || [[ "${1:-}" == "-h" ]]; then
   echo ""
-  echo "  Usage: bash deploy/worker-03/deploy.sh certificates"
+  echo "  Usage: bash deploy/deploy.sh certificates"
   echo ""
   echo "  Issues Let's Encrypt certificates for all configured domains"
   echo "  via Certbot webroot method. Reuses existing valid certs"
   echo "  (>30d remaining). Refuses in-place replacement of bad certs"
-  echo "  (use: bash deploy/worker-03/ops.sh certs --upgrade)."
+  echo "  (use: bash deploy/ops.sh certs --upgrade)."
   echo ""
   echo "  Requires port 80 and DNS resolution to this server."
   echo "  Set CERTBOT_STAGING=true for test certs."
   echo "  Set CERTBOT_SKIP=true to skip issuance (self-signed mode)."
   echo ""
-  echo "  Called automatically by: bash deploy/worker-03/deploy.sh all"
-  echo "  Run standalone:          bash deploy/worker-03/deploy.sh certificates"
+  echo "  Called automatically by: bash deploy/deploy.sh all"
+  echo "  Run standalone:          bash deploy/deploy.sh certificates"
   echo ""
   exit 0
 fi
@@ -128,7 +128,7 @@ for domain in "${DOMAINS[@]}"; do
         # CERT-003: Never overwrite a bad production cert directory in-place.
         # The staged upgrade path keeps production live while replacement runs.
         log_error "Non-trusted cert already exists in $CERT_DIR for $domain."
-        log_info  "Use safe staged replacement: bash deploy/worker-03/ops.sh certs --upgrade"
+        log_info  "Use safe staged replacement: bash deploy/ops.sh certs --upgrade"
         (( ++FAILED ))
         continue
       fi
@@ -144,7 +144,7 @@ for domain in "${DOMAINS[@]}"; do
       # CERT-004: A malformed live directory is also production state. Refuse
       # in-place mutation and force the safer staged flow.
       log_error "Refusing in-place replacement of existing cert directory: $live_path"
-      log_info  "Use safe staged replacement: bash deploy/worker-03/ops.sh certs --upgrade"
+      log_info  "Use safe staged replacement: bash deploy/ops.sh certs --upgrade"
       (( ++FAILED ))
       continue
     fi

@@ -2,7 +2,7 @@
 # Server lifecycle dispatcher.
 #
 # Usage:
-#   bash deploy/worker-03/server.sh <command> [args]
+#   bash deploy/server.sh <command> [args]
 #
 # Commands:
 #   init              Bootstrap a fresh server; run as root
@@ -16,10 +16,10 @@ shift || true
 
 _usage() {
   echo ""
-  echo "  Usage: bash deploy/worker-03/server.sh <command> [args]"
+  echo "  Usage: bash deploy/server.sh <command> [args]"
   echo ""
   echo "  Purpose:"
-  echo "    Manage worker-03 host lifecycle tasks."
+  echo "    Manage deploy host lifecycle tasks."
   echo "    Use this for first-time server bootstrap or explicit reset only."
   echo ""
   echo "  Server lifecycle:"

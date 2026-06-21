@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Compatibility wrapper. Prefer: bash deploy/worker-03/server.sh reset "$@"
+# Compatibility wrapper. Prefer: bash deploy/server.sh reset "$@"
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"

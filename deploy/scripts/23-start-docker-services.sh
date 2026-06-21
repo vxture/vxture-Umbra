@@ -9,13 +9,13 @@ source "$SCRIPT_DIR/../lib/02-certs.sh"
 
 if [[ "${1:-}" == "--help" ]] || [[ "${1:-}" == "-h" ]]; then
   echo ""
-  echo "  Usage: bash deploy/worker-03/deploy.sh start"
+  echo "  Usage: bash deploy/deploy.sh start"
   echo ""
   echo "  Pulls images, starts all Docker services, syncs Marzban TLS,"
   echo "  reloads nginx, and polls for container health."
   echo ""
-  echo "  Called automatically by: bash deploy/worker-03/deploy.sh all"
-  echo "  Run standalone:          bash deploy/worker-03/deploy.sh start"
+  echo "  Called automatically by: bash deploy/deploy.sh all"
+  echo "  Run standalone:          bash deploy/deploy.sh start"
   echo ""
   exit 0
 fi
@@ -77,8 +77,8 @@ compose_pull_with_retry() {
 # nginx proxies https:// with proxy_ssl_verify off.
 if ! umbra_sync_marzban_tls "$DATA_DIR/letsencrypt" "$EDGE_DOMAIN" "$DATA_DIR/marzban/tls"; then
   log_error "Marzban requires /var/lib/marzban/tls/cert.pem and will restart without it."
-  log_info  "Run certificate issuance first: bash deploy/worker-03/deploy.sh certificates"
-  log_info  "Or upgrade/repair certs:      bash deploy/worker-03/ops.sh certs --upgrade"
+  log_info  "Run certificate issuance first: bash deploy/deploy.sh certificates"
+  log_info  "Or upgrade/repair certs:      bash deploy/ops.sh certs --upgrade"
   exit 1
 fi
 
@@ -175,7 +175,7 @@ fi
 # disk over time (a full disk fails the next deploy at `git fetch`). This runs
 # only after the new containers are confirmed healthy, so prior images remain
 # available for rollback until the new deployment is proven. Images referenced by
-# running containers are never removed; worker-03 only pulls (no build cache).
+# running containers are never removed; this host only pulls (no build cache).
 log_step "Pruning unused images to reclaim disk (running images are kept)..."
 if docker image prune -af >/tmp/umbra-prune.out 2>&1; then
   grep -i "reclaimed" /tmp/umbra-prune.out 2>/dev/null | sed 's/^/  /' || true

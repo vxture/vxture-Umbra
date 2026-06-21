@@ -73,7 +73,7 @@ standalone workflow files - the contract check forbids the retired
 triggers on PRs to develop/main and pushes to develop; it does NOT run on
 `main` (main only advances via `promote.yml`, which fires `release.yml`).
 Design doc: `docs/operations/github-actions.md`. Deploy internals live under
-`deploy/worker-03/`.
+`deploy/`.
 
 `quality-gate` must pass before any merge or promotion. It runs:
 - static script checks (`bash -n`, `python -m compileall`,

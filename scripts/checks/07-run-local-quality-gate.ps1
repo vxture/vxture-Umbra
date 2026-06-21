@@ -14,7 +14,7 @@ $bash = "bash"
 if (Test-Path "D:\Program Files\Git\bin\bash.exe") {
   $bash = "D:\Program Files\Git\bin\bash.exe"
 }
-Get-ChildItem deploy\worker-03 -Recurse -File -Include *.sh |
+Get-ChildItem deploy -Recurse -File -Include *.sh |
   ForEach-Object { & $bash -n $_.FullName }
 
 Write-Host "==> python compile"

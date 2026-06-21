@@ -2,7 +2,7 @@
 # Deployment lifecycle dispatcher.
 #
 # Usage:
-#   bash deploy/worker-03/deploy.sh <command> [args]
+#   bash deploy/deploy.sh <command> [args]
 #
 # Commands (new canonical names):
 #   all [--skip-verify] [--skip-backup]   Full deployment pipeline
@@ -31,7 +31,7 @@ shift || true
 
 _usage() {
   echo ""
-  echo "  Usage: bash deploy/worker-03/deploy.sh <command> [args]"
+  echo "  Usage: bash deploy/deploy.sh <command> [args]"
   echo ""
   echo "  Purpose:"
   echo "    Deploy the worker-03 runtime from repository source and environment values."
@@ -55,7 +55,7 @@ _usage() {
   echo "    check|dirs|keys|certs|up|post"
   echo ""
   echo "  Operational commands moved to:"
-  echo "    bash deploy/worker-03/ops.sh <status|logs|restart|reload|backup|certs>"
+  echo "    bash deploy/ops.sh <status|logs|restart|reload|backup|certs>"
   echo ""
 }
 
@@ -70,7 +70,7 @@ source "$SCRIPT_DIR/lib/01-env.sh"
 source "$SCRIPT_DIR/lib/00-log.sh"
 
 check_rendered_nginx_cert_paths() {
-  local conf_dir="$DATA_DIR/nginx/conf.d"
+  local conf_dir="$RUNTIME_DIR/nginx/conf.d"
   local cert_path host_path
   local failures=0
 
@@ -100,7 +100,7 @@ check_rendered_nginx_cert_paths() {
   if (( failures > 0 )); then
     log_error "Rendered nginx config references missing certificate files."
     log_info "Issue or upgrade certificates before reloading:"
-    log_info "  bash deploy/worker-03/ops.sh certs --upgrade"
+    log_info "  bash deploy/ops.sh certs --upgrade"
     return 1
   fi
 }
@@ -145,15 +145,15 @@ case "$CMD" in
         log_error "Nginx config test failed. Configs were rendered but nginx was not reloaded."
         if printf '%s\n' "$nginx_test_output" | grep -q "/etc/letsencrypt/live/"; then
           log_info "A referenced certificate may be missing. Check cert status:"
-          log_info "  bash deploy/worker-03/ops.sh certs --status"
+          log_info "  bash deploy/ops.sh certs --status"
           log_info "Then issue/upgrade certs before reloading:"
-          log_info "  bash deploy/worker-03/ops.sh certs --upgrade"
+          log_info "  bash deploy/ops.sh certs --upgrade"
         fi
         exit 1
       fi
     else
       log_warn "Nginx not running - configs rendered but not applied."
-      log_warn "Start services with: bash deploy/worker-03/deploy.sh start"
+      log_warn "Start services with: bash deploy/deploy.sh start"
     fi
     ;;
 
@@ -171,32 +171,32 @@ case "$CMD" in
 
   # -- Legacy aliases -------------------------------------------------------------
   check)
-    log_warn "'check' is deprecated. Use: bash deploy/worker-03/deploy.sh environment"
+    log_warn "'check' is deprecated. Use: bash deploy/deploy.sh environment"
     exec bash "$SCRIPT_DIR/scripts/11-check-runtime-environment.sh"
     ;;
 
   dirs)
-    log_warn "'dirs' is deprecated. Use: bash deploy/worker-03/deploy.sh directories"
+    log_warn "'dirs' is deprecated. Use: bash deploy/deploy.sh directories"
     exec bash "$SCRIPT_DIR/scripts/12-prepare-runtime-directories.sh"
     ;;
 
   keys)
-    log_warn "'keys' is deprecated. Use: bash deploy/worker-03/deploy.sh reality-keys"
+    log_warn "'keys' is deprecated. Use: bash deploy/deploy.sh reality-keys"
     exec bash "$SCRIPT_DIR/scripts/13-generate-runtime-secrets.sh"
     ;;
 
   certs)
-    log_warn "'certs' is deprecated. Use: bash deploy/worker-03/deploy.sh certificates"
+    log_warn "'certs' is deprecated. Use: bash deploy/deploy.sh certificates"
     exec bash "$SCRIPT_DIR/scripts/20-issue-tls-certificates.sh"
     ;;
 
   up)
-    log_warn "'up' is deprecated. Use: bash deploy/worker-03/deploy.sh start"
+    log_warn "'up' is deprecated. Use: bash deploy/deploy.sh start"
     exec bash "$SCRIPT_DIR/scripts/23-start-docker-services.sh"
     ;;
 
   post)
-    log_warn "'post' is deprecated. Use: bash deploy/worker-03/deploy.sh wizard"
+    log_warn "'post' is deprecated. Use: bash deploy/deploy.sh wizard"
     exec bash "$SCRIPT_DIR/scripts/25-run-post-deploy-wizard.sh"
     ;;
 
@@ -207,7 +207,7 @@ case "$CMD" in
 
   backup|status|logs|reload|restart)
     log_error "'$CMD' is an operations command."
-    log_info "Use: bash deploy/worker-03/ops.sh $CMD $*"
+    log_info "Use: bash deploy/ops.sh $CMD $*"
     exit 1
     ;;
 

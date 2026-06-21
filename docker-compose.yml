@@ -21,15 +21,15 @@ services:
       - "80:80"
       - "443:443"
     volumes:
-      - ${DATA_DIR}/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
-      - ${DATA_DIR}/nginx/conf.d:/etc/nginx/conf.d:ro
-      - ${DATA_DIR}/nginx/stream.d:/etc/nginx/stream.d:ro
-      - ${DATA_DIR}/nginx/snippets:/etc/nginx/snippets:ro
-      - ${DATA_DIR}/nginx/html:/usr/share/nginx/html:ro
-      - ${DATA_DIR}/nginx/private:/etc/nginx/private:ro
+      - ${RUNTIME_DIR}/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ${RUNTIME_DIR}/nginx/conf.d:/etc/nginx/conf.d:ro
+      - ${RUNTIME_DIR}/nginx/stream.d:/etc/nginx/stream.d:ro
+      - ${RUNTIME_DIR}/nginx/snippets:/etc/nginx/snippets:ro
+      - ${RUNTIME_DIR}/nginx/html:/usr/share/nginx/html:ro
+      - ${RUNTIME_DIR}/nginx/private:/etc/nginx/private:ro
       - ${DATA_DIR}/letsencrypt:/etc/letsencrypt:ro
       - ${DATA_DIR}/certbot/www:/var/www/certbot:ro
-      - ${DATA_DIR}/nginx/logs:/var/log/nginx
+      - ${RUNTIME_DIR}/nginx/logs:/var/log/nginx
     networks:
       - umbra-net
     healthcheck:

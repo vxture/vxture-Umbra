@@ -2,7 +2,7 @@
 # Operations lifecycle dispatcher.
 #
 # Usage:
-#   bash deploy/worker-03/ops.sh <command> [args]
+#   bash deploy/ops.sh <command> [args]
 #
 # Commands:
 #   status                         Show container status
@@ -24,7 +24,7 @@ shift || true
 
 _usage() {
   echo ""
-  echo "  Usage: bash deploy/worker-03/ops.sh <command> [args]"
+  echo "  Usage: bash deploy/ops.sh <command> [args]"
   echo ""
   echo "  Purpose:"
   echo "    Operate an already deployed worker-03 runtime."
