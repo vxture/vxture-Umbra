@@ -33,6 +33,7 @@ mk "$RUNTIME_DIR/nginx/conf.d"
 mk "$RUNTIME_DIR/nginx/stream.d"
 mk "$RUNTIME_DIR/nginx/private"
 mk "$RUNTIME_DIR/nginx/logs"
+mk "$RUNTIME_DIR/hysteria"
 
 # -- Data directories (persistent state; the only tree that is backed up) ------
 log_step "Creating DATA_DIR structure at $DATA_DIR ..."

@@ -122,7 +122,7 @@ log_step "Container health..."
 CONTAINERS=(
   umbra-nginx umbra-marzban
   umbra-subproxy umbra-account umbra-account-web
-  umbra-vaultwarden umbra-website
+  umbra-vaultwarden umbra-website umbra-hysteria
 )
 
 cd "$REPO_DIR"
@@ -269,6 +269,16 @@ if timeout 5 bash -c "</dev/tcp/$EDGE_DOMAIN/443" 2>/dev/null; then
   (( ++PASS ))
 else
   log_fail "Port 443 not reachable on $EDGE_DOMAIN"
+  (( ++FAIL ))
+fi
+
+# Hysteria2 binds UDP 443 on the host (network_mode: host). A UDP listener on
+# :443 confirms the fallback transport is up; reachability is checked separately.
+if ss -lun 2>/dev/null | grep -q ":443 "; then
+  log_ok "Hysteria2 UDP 443 listening"
+  (( ++PASS ))
+else
+  log_fail "Hysteria2 UDP 443 not listening"
   (( ++FAIL ))
 fi
 

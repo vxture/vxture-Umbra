@@ -112,7 +112,7 @@ HEALTH_CHECK_INTERVAL=3     # seconds between polls
 MAX_RETRIES=$((HEALTH_CHECK_TIMEOUT / HEALTH_CHECK_INTERVAL))
 poll_count=0
 
-containers=("umbra-nginx" "umbra-marzban" "umbra-subproxy" "umbra-account" "umbra-account-web" "umbra-vaultwarden" "umbra-website" "umbra-admin")
+containers=("umbra-nginx" "umbra-marzban" "umbra-subproxy" "umbra-account" "umbra-account-web" "umbra-vaultwarden" "umbra-website" "umbra-admin" "umbra-hysteria")
 
 while [[ $poll_count -lt $MAX_RETRIES ]]; do
   all_healthy=true
@@ -153,7 +153,7 @@ docker compose ps
 # Health check: fail if any service exited or is crash-looping
 PROBLEMS=""
 
-for container in umbra-nginx umbra-marzban umbra-subproxy umbra-account umbra-account-web umbra-vaultwarden umbra-website umbra-admin; do
+for container in umbra-nginx umbra-marzban umbra-subproxy umbra-account umbra-account-web umbra-vaultwarden umbra-website umbra-admin umbra-hysteria; do
   state=$(docker inspect "$container" --format '{{.State.Status}}' 2>/dev/null || echo "missing")
 
   if [[ "$state" == "exited" ]]; then

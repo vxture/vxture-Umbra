@@ -229,3 +229,19 @@ services:
       - ${DATA_DIR}/vaultwarden/data:/data
     networks:
       - umbra-net
+
+  # -- Hysteria2: UDP/QUIC fallback transport (reality SNI-fingerprint hedge) ---
+  # Marzban's Xray core has no hysteria2 protocol, so this runs standalone. It
+  # listens on UDP 443 (no conflict with nginx TCP 443), reuses the EDGE_DOMAIN
+  # LE cert, and uses salamander obfuscation. The node is injected into the Clash
+  # subscription as vx-tokyo-h2 (shared-password auth). Host networking gives
+  # clean QUIC/UDP and sidesteps docker-proxy UDP quirks; only UDP 443 is bound.
+  umbra-hysteria:
+    image: tobyxdd/hysteria:latest
+    container_name: umbra-hysteria
+    restart: always
+    network_mode: "host"
+    command: ["server", "-c", "/etc/hysteria/config.yaml"]
+    volumes:
+      - ${RUNTIME_DIR}/hysteria/config.yaml:/etc/hysteria/config.yaml:ro
+      - ${DATA_DIR}/letsencrypt:/etc/letsencrypt:ro

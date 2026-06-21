@@ -233,6 +233,14 @@ render_file(
     mode=0o600,
 )
 
+print("\n-- Rendering Hysteria2 config -------------------------------------------")
+render_file(
+    configs_dir / "hysteria" / "config.yaml.template",
+    RUNTIME_DIR / "hysteria" / "config.yaml",
+    variables,
+    mode=0o600,
+)
+
 print("\n-- Rendering Marzban Clash subscription template ------------------------")
 render_file(
     configs_dir / "marzban" / "clash-subscription.j2",
