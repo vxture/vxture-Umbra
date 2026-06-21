@@ -47,14 +47,19 @@ dns:
   sni: {{ EDGE_DOMAIN }}
   skip-cert-verify: false
 proxy-groups:
+  # url-test auto-selects the lowest-latency node and re-tests every interval,
+  # giving automatic failover between reality and hysteria2. DIRECT is excluded
+  # deliberately: in a url-test group it would always win (~0ms) and bypass the VPN.
   - name: PROXY
-    type: select
+    type: url-test
+    url: http://www.gstatic.com/generate_204
+    interval: 300
+    tolerance: 50
     proxies:
 {% for tag in proxy_remarks %}
       - {{ tag }}
 {% endfor %}
       - vx-tokyo-h2
-      - DIRECT
 
 rules:
   # 0. Must-direct services: Umbra, Microsoft, Vultr, domestic AI
