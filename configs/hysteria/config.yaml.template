@@ -1,0 +1,30 @@
+# Hysteria2 server config. Rendered from .env by 22-render-runtime-configs.py
+# into RUNTIME_DIR/hysteria/config.yaml (mode 0600; it holds the shared secret).
+#
+# Standalone UDP/QUIC fallback transport: Marzban's Xray core has no hysteria2,
+# so this runs as its own container (umbra-hysteria, host networking, UDP 443).
+# The node is injected into the Clash subscription as vx-tokyo-h2. It reuses the
+# EDGE_DOMAIN Let's Encrypt certificate and camouflages active probes via the
+# masquerade proxy plus salamander obfuscation. This is the hedge for the
+# reality SNI-fingerprint arms race; clients switch to it if reality is flagged.
+
+listen: :443
+
+tls:
+  cert: /etc/letsencrypt/live/{{ EDGE_DOMAIN }}/fullchain.pem
+  key: /etc/letsencrypt/live/{{ EDGE_DOMAIN }}/privkey.pem
+
+obfs:
+  type: salamander
+  salamander:
+    password: {{ HYSTERIA_OBFS_PASSWORD }}
+
+auth:
+  type: password
+  password: {{ HYSTERIA_PASSWORD }}
+
+masquerade:
+  type: proxy
+  proxy:
+    url: https://{{ REALITY_SNI }}/
+    rewriteHost: true

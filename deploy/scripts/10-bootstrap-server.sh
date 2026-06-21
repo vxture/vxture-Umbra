@@ -135,7 +135,8 @@ if command -v ufw &>/dev/null; then
   ufw allow 22/tcp  &>/dev/null || true
   ufw allow 80/tcp  &>/dev/null || true
   ufw allow 443/tcp &>/dev/null || true
-  log_ok "UFW rules added: 22, 80, 443"
+  ufw allow 443/udp &>/dev/null || true
+  log_ok "UFW rules added: 22, 80, 443/tcp, 443/udp"
 else
   log_info "UFW not installed - skipping firewall config"
 fi

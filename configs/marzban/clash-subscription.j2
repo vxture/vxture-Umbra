@@ -37,6 +37,15 @@ dns:
       - 240.0.0.0/4
 
 {{ conf | only("proxies") | yaml }}
+- name: vx-tokyo-h2
+  type: hysteria2
+  server: {{ EDGE_DOMAIN }}
+  port: 443
+  password: {{ HYSTERIA_PASSWORD }}
+  obfs: salamander
+  obfs-password: {{ HYSTERIA_OBFS_PASSWORD }}
+  sni: {{ EDGE_DOMAIN }}
+  skip-cert-verify: false
 proxy-groups:
   - name: PROXY
     type: select
@@ -44,6 +53,7 @@ proxy-groups:
 {% for tag in proxy_remarks %}
       - {{ tag }}
 {% endfor %}
+      - vx-tokyo-h2
       - DIRECT
 
 rules:
