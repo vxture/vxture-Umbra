@@ -1,25 +1,22 @@
-# Memory Mirror
+# Memory (pointer)
 
-> Mirror of the Claude Code persistent memory store at
-> `~/.claude/projects/D--MyWebSite-vxturestudio-umbra/memory/`.
-> These files are durable project context loaded by AI assistants across
-> sessions. They are summaries and pointers - the authoritative detail always
-> lives in the linked `specs/`, `design/`, `implementation/`, and `operations/`
-> docs. When memory and an authoritative doc disagree, the authoritative doc
-> wins and the memory should be updated.
+Claude Code's persistent project memory does NOT live here. It lives in two
+places, both outside this `docs/` tree:
 
-## Index
+- Live store: `~/.claude/projects/D--MyWebSite-vxturestudio-umbra/memory/`
+  (loaded by AI assistants across sessions; `MEMORY.md` is its index).
+- Versioned copy: the same store is a git repo whose `origin` is `vxture/umbra`,
+  pushed to the dedicated `claude-memory` branch (NOT merged into
+  `develop`/`main`).
 
-| File | Type | Summary |
-|------|------|---------|
-| [`project-overview.md`](project-overview.md) | project | Stack, domain layout, architecture, Marzban HTTP-proxy decision |
-| [`deployment-modules.md`](deployment-modules.md) | project | `deploy.sh` dispatcher, step scripts, config update workflow |
-| [`cicd-deploy-flow.md`](cicd-deploy-flow.md) | project | Git flow to production, promotion command, deploy gotchas |
-| [`memory-versioning-preference.md`](memory-versioning-preference.md) | feedback | Version memory inside `vxture/umbra` on the `claude-memory` branch |
+This folder previously held a hand-maintained mirror of those memory files. The
+mirror was removed because it duplicated content that is already authoritative in
+the product docs and drifted out of sync. For durable project facts, read the
+authoritative docs directly:
 
-## Sync model
+- Architecture / decisions: `../design/`
+- Deploy scripts and config rendering: `../implementation/`
+- Deploy/ops runbooks and CI/CD: `../operations/`, `../deployment/`
+- Product / domains / security: `../specs/`
 
-The live store under `~/.claude/.../memory/` is also a git repo whose `origin`
-is `vxture/umbra`, pushed to the dedicated `claude-memory` branch. This `docs/memory/`
-tree is the human-readable mirror that travels with the codebase on `develop`/`main`.
-See [`memory-versioning-preference.md`](memory-versioning-preference.md).
+When memory and an authoritative doc disagree, the authoritative doc wins.

@@ -20,7 +20,7 @@ Internet
                                       |-- sub.ruyin.ai           -> umbra-subproxy:8080 -> umbra-marzban:8000 /sub/<token>
                                       |-- console.ruyin.ai -> umbra-account-web + umbra-account API
                                       |-- admin.ruyin.ai   -> umbra-marzban:8000 and /invites -> account web/API
-                                      `-- pass.ruyin.ai    -> umbra-vaultwarden:80
+                                      `-- pas.ruyin.ai     -> umbra-vaultwarden:80
 ```
 
 ### REALITY Proxy Path
@@ -100,6 +100,10 @@ Services:
   umbra-subproxy
     - internal-only metadata normalizer for /sub/<token>
 
+  umbra-redis
+    - server-side session store for the OIDC RP (rpsess/rptok/authreq/sid keys)
+    - persistent (appendonly); only reachable on umbra-net
+
   umbra-account
     - current lightweight account/invite API (BFF) on :3281
     - stores account and invite state in DATA_DIR/account/account.db
@@ -116,114 +120,53 @@ Services:
 
   umbra-vaultwarden
     - Vaultwarden on :80
+
+  umbra-hysteria
+    - standalone Hysteria2 UDP/QUIC fallback transport (network_mode: host)
+    - listens on UDP 443 (no conflict with the nginx TCP 443 stream)
+    - reuses the EDGE_DOMAIN LE cert; salamander obfs + masquerade to REALITY_SNI
+    - NOT a Marzban inbound (Marzban's Xray core has no hysteria2); surfaced in
+      the Clash subscription as the vx-tokyo-h2 node. See decisions.md (REALITY
+      Camouflage) and modules.md for detail.
 ```
 
 ---
 ## Server Directory Structure
 
-The Git repo is cloned on the server, but the server is a thin runtime: it pulls
-prebuilt images from the registry (GHCR / Aliyun ACR) and does NOT build portal
-images locally. The checkout exists mainly for orchestration - `docker-compose.yml`,
-`configs/` templates, and the `deploy/` scripts that render runtime
-config and manage the lifecycle. The `portals/` source rides along in the
-checkout but is built in CI, not on the server.
+The server is a thin runtime: it pulls prebuilt images from the registry
+(GHCR / Aliyun ACR) and does NOT build portal images locally, and there is
+**no git clone on the server**. The release `deploy` job checks out the repo in
+CI and **rsyncs only the deploy subset** (`deploy/`, `configs/`,
+`docker-compose.yml`, plus a `VERSION` file stamped with the SHA) into
+`/srv/umbra/deploy`. The layout is flattened under a single `/srv/umbra` root:
 
 ```
-/srv/vxture/
-|-- repo/
-|   `-- umbra/                         # Git repo (orchestration + config + scripts)
-|       |-- docker-compose.yml
-|       |-- .env.example
-|       |-- brand/                     # Canonical brand identity PNG/ICO (single source)
-|       |-- configs/
-|       |   |-- nginx/
-|       |   |   |-- nginx.conf
-|       |   |   |-- stream.conf.template
-|       |   |   |-- snippets/
-|       |   |   |   |-- proxy-headers.conf
-|       |   |   |   |-- security-headers.conf
-|       |   |   |   `-- ssl-params.conf
-|       |   |   `-- vhosts/
-|       |   |       |-- 00-default.conf.template
-|       |   |       |-- 01-ruyin.conf.template
-|       |   |       |-- 02-www.conf.template
-|       |   |       |-- 03-vpn.conf.template
-|       |   |       |-- 04-sub.conf.template
-|       |   |       |-- 05-console.conf.template
-|       |   |       |-- 06-pass.conf.template
-|       |   |       `-- 07-admin.conf.template
-|       |   |-- xray/
-|       |   |   `-- config.json.template
-|       |   `-- marzban/
-|       |       |-- clash-subscription.j2
-|       |       `-- must-direct-rules.txt
-|       |-- docker/                    # Dockerfiles for CI-built images
-|       |   |-- ruyin-account-api.Dockerfile
-|       |   |-- ruyin-nginx.Dockerfile
-|       |   `-- ruyin-subproxy.Dockerfile
-|       |-- portals/                   # Next.js source; images built in CI, not here
-|       |   |-- website/               # app/, components/, lib/, public/, Dockerfile
-|       |   |-- console/               # app/, public/, Dockerfile
-|       |   `-- admin/                 # app/, public/, Dockerfile
-|       |-- services/                  # Ruyin-owned Python edge services
-|       |   |-- account/account.py
-|       |   `-- subproxy/subproxy.py
-|       |-- deploy/                     # Server-side deploy/ops entrypoints
-|       |   |-- server.sh
-|       |   |-- deploy.sh
-|       |   |-- ops.sh
-|       |   |-- lib/
-|       |   |   |-- 00-log.sh
-|       |   |   |-- 01-env.sh
-|       |   |   `-- 02-certs.sh
-|       |   `-- scripts/
-|       |       |-- 10-bootstrap-server.sh
-|       |       |-- 11-check-runtime-environment.sh
-|       |       |-- 12-prepare-runtime-directories.sh
-|       |       |-- 13-generate-runtime-secrets.sh
-|       |       |-- 20-issue-tls-certificates.sh
-|       |       |-- 21-issue-self-signed-certificates.sh
-|       |       |-- 22-render-runtime-configs.py
-|       |       |-- 23-start-docker-services.sh
-|       |       |-- 24-verify-deployment.sh
-|       |       |-- 25-run-post-deploy-wizard.sh
-|       |       |-- 26-pin-image-digests.py
-|       |       |-- 30-run-full-deployment.sh
-|       |       `-- (55-backup / 53-certs / 60-reset / 9x-compat wrappers)
-|       |-- scripts/                   # Repo-side checks and GitHub helpers (not server runtime)
-|       |   |-- checks/
-|       |   `-- github/
-|       `-- docs/
-|-- data/
-|   `-- umbra/                         # Runtime data, not in Git
-|       |-- nginx/
-|       |   |-- nginx.conf
-|       |   |-- conf.d/
-|       |   |-- stream.d/
-|       |   |-- snippets/
-|       |   |-- private/
-|       |   `-- logs/
-|       |-- marzban/
-|       |   |-- db.sqlite3
-|       |   |-- xray_config.json
-|       |   |-- templates/
-|       |   |   |-- clash/
-|       |   |   `-- v2ray/
-|       |   `-- logs/
-|       |-- account/
-|       |   `-- account.db
-|       |-- vaultwarden/
-|       |   `-- data/
-|       |-- letsencrypt/
-|       |-- certbot/
-|       |   |-- www/
-|       |   |-- config/
-|       |   `-- hooks/
-|       `-- private/
-|           `-- reality.json
-`-- backup/
-    `-- umbra/
+/srv/umbra/
+|-- etc/
+|   `-- .env                          # Persistent operator config (NOT in deploy/;
+|                                     #   bash-sourced; CI/CD never overwrites it)
+|-- deploy/                           # Disposable: rsynced each release (REPO_DIR)
+|   |-- docker-compose.yml
+|   |-- VERSION                       # Deployed commit SHA
+|   |-- configs/                      # nginx / xray / marzban templates
+|   `-- deploy/                       # server.sh, deploy.sh, ops.sh, lib/, scripts/
+|-- runtime/                          # RUNTIME_DIR: rendered, regenerable config
+|   |-- nginx/                        #   nginx.conf, conf.d/, stream.d/, snippets/,
+|   |                                 #   private/, logs/
+|   `-- hysteria/config.yaml          #   rendered Hysteria2 server config (0600)
+|-- data/                             # DATA_DIR: persistent state (not in Git)
+|   |-- marzban/                      #   db.sqlite3, xray_config.json, templates/, logs/
+|   |-- account/account.db
+|   |-- redis/                        #   OIDC RP session store (appendonly)
+|   |-- vaultwarden/data/
+|   |-- letsencrypt/
+|   |-- certbot/                      #   www/, config/, hooks/
+|   `-- private/reality.json          #   chmod 700
+`-- backup/                           # BACKUP_DIR
 ```
+
+The repo's own source tree (orchestration + portals + services) is documented in
+implementation/repository.md; only the subset above ships to the server.
 ---
 
 ## Port Allocation
@@ -240,7 +183,9 @@ checkout but is built in CI, not on the server.
 | 3210 | Internal | umbra-website | Ruyin public Next website |
 | 3220 | Internal | umbra-account-web | User console and invite UI |
 | 3230 | Internal | umbra-admin | Platform admin surface (built, not yet routed) |
+| 6379 | Internal | umbra-redis | OIDC RP session store |
 | 80 | Internal | umbra-vaultwarden | Vaultwarden HTTP |
+| 443/udp | Public | umbra-hysteria | Hysteria2 UDP/QUIC fallback (host network) |
 
 ---
 

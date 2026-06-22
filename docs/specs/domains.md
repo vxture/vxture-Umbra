@@ -10,7 +10,7 @@ Domain ownership is explicit. Do not repurpose a domain without updating nginx v
 | `SUB_DOMAIN` | `sub.ruyin.ai` | Marzban native subscription endpoint with normalized response metadata |
 | `CONSOLE_DOMAIN` | `console.ruyin.ai` | User self-service console: SSO, invite activation, subscription dashboard |
 | `ADMIN_DOMAIN` | `admin.ruyin.ai` | Platform management: Marzban console and invite management page |
-| `PASS_DOMAIN` | `pass.ruyin.ai` | Vaultwarden web app |
+| `PASS_DOMAIN` | `pas.ruyin.ai` | Vaultwarden web app |
 
 Subscription URL format is always:
 
