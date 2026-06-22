@@ -158,7 +158,7 @@ Browser (*.ruyin.ai:443)
        console.ruyin.ai/api/account/* -> umbra-account (identity broker + auth DB + module brokers)
        console.ruyin.ai/auth/*        -> umbra-account-web (OIDC RP / app-bff)
        vpn.ruyin.ai/                  -> 444 (web retired; VPN node is REALITY on :443)
-       pass.ruyin.ai/                 -> umbra-vaultwarden (later)
+       pas.ruyin.ai/                  -> umbra-vaultwarden (later)
   umbra-account     -> umbra-marzban (VPN source of truth)
   umbra-account-web -> umbra-redis (OIDC RP session store)
   umbra-account     -> umbra-redis (reads RP session identity claims)
@@ -227,7 +227,7 @@ console/app/
 ```
 APPS = [
   { key:'vpn',   name:'VPN',   href:'/apps/vpn',             enabled:true,  bindable:true, secondaryAuth:false },
-  { key:'vault', name:'Vault', href:'https://pass.ruyin.ai', enabled:false, bindable:true, secondaryAuth:true  },
+  { key:'vault', name:'Vault', href:'https://pas.ruyin.ai',  enabled:false, bindable:true, secondaryAuth:true  },
 ]
 ```
 

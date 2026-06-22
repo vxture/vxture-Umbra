@@ -8,9 +8,9 @@ Umbra publishes deployable images to GitHub Container Registry and Aliyun ACR.
 production deploys by pulling those images and restarting Docker Compose. It
 must not build production images on the server during normal deployment.
 
-Enablement checklist:
-
-- [`docs/operations/github-actions-enablement.md`](github-actions-enablement.md)
+For first-time activation, see
+[Enablement (first-time activation)](#enablement-first-time-activation) near the
+end of this document.
 
 ## Goals
 
@@ -484,7 +484,7 @@ Deployment:
 | `DEPLOY_USER` | Non-root deploy user, normally `stone` |
 | `DEPLOY_SSH_KEY` | Private SSH key for the deploy user |
 | `DEPLOY_PORT` | Optional SSH port, defaults to `22` |
-| `DEPLOY_REPO_DIR` | Optional repo path, defaults to `/srv/vxture/repo/umbra` |
+| `DEPLOY_REPO_DIR` | Optional repo path; when unset defaults to `/srv/umbra/deploy` |
 | `DEPLOY_KNOWN_HOSTS` | Optional pinned known_hosts line |
 | `ALIYUN_ACR_REGISTRY` | ACR registry host used for image pulls |
 | `ALIYUN_ACR_NAMESPACE` | ACR namespace, currently `vxture` |
@@ -509,9 +509,71 @@ fast-forward updates to `main`.
 Do not temporarily disable rulesets as a release path. If promotion is blocked,
 fix the promotion workflow or ruleset configuration first.
 
-First-time enablement (secrets, rulesets, production prerequisites, and the
-activation sequence) is covered by
-[`github-actions-enablement.md`](github-actions-enablement.md).
+## Enablement (first-time activation)
+
+Use this section when turning on the Umbra CI/CD workflows for the first time. It
+assumes the design above is already implemented. The secrets are listed under
+[Required Secrets](#required-secrets) above, and branch rules under
+[Repository Rulesets](#repository-rulesets) above; this section does not repeat
+them. Deploy secrets (`DEPLOY_HOST`, `DEPLOY_USER`, `DEPLOY_SSH_KEY`,
+`DEPLOY_PORT`, `DEPLOY_REPO_DIR`, `DEPLOY_KNOWN_HOSTS`) belong on the GitHub
+environment named `production`; keep the remaining secrets at repository scope.
+
+### Operator local env file and helper script
+
+Operators stage secret values in a Git-ignored local file rather than typing them
+into the GitHub UI one by one:
+
+```text
+private/github-actions.local.env
+```
+
+Fill it from a password manager or other approved secret store, then run:
+
+```powershell
+pwsh -File scripts/github/00-set-github-secrets.ps1 -DryRun
+pwsh -File scripts/github/00-set-github-secrets.ps1
+```
+
+The script creates the `production` GitHub environment if it does not already
+exist, then writes repository secrets and environment secrets through `gh`.
+
+### Production runtime prerequisites
+
+Before the first automated deploy:
+
+- The deploy sources exist on production at `DEPLOY_REPO_DIR` (defaults to
+  `/srv/umbra/deploy` when the secret is unset).
+- The checkout can fetch `origin main`.
+- The deploy user can run Docker and Docker Compose.
+- The deploy user is not root; `deploy/deploy.sh all` rejects root.
+- `.env` exists on production and contains production runtime secrets.
+- `.env` may keep local registry defaults for manual operations.
+- `.env` should keep `IMAGE_NAMESPACE=vxture` when manual pulls use the Umbra
+  owned repositories.
+- The deploy job overrides production image pulls to GHCR first and Aliyun ACR
+  fallback, and overrides `IMAGE_TAG` with `sha-<short-sha>` for the exact image
+  set built by `docker-build`.
+- Runtime state remains under `DATA_DIR` and `BACKUP_DIR`.
+
+### First enablement sequence
+
+1. Add repository secrets and `production` environment secrets, including
+   `PROMOTION_TOKEN` (see [Required Secrets](#required-secrets)). The helper
+   script above writes all of them.
+2. Configure branch rulesets for `develop` and `main` (see
+   [Repository Rulesets](#repository-rulesets)).
+3. Merge the CI/CD workflow files (`ci.yml`, `promote.yml`, `release.yml`) to
+   `develop`.
+4. Confirm `ci` passes on `develop`.
+5. Run `promote.yml` manually with `target=main`, `expected_sha`, a release
+   note, and `release_confirmed=true`.
+6. Confirm `release.yml`'s `docker-build` job pushes all six images to GHCR and
+   Aliyun ACR.
+7. Confirm the `deploy` job pulls the `sha-<short-sha>` images and verifies.
+
+`PROMOTION_TOKEN` is required because GitHub does not trigger downstream
+workflows from pushes made with the default `GITHUB_TOKEN`.
 
 ## Non-Goals
 

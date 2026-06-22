@@ -358,20 +358,9 @@ bash deploy/ops.sh certs --clean-workdirs
 bash deploy/ops.sh certs --upgrade
 ```
 
-Safety checklist:
-
-```text
-[ ] `certs --upgrade` uses DATA_DIR/letsencrypt.staged
-[ ] Existing production certs remain untouched until every domain succeeds
-[ ] Active domains are issued/verified before activation
-[ ] Existing trusted LE certs are reused if not near expiry
-[ ] Missing/non-trusted domains are issued only in staging
-[ ] Partial staged successes are kept for retry
-[ ] Zero-byte renewal configs are removed before renew/upgrade
-[ ] Activation happens only after every staged cert is trusted LE, unexpired, and name-matched
-[ ] Marzban TLS is synced after activation
-[ ] Nginx and Marzban restart only after activation succeeds
-```
+The staged-upgrade safety mechanics (staging dir, production-cert preservation,
+per-domain verification, activation, and TLS sync/restart ordering) are owned by
+operations.md (Certificate Management).
 
 Rate-limit handling:
 
@@ -384,31 +373,11 @@ Rate-limit handling:
 
 ### S9 - Backup and Restore Readiness
 
-Use before reset, deploy, domain change, or risky script changes.
+Use before reset, deploy, domain change, or risky script changes. Run
+`bash deploy/ops.sh backup` and confirm it completes before the risky operation.
 
-Backup command:
-
-```bash
-bash deploy/ops.sh backup
-```
-
-Backup checklist:
-
-```text
-[ ] Marzban SQLite DB backup exists
-[ ] Vaultwarden full data archive exists
-[ ] Config/private archive exists
-[ ] Crontab snapshot exists
-[ ] Files are mode 600 where sensitive
-[ ] Backups older than retention window are pruned intentionally
-```
-
-Restore is currently manual. Before relying on a backup, inspect archive contents:
-
-```bash
-ls -lt "$BACKUP_DIR" | head -20
-tar -tzf "$BACKUP_DIR/umbra-config-<timestamp>.tar.gz" | sort
-```
+The backup output contract, retention, and the manual restore procedure are owned
+by operations.md (Backup, Rollback).
 
 ### S10 - Post-Deploy Users and Subscription URLs
 

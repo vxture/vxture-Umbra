@@ -35,12 +35,12 @@ sudo apt install -y python3 python3-pip
 | `sub.ruyin.ai` | A | server public IP |
 | `console.ruyin.ai` | A | server public IP |
 | `admin.ruyin.ai` | A | server public IP |
-| `pass.ruyin.ai` | A | server public IP |
+| `pas.ruyin.ai` | A | server public IP |
 
 Verify all resolve before running `deploy.sh all`:
 
 ```bash
-for d in ruyin.ai www.ruyin.ai vpn.ruyin.ai sub.ruyin.ai console.ruyin.ai admin.ruyin.ai pass.ruyin.ai; do
+for d in ruyin.ai www.ruyin.ai vpn.ruyin.ai sub.ruyin.ai console.ruyin.ai admin.ruyin.ai pas.ruyin.ai; do
   echo "$d -> $(dig +short $d)"
 done
 ```
@@ -72,7 +72,7 @@ EDGE_DOMAIN=vpn.ruyin.ai
 SUB_DOMAIN=sub.ruyin.ai
 CONSOLE_DOMAIN=console.ruyin.ai
 ADMIN_DOMAIN=admin.ruyin.ai
-PASS_DOMAIN=pass.ruyin.ai
+PASS_DOMAIN=pas.ruyin.ai
 
 # -- Paths -----------------------------------------------
 ROOT_DIR=/srv/vxture
@@ -88,8 +88,8 @@ VXTURE_NPM_REGISTRY=https://npm.pkg.github.com
 NODE_AUTH_TOKEN=<token-with-package-read-access>
 
 # -- Xray / REALITY -------------------------------------
-REALITY_DEST=www.microsoft.com:443
-REALITY_SNI=www.microsoft.com
+REALITY_DEST=www.icloud.com:443
+REALITY_SNI=www.icloud.com
 REALITY_SHORT_ID_LENGTH=16
 XRAY_INTERNAL_PORT=10443
 
@@ -261,7 +261,7 @@ Expected: all containers in `running` state.
 ### HTTPS Check (all domains)
 
 ```bash
-for d in ruyin.ai www.ruyin.ai vpn.ruyin.ai sub.ruyin.ai console.ruyin.ai admin.ruyin.ai pass.ruyin.ai; do
+for d in ruyin.ai www.ruyin.ai vpn.ruyin.ai sub.ruyin.ai console.ruyin.ai admin.ruyin.ai pas.ruyin.ai; do
   code=$(curl -sk -o /dev/null -w "%{http_code}" https://$d)
   echo "$d -> $code"
 done
@@ -335,7 +335,8 @@ curl -sk -o /dev/null -w "%{http_code}\n" https://sub.ruyin.ai/sub/TESTTOKEN/cla
 
 Expected: all four return `404`. A real `GET https://sub.ruyin.ai/sub/<marzban-token>` should return `200`.
 
-Marzban console may display a different subscription token after each refresh. That is expected; saved tokens can remain valid. Verify old and new URLs with GET and status `200` before replacing distributed links.
+For subscription token-refresh behavior and the full subscription URL contract,
+see operations.md (Marzban User Management).
 
 ### SQLite Databases
 
@@ -359,7 +360,7 @@ Expected: all files exist and are non-zero size after services have started.
 ### Steps
 
 ```
-1.  Provision new VPS (Ubuntu 22.04)
+1.  Provision new VPS (same OS as Prerequisites, Ubuntu 26.04)
 2.  Install Docker + Compose on new VPS
 3.  Create user stone, add to docker group
 4.  Clone vxture/umbra to /srv/vxture/repo/umbra
@@ -371,9 +372,11 @@ Expected: all files exist and are non-zero size after services have started.
 9.  Switch DNS to new VPS IP
 10. Notify users to refresh subscription in Clash
 11. Monitor 24-72 hours
-12. Run final backup on old node
-13. Destroy old VPS
 ```
+
+Once the new node is healthy and serving production DNS, retire the old node
+following operations.md (Node Decommission), which owns the final-backup and
+destroy steps.
 
 Copying `private/reality.json` ensures existing Marzban users keep the same REALITY public key - no client reconfiguration needed, only a subscription refresh.
 

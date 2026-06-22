@@ -7,11 +7,11 @@ is referenced from certificate scripts as an implementation guardrail.
 
 Original observed production state:
 
-- `pass.ruyin.ai` has a trusted Let's Encrypt certificate.
+- `pas.ruyin.ai` has a trusted Let's Encrypt certificate.
 - `ruyin.ai`, `www.ruyin.ai`, `console.ruyin.ai`, and `admin.ruyin.ai` have
   self-signed certificates.
 - The six self-signed domains have zero-byte `renewal/*.conf` files.
-- Only `pass.ruyin.ai` has normal Certbot `archive/` material.
+- Only `pas.ruyin.ai` has normal Certbot `archive/` material.
 
 This means the running system is mixed state: one valid Certbot-managed domain
 and six self-signed fallback domains. `certs --renew` cannot repair that state;

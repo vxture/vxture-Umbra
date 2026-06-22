@@ -17,7 +17,7 @@ Purpose:    Production overseas edge entry node
 ```
 
 **One-liner:**
-> Umbra is a production-grade overseas edge node providing multi-user VPN access, subscription delivery, SNI-based domain routing, password management, status monitoring, and docs hosting - all behind a unified 443 entry.
+> Umbra is a production-grade overseas edge node providing multi-user VPN access, subscription delivery, SNI-based domain routing, and password management - all behind a unified 443 entry.
 
 **Principles:**
 - No compromises on architecture - build it right from the start
@@ -35,10 +35,12 @@ Purpose:    Production overseas edge entry node
 | Website | `umbra-website` | ruyin.ai | Ruyin public Next.js homepage |
 | Marzban + Xray | `umbra-marzban` | sub.ruyin.ai, admin.ruyin.ai, REALITY ingress | VPN user management, subscription, bundled Xray subprocess |
 | Subscription Proxy | `umbra-subproxy` | internal | Normalizes subscription response metadata only |
+| Redis | `umbra-redis` | internal | OIDC RP server-side session store |
 | Account API | `umbra-account` | internal (BFF) | Auth and invite backend for the console and invite flows |
 | Console Web | `umbra-account-web` | console.ruyin.ai, admin.ruyin.ai/invites | Invite-bound user dashboard and invite management UI |
 | Admin Web | `umbra-admin` | built, not yet routed | Future dedicated platform-management surface; image published so routing can switch without pipeline changes |
-| Vaultwarden | `umbra-vaultwarden` | pass.ruyin.ai | Password manager |
+| Vaultwarden | `umbra-vaultwarden` | pas.ruyin.ai | Password manager |
+| Hysteria2 | `umbra-hysteria` | UDP 443 (host) | Standalone UDP/QUIC fallback transport (vx-tokyo-h2 in the Clash sub) |
 | Certbot | one-shot Docker container | ACME webroot | Let's Encrypt issue/renew automation |
 
 ---
@@ -47,13 +49,13 @@ Purpose:    Production overseas edge entry node
 
 | Domain | Target | Notes |
 |--------|--------|-------|
-| `ruyin.ai` | Nginx -> umbra-website | Brand home and Hermes entry |
+| `ruyin.ai` | Nginx -> umbra-website | Brand home |
 | `www.ruyin.ai` | Nginx -> ruyin.ai | Canonical redirect |
 | `vpn.ruyin.ai` | Nginx -> 444 catch-all | Web surface retired; VPN node is REALITY on `:443` |
 | `sub.ruyin.ai` | Nginx -> umbra-subproxy -> umbra-marzban | Marzban-native subscription endpoint with normalized metadata |
 | `console.ruyin.ai` | Nginx -> umbra-account-web + umbra-account | User login, invite activation, subscription dashboard |
 | `admin.ruyin.ai` | Nginx -> umbra-marzban; /invites -> account web/API | Marzban console and invite generation |
-| `pass.ruyin.ai` | Nginx -> umbra-vaultwarden | Password manager |
+| `pas.ruyin.ai` | Nginx -> umbra-vaultwarden | Password manager |
 
 ---
 
@@ -89,15 +91,10 @@ identity model - see [`design/platform-identity.md`](design/platform-identity.md
 | [`deployment/deployment.md`](deployment/deployment.md) | Deploy steps, .env reference, verification checklist, migration |
 | [`deployment/checklists.md`](deployment/checklists.md) | Scenario matrix, preservation contracts, and deployment safety checklists |
 | [`operations/operations.md`](operations/operations.md) | Backup, rollback, cert renewal, user management, monitoring |
-| [`operations/github-actions.md`](operations/github-actions.md) | CI/CD branch flow, promotion contract, and production deployment design |
-| [`operations/github-actions-enablement.md`](operations/github-actions-enablement.md) | Secrets, rulesets, and first-run checklist for enabling CI/CD |
+| [`operations/github-actions.md`](operations/github-actions.md) | CI/CD design, promotion contract, deployment, and first-time enablement |
 | [`operations/certificate-incident.md`](operations/certificate-incident.md) | Certificate incident ledger and non-regression guardrails |
 | [`operations/local-dev-environment.md`](operations/local-dev-environment.md) | Operator workstation notes for TUN, DeepSeek API, and Roo Code |
-| [`memory/README.md`](memory/README.md) | **Memory mirror index.** AI-assistant persistent memory, summaries and pointers |
-| [`memory/project-overview.md`](memory/project-overview.md) | Memory: stack, domain layout, architecture, Marzban HTTP-proxy decision |
-| [`memory/deployment-modules.md`](memory/deployment-modules.md) | Memory: `deploy.sh` dispatcher, step scripts, config update workflow |
-| [`memory/cicd-deploy-flow.md`](memory/cicd-deploy-flow.md) | Memory: git flow to production, promotion command, deploy gotchas |
-| [`memory/memory-versioning-preference.md`](memory/memory-versioning-preference.md) | Memory: how the memory store is versioned in this repo |
+| [`memory/README.md`](memory/README.md) | Pointer to where Claude's persistent memory actually lives (not in this tree) |
 
 ---
 
