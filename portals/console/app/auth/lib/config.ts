@@ -30,9 +30,10 @@ function trimTrailingSlash(value: string): string {
 }
 
 /**
- * Returns the OIDC config when the RP is fully configured, otherwise null. The
- * new auth endpoints stay dormant (legacy SSO remains active) until both the
- * issuer and the client secret are provisioned.
+ * Returns the OIDC config when the RP is fully configured, otherwise null.
+ * Until both the issuer and the client secret are provisioned, the auth routes
+ * treat a null config as "not configured" (login/logout return 503, session
+ * returns anonymous). There is no longer a legacy SSO fallback.
  */
 export function getOidcConfig(): OidcConfig | null {
   const issuer = trimTrailingSlash((process.env.OIDC_ISSUER || "").trim());

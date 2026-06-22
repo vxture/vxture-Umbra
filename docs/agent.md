@@ -83,6 +83,7 @@ identity model - see [`design/platform-identity.md`](design/platform-identity.md
 | [`design/decisions.md`](design/decisions.md) | Design decisions: security model, B++ rules, subscription design |
 | [`design/platform-identity.md`](design/platform-identity.md) | Multi-app identity model: app bindings, invite app_key, identity broker |
 | [`design/vxture-sso.md`](design/vxture-sso.md) | Vxture SSO handoff contract for the Ruyin console (auth start, callback, verify) |
+| [`../identity-app-integration-standard.md`](../identity-app-integration-standard.md) | Vxture App Integration Standard v1.0 (OIDC RP contract). Root-level and Chinese (kept out of the ASCII-scanned `docs/` tree); upstream spec for `platform-identity.md` + `vxture-sso.md` |
 | [`implementation/repository.md`](implementation/repository.md) | Current repository layout and source-of-truth paths |
 | [`implementation/brand-assets.md`](implementation/brand-assets.md) | Brand asset spec: PNG/ICO source of truth, per-portal sync, build-time injection |
 | [`implementation/config-rendering.md`](implementation/config-rendering.md) | Template renderer inputs, syntax, and outputs |

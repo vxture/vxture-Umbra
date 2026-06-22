@@ -168,7 +168,7 @@ External: accounts.vxture.com (OIDC IdP; issues RS256 id/access/refresh tokens)
 ### Authentication and session (one identity across subdomains)
 
 ruyin is an OIDC Authorization-Code + PKCE(S256) RP against accounts.vxture.com
-(see `vxture-sso.md` and `identity-app-integration-standard.md`). The console
+(see `vxture-sso.md` and [`identity-app-integration-standard.md`](../../identity-app-integration-standard.md)). The console
 portal (`umbra-account-web`) is the app-bff: tokens live server-side in Redis and
 the browser only ever holds an opaque `vx_rp_session` cookie.
 
