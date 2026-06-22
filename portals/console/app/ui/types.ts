@@ -6,7 +6,9 @@ export interface VxtureUser {
   phoneVerified?: boolean;
   accountStatus?: string;
   orgId?: string;
+  orgName?: string;
   workspaceId?: string;
+  workspaceName?: string;
   roles?: string[];
   userType?: string;
   username?: string;

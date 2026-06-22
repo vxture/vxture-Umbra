@@ -1,6 +1,6 @@
 "use client";
 
-import { Button, Icon, SectionCard } from "@vxture/design-system";
+import { Button, Icon } from "@vxture/design-system";
 import { AccountGate } from "./account-gate";
 import { SectionHeading } from "./shell";
 import { PersonalInfo } from "./personal-info";
@@ -16,9 +16,7 @@ export function AccountProfile() {
             title="Personal info"
             description="Your Vxture account identity."
           />
-          <SectionCard title="Account identity">
-            <PersonalInfo user={session.user} />
-          </SectionCard>
+          <PersonalInfo user={session.user} />
           <div className="actions">
             <Button variant="secondary" asChild>
               <a href="/">
