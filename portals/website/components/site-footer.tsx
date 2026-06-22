@@ -7,7 +7,11 @@ export function SiteFooter() {
       className="site-footer"
       innerClassName="site-footer-inner"
       copyright={ruyinBrand.copyright}
-      links={ruyinBrand.legalLinks.map(([label, href]) => ({ label, href }))}
+      links={ruyinBrand.legalLinks
+        .filter(([label]) =>
+          /Terms of Service|Privacy Policy|Cookie Policy/.test(label)
+        )
+        .map(([label, href]) => ({ label, href }))}
     />
   );
 }

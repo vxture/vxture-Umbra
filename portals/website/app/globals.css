@@ -426,7 +426,8 @@ a {
   padding: 0;
   /* Small, muted legal text (the DS footer sets no base size/color). Copyright
      and links both inherit this. */
-  font-size: var(--vx-typography-body-sm-size);
+  /* Reduce footer font size by ~2 steps for a more compact legal band. */
+  font-size: 0.75rem;
   color: var(--vx-color-text-muted);
 }
 
