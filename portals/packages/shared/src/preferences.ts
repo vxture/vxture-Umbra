@@ -107,20 +107,17 @@ function setLocalStorage(key: string, value: string): void {
   }
 }
 
-/** Notify the same document (custom event) and other same-origin tabs (storage
- *  event on the shared snapshot key) of a preference change. */
+/** Notify OTHER same-origin tabs of a preference change by bumping the shared
+ *  snapshot key; the `storage` event fires only in other documents, never the
+ *  one that wrote it. We deliberately do NOT emit a same-document event: within
+ *  one tab the React provider/context already propagates the change to every
+ *  consumer, and echoing it back (apply() -> setLocale -> persist -> broadcast
+ *  -> apply()) re-rendered the open account popover mid-click and dismissed it. */
 function broadcast(partial: Record<string, string>): void {
   try {
     localStorage.setItem(
       PREFERENCE_CONSTANTS.SYNC_STORAGE_KEY,
       JSON.stringify({ ...partial, ts: Date.now() }),
-    );
-  } catch {
-    /* ignore */
-  }
-  try {
-    window.dispatchEvent(
-      new CustomEvent(PREFERENCE_CONSTANTS.SYNC_EVENT, { detail: partial }),
     );
   } catch {
     /* ignore */
@@ -266,6 +263,10 @@ export function usePreferenceLiveSync(setters: PreferenceSetters): void {
 
     apply();
 
+    // Cross-tab only: the `storage` event fires in OTHER same-origin documents
+    // when any of our keys change. The tab that made the change does not receive
+    // it (and must not - re-applying mid-interaction is what dismissed the open
+    // popover), so there is intentionally no same-document listener here.
     const watched = new Set<string>([
       PREFERENCE_CONSTANTS.SYNC_STORAGE_KEY,
       LS.locale,
@@ -276,13 +277,10 @@ export function usePreferenceLiveSync(setters: PreferenceSetters): void {
     const onStorage = (e: StorageEvent) => {
       if (e.key === null || watched.has(e.key)) apply();
     };
-    const onEvent = () => apply();
 
     window.addEventListener("storage", onStorage);
-    window.addEventListener(PREFERENCE_CONSTANTS.SYNC_EVENT, onEvent);
     return () => {
       window.removeEventListener("storage", onStorage);
-      window.removeEventListener(PREFERENCE_CONSTANTS.SYNC_EVENT, onEvent);
     };
   }, []);
 }

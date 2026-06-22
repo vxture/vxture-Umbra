@@ -130,66 +130,93 @@ a {
 }
 
 /* -- Signed-in account menu --------------------------------------------------
-   The menu itself is the DS ShellUserMenu (avatar trigger, online dot, bold
-   identity, badges, separated sections, actions) with the DS ShellPreferencePanel
-   for the preference controls - same components the vxture-website header uses.
-   These rules only style the extra personal-info block this site adds at the top
-   of the menu's settings slot, above the preference panel. Tokens only. */
-.acct-settings {
-  display: flex;
-  flex-direction: column;
-  gap: var(--vx-space-sm);
+   The DS ShellUserMenu supplies the avatar trigger, bold identity, badges,
+   popover chrome and separators. The three lower sections (user info, quick
+   settings, account actions) are rendered into the single settings slot on ONE
+   shared three-column grid - [icon | label | control] - so every icon, label
+   and control aligns across all three. Tokens only. */
+.acct-menu {
+  width: 360px;
+  max-width: min(92vw, 400px);
 }
 
-.acct-info {
+.acct-panel {
+  --acct-ico-col: 1.25rem;
+  --acct-ctl-col: 10.5rem;
   display: flex;
   flex-direction: column;
-  gap: var(--vx-space-3xs, var(--vx-space-xs));
 }
 
-.acct-info-link,
-.acct-info-row {
-  display: flex;
+/* Shared row grid: a fixed icon column, a flexible label, and a fixed-width
+   control column. Fixed outer columns are what keep every icon and every
+   control on the same left/right edge across the three sections. */
+.acct-row {
+  display: grid;
+  grid-template-columns: var(--acct-ico-col) 1fr var(--acct-ctl-col);
   align-items: center;
   gap: var(--vx-space-sm);
   width: 100%;
   padding: var(--vx-space-xs) 0;
-  font-size: var(--vx-typography-body-sm-size);
   text-align: left;
+  color: var(--vx-color-text-secondary);
+  font-size: var(--vx-typography-body-sm-size);
 }
 
-.acct-info-link {
+/* Clickable rows (profile link, switch user, sign out). */
+.acct-row--btn {
   border: none;
   background: transparent;
-  color: var(--vx-color-text-secondary);
   cursor: pointer;
   border-radius: var(--vx-radius-md);
-  transition: color var(--vx-duration-fast) var(--vx-ease-standard);
+  margin-inline: calc(var(--vx-space-xs) * -1);
+  padding-inline: var(--vx-space-xs);
+  transition:
+    background var(--vx-duration-fast) var(--vx-ease-standard),
+    color var(--vx-duration-fast) var(--vx-ease-standard);
 }
 
-.acct-info-link:hover {
+.acct-row--btn:hover {
+  background: color-mix(in srgb, var(--vx-control-brand) 10%, transparent);
   color: var(--vx-control-brand);
 }
 
-.acct-info-icon {
+.acct-row--danger:hover {
+  background: color-mix(in srgb, var(--vx-color-danger-500) 12%, transparent);
+  color: var(--vx-color-danger-600);
+}
+
+.acct-ico {
   flex: none;
   color: var(--vx-color-text-muted);
 }
 
-.acct-info-text {
-  flex: 1 1 auto;
+.acct-row--btn:hover .acct-ico {
+  color: inherit;
+}
+
+.acct-label {
   min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   font-weight: 600;
 }
 
-.acct-info-go {
-  flex: none;
-  color: var(--vx-color-text-muted);
+/* Control column: right-aligned, holds a segmented control, a select, a value
+   or a trailing glyph. Fixed width keeps all controls on one right edge. */
+.acct-ctl {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  min-width: 0;
 }
 
-.acct-info-val {
-  flex: none;
-  max-width: 60%;
+.acct-ctl .vx-shell-segmented {
+  width: 100%;
+}
+
+.acct-val {
+  max-width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -197,9 +224,26 @@ a {
   font-family: var(--vx-font-mono, ui-monospace, SFMono-Regular, Consolas, monospace);
 }
 
-/* Bordered separator between the personal-info block and the preference panel. */
-.acct-settings-divider {
+.acct-go {
+  color: var(--vx-color-text-muted);
+}
+
+/* Native language select, sized to the shared control column. */
+.acct-sel {
+  width: 100%;
+  border: var(--vx-control-border-width) solid var(--vx-color-border);
+  border-radius: var(--vx-radius-md);
+  background: var(--vx-color-surface);
+  color: var(--vx-color-text-primary);
+  padding: var(--vx-space-2xs, 0.25rem) var(--vx-space-xs);
+  font-size: var(--vx-typography-body-sm-size);
+  cursor: pointer;
+}
+
+/* Full-width divider between the three sections. */
+.acct-div {
   height: var(--vx-control-border-width);
+  margin: var(--vx-space-xs) 0;
   background: var(--vx-color-border);
 }
 
@@ -207,7 +251,7 @@ a {
 .acct-verify-badge {
   display: inline-flex;
   align-items: center;
-  gap: var(--vx-space-3xs, 0.25rem);
+  gap: 0.25rem;
 }
 
 .site-tools {
