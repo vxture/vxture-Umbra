@@ -227,17 +227,41 @@ export interface PreferenceSetters {
 export function usePreferenceLiveSync(setters: PreferenceSetters): void {
   const ref = useRef(setters);
   ref.current = setters;
+  // Snapshot of the values we last pushed into React state. Calling the
+  // locale provider's setLocale re-persists + re-broadcasts, which fires our
+  // own SYNC_EVENT listener again; without this guard apply() would recurse
+  // forever (setLocale -> broadcast -> apply -> setLocale ...). We only act
+  // when a cookie value actually differs from what we last applied, so the
+  // re-entrant call is a no-op and the loop terminates immediately.
+  const last = useRef<{
+    locale?: string;
+    theme?: string;
+    density?: string;
+    fontSize?: string;
+  }>({});
 
   useEffect(() => {
     const apply = () => {
       const { setLocale, setMode, setDensity } = ref.current;
-      const loc = readCookie(COOKIE.locale);
+      const loc = readCookie(COOKIE.locale) ?? undefined;
+      const theme = readCookie(COOKIE.theme) ?? undefined;
+      const density = readCookie(COOKIE.density) ?? undefined;
+      const fontSize = getFontSize();
+
+      if (
+        last.current.locale === loc &&
+        last.current.theme === theme &&
+        last.current.density === density &&
+        last.current.fontSize === fontSize
+      ) {
+        return;
+      }
+      last.current = { locale: loc, theme, density, fontSize };
+
       if (setLocale && isLocale(loc)) setLocale(loc);
-      const theme = readCookie(COOKIE.theme);
       if (setMode && isTheme(theme)) setMode(theme);
-      const density = readCookie(COOKIE.density);
       if (setDensity && isDensity(density)) setDensity(density);
-      applyFontSize(getFontSize());
+      applyFontSize(fontSize);
     };
 
     apply();

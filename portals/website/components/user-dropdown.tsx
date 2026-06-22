@@ -1,19 +1,12 @@
 "use client";
 
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useState } from "react";
 import {
-  Avatar,
-  AvatarFallback,
-  AvatarImage,
   Icon,
-  NativeSelect,
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-  StatusBadge,
+  ShellPreferencePanel,
+  ShellUserMenu,
   useTheme,
-  type Density,
-  type IconName,
+  type ShellThemePreference,
 } from "@vxture/design-system";
 import type { Locale } from "@vxture/shared";
 import {
@@ -28,7 +21,16 @@ import { ruyinBrand } from "@/lib/brand";
 import { logout, type SessionUser } from "@/lib/session";
 
 type RoleKey = "owner" | "manager" | "member";
-type ThemeMode = "system" | "light" | "dark";
+
+/** Default account silhouette when the session carries no picture. Three states
+ *  ship under /assets/icons; the signed-in account menu always represents an
+ *  online user, so it uses the online variant (offline / fill are kept here for
+ *  other surfaces and as the documented contract). */
+const DEFAULT_AVATAR = {
+  online: "/assets/icons/avatar-default-online.svg",
+  offline: "/assets/icons/avatar-default-offline.svg",
+  fill: "/assets/icons/avatar-default.svg",
+} as const;
 
 const COPY = {
   "en-US": {
@@ -38,6 +40,7 @@ const COPY = {
     profile: "Personal info",
     org: "Organization",
     workspace: "Workspace",
+    preferences: "Preferences",
     language: "Language",
     theme: "Theme",
     themeSystem: "System",
@@ -65,6 +68,7 @@ const COPY = {
     profile: "个人信息",
     org: "组织",
     workspace: "工作区",
+    preferences: "偏好设置",
     language: "语言",
     theme: "主题",
     themeSystem: "跟随系统",
@@ -88,8 +92,7 @@ const COPY = {
 } as const;
 
 /** Drop a leading country code so Chinese users see only the national number:
- *  "+86 138 0000 0000" -> "138 0000 0000". China first, then a generic fallback
- *  for any other "+CC " prefix. Numbers with no country code pass through. */
+ *  "+86 138 0000 0000" -> "138 0000 0000". */
 function nationalPhone(phone: string): string {
   return phone
     .replace(/^\+?\s*86[\s-]*/, "")
@@ -108,68 +111,30 @@ function primaryRole(user: SessionUser): RoleKey {
   return "member";
 }
 
-/** One avatar (trigger or profile): the session picture when present, otherwise
- *  a neutral user silhouette so the avatar always renders. */
-function UserAvatar({ user, large }: { user: SessionUser; large?: boolean }) {
-  return (
-    <Avatar className={large ? "um-avatar um-avatar--lg" : "um-avatar"}>
-      {user.avatarUrl ? <AvatarImage src={user.avatarUrl} alt="" /> : null}
-      <AvatarFallback className="um-avatar-fallback">
-        <Icon name="user" size={large ? "lg" : "sm"} />
-      </AvatarFallback>
-    </Avatar>
-  );
-}
-
-/** A settings row: aligned leading icon, a label, and a control pushed right.
- *  Shares the .um-row grid with the info and action rows so every icon and
- *  every label lines up across sections 3-5. */
-function SettingRow({
-  icon,
-  label,
-  children,
-}: {
-  icon: IconName;
-  label: string;
-  children: ReactNode;
-}) {
-  return (
-    <div className="um-row">
-      <span className="um-row-icon">
-        <Icon name={icon} size="sm" />
-      </span>
-      <span className="um-row-main">
-        <span className="um-row-label">{label}</span>
-        <span className="um-row-control">{children}</span>
-      </span>
-    </div>
-  );
-}
-
 /**
- * Signed-in account menu for the public site header. Built on DS primitives
- * (Popover + Avatar + StatusBadge + NativeSelect + Icon) so the layout is fully
- * controlled: an identity block with a right-aligned verification tag, two
- * badges (role + tenant type), a personal-info section (profile link + current
- * org/workspace), an inline preference section (language / theme / density /
- * font size), and the account actions. The popover is controlled and stays open
- * while preferences change so the effect is visible.
+ * Signed-in account menu for the public site header. Built on the DS
+ * ShellUserMenu + ShellPreferencePanel - the same components the vxture-website
+ * header uses - so the website matches that look exactly: an avatar trigger with
+ * an online dot opens a spacious popover with a bold identity line, role / tenant
+ * / verification badges, separated sections, the personal-info block (profile
+ * link + current org / workspace), the full preference panel (language dropdown
+ * that scales to every supported locale, plus three-segment theme / density /
+ * font controls), and the account actions. All preference changes also persist
+ * to the cross-subdomain cookies (see @umbra/shared/preferences).
  */
 export function UserDropdown({ user }: { user: SessionUser }) {
   const { locale, setLocale } = useLocale();
   const { mode, setMode, density, setDensity } = useTheme();
   const t = COPY[locale] ?? COPY["en-US"];
 
-  const [open, setOpen] = useState(false);
   const [fontSize, setFontSize] = useState<PrefFontSize>("default");
-
   useEffect(() => {
     setFontSize(getFontSize());
   }, []);
 
   const name =
     user.displayName || user.username || user.email || user.phone || t.fallbackName;
-  const subLine =
+  const uniqueLine =
     user.email && name !== user.email
       ? user.email
       : user.phone
@@ -178,182 +143,122 @@ export function UserDropdown({ user }: { user: SessionUser }) {
   const verified = Boolean(user.emailVerified || user.phoneVerified);
   const role = primaryRole(user);
   const isOrg = user.userType === "organization" || Boolean(user.orgId);
+  const avatarFallback = Array.from(name.trim() || "U")[0]?.toLocaleUpperCase() ?? "U";
 
   const handleFontSize = (next: PrefFontSize) => {
     setFontSize(next);
-    // Writes the parent-domain cookie, applies the root font-size, and broadcasts.
     persistFontSize(next);
   };
-
   const openProfile = () => {
-    setOpen(false);
     window.open(`${ruyinBrand.consoleUrl}/account`, "_blank", "noopener,noreferrer");
   };
 
-  const signOut = () => {
-    setOpen(false);
-    logout();
-  };
+  const settings = (
+    <div className="acct-settings">
+      <div className="acct-info">
+        <button type="button" className="acct-info-link" onClick={openProfile}>
+          <Icon name="user" size="sm" className="acct-info-icon" />
+          <span className="acct-info-text">{t.profile}</span>
+          <Icon name="arrow-long-right" size="xs" className="acct-info-go" />
+        </button>
+        {user.orgId ? (
+          <div className="acct-info-row">
+            <Icon name="building-library" size="sm" className="acct-info-icon" />
+            <span className="acct-info-text">{t.org}</span>
+            <span className="acct-info-val">{user.orgId}</span>
+          </div>
+        ) : null}
+        {user.workspaceId ? (
+          <div className="acct-info-row">
+            <Icon name="squares-four" size="sm" className="acct-info-icon" />
+            <span className="acct-info-text">{t.workspace}</span>
+            <span className="acct-info-val">{user.workspaceId}</span>
+          </div>
+        ) : null}
+      </div>
+
+      <div className="acct-settings-divider" />
+
+      <ShellPreferencePanel
+        locale={locale}
+        theme={mode}
+        density={density}
+        fontSize={fontSize}
+        labels={{
+          title: t.preferences,
+          locale: t.language,
+          theme: t.theme,
+          density: t.density,
+          fontSize: t.fontSize,
+          themeOptions: {
+            system: t.themeSystem,
+            light: t.themeLight,
+            dark: t.themeDark,
+          },
+          densityOptions: {
+            compact: t.densityCompact,
+            default: t.densityDefault,
+            comfortable: t.densityComfortable,
+          },
+          fontSizeOptions: {
+            small: t.fontSmall,
+            default: t.fontDefault,
+            large: t.fontLarge,
+          },
+        }}
+        onLocaleChange={(next: Locale) => setLocale(next)}
+        onThemeChange={(next: ShellThemePreference) => {
+          setMode(next);
+          persistTheme(next);
+        }}
+        onDensityChange={(next) => {
+          setDensity(next);
+          persistDensity(next);
+        }}
+        onFontSizeChange={(next) => handleFontSize(next)}
+      />
+    </div>
+  );
 
   return (
-    <Popover open={open} onOpenChange={setOpen} modal={false}>
-      <PopoverTrigger asChild>
-        <button type="button" className="um-trigger" aria-label={t.account}>
-          <UserAvatar user={user} />
-          <span className="um-trigger-dot" aria-hidden="true" />
-        </button>
-      </PopoverTrigger>
-
-      <PopoverContent align="end" sideOffset={10} className="um-menu">
-        {/* 1. Profile: display name + identifier, verification tag pushed right */}
-        <div className="um-profile">
-          <UserAvatar user={user} large />
-          <div className="um-identity">
-            <p className="um-name">{name}</p>
-            {subLine ? <p className="um-sub">{subLine}</p> : null}
-          </div>
-          <StatusBadge
-            tone={verified ? "success" : "neutral"}
-            className="um-verify"
-          >
-            <Icon name="check" size="xs" className="um-verify-icon" />
-            {verified ? t.verified : t.unverified}
-          </StatusBadge>
-        </div>
-
-        {/* 2. Badges: role type + tenant type */}
-        <div className="um-badges">
-          <StatusBadge tone="info">{t.roles[role]}</StatusBadge>
-          <StatusBadge tone="neutral">
-            {isOrg ? t.tenantOrg : t.tenantPersonal}
-          </StatusBadge>
-        </div>
-
-        <div className="um-sep" />
-
-        {/* 3. Personal info: profile link (new tab) + current org / workspace */}
-        <div className="um-section">
-          <button type="button" className="um-row um-row--action" onClick={openProfile}>
-            <span className="um-row-icon">
-              <Icon name="user" size="sm" />
-            </span>
-            <span className="um-row-main">
-              <span className="um-row-label">{t.profile}</span>
-              <Icon name="chevron-right" size="xs" className="um-row-ext" />
-            </span>
-          </button>
-
-          {user.orgId ? (
-            <div className="um-row">
-              <span className="um-row-icon">
-                <Icon name="building-library" size="sm" />
+    <ShellUserMenu
+      user={{
+        displayName: name,
+        uniqueLine,
+        avatarSrc: user.avatarUrl?.trim() || DEFAULT_AVATAR.online,
+        avatarAlt: name,
+        avatarFallback,
+        badges: [
+          { key: "role", label: t.roles[role] },
+          { key: "tenant", label: isOrg ? t.tenantOrg : t.tenantPersonal },
+          {
+            key: "verified",
+            label: (
+              <span className="acct-verify-badge">
+                <Icon name="check" size="xs" />
+                {verified ? t.verified : t.unverified}
               </span>
-              <span className="um-row-main">
-                <span className="um-row-label">{t.org}</span>
-                <span className="um-row-value">{user.orgId}</span>
-              </span>
-            </div>
-          ) : null}
-
-          {user.workspaceId ? (
-            <div className="um-row">
-              <span className="um-row-icon">
-                <Icon name="squares-four" size="sm" />
-              </span>
-              <span className="um-row-main">
-                <span className="um-row-label">{t.workspace}</span>
-                <span className="um-row-value">{user.workspaceId}</span>
-              </span>
-            </div>
-          ) : null}
-        </div>
-
-        <div className="um-sep" />
-
-        {/* 4. Quick settings: icon + dropdown per preference */}
-        <div className="um-section">
-          <SettingRow icon="globe" label={t.language}>
-            <NativeSelect
-              className="um-select"
-              value={locale}
-              onChange={(e) => setLocale(e.target.value as Locale)}
-            >
-              <option value="en-US">English</option>
-              <option value="zh-CN">简体中文</option>
-            </NativeSelect>
-          </SettingRow>
-
-          <SettingRow icon="sun" label={t.theme}>
-            <NativeSelect
-              className="um-select"
-              value={mode}
-              onChange={(e) => {
-                const next = e.target.value as ThemeMode;
-                setMode(next);
-                persistTheme(next);
-              }}
-            >
-              <option value="system">{t.themeSystem}</option>
-              <option value="light">{t.themeLight}</option>
-              <option value="dark">{t.themeDark}</option>
-            </NativeSelect>
-          </SettingRow>
-
-          <SettingRow icon="rows" label={t.density}>
-            <NativeSelect
-              className="um-select"
-              value={density}
-              onChange={(e) => {
-                const next = e.target.value as Density;
-                setDensity(next);
-                persistDensity(next);
-              }}
-            >
-              <option value="compact">{t.densityCompact}</option>
-              <option value="default">{t.densityDefault}</option>
-              <option value="comfortable">{t.densityComfortable}</option>
-            </NativeSelect>
-          </SettingRow>
-
-          <SettingRow icon="text-indent" label={t.fontSize}>
-            <NativeSelect
-              className="um-select"
-              value={fontSize}
-              onChange={(e) => handleFontSize(e.target.value as PrefFontSize)}
-            >
-              <option value="small">{t.fontSmall}</option>
-              <option value="default">{t.fontDefault}</option>
-              <option value="large">{t.fontLarge}</option>
-            </NativeSelect>
-          </SettingRow>
-        </div>
-
-        <div className="um-sep" />
-
-        {/* 5. Account actions */}
-        <div className="um-section">
-          <button type="button" className="um-row um-row--action" onClick={signOut}>
-            <span className="um-row-icon">
-              <Icon name="user-switch" size="sm" />
-            </span>
-            <span className="um-row-main">
-              <span className="um-row-label">{t.switchUser}</span>
-            </span>
-          </button>
-          <button
-            type="button"
-            className="um-row um-row--action um-row--danger"
-            onClick={signOut}
-          >
-            <span className="um-row-icon">
-              <Icon name="sign-out" size="sm" />
-            </span>
-            <span className="um-row-main">
-              <span className="um-row-label">{t.signout}</span>
-            </span>
-          </button>
-        </div>
-      </PopoverContent>
-    </Popover>
+            ),
+          },
+        ],
+      }}
+      openLabel={t.account}
+      online
+      settings={settings}
+      actions={[
+        {
+          key: "switch-user",
+          label: t.switchUser,
+          icon: "user-switch",
+          onClick: () => logout(),
+        },
+        {
+          key: "sign-out",
+          label: t.signout,
+          icon: "sign-out",
+          onClick: () => logout(),
+        },
+      ]}
+    />
   );
 }
