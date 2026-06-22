@@ -261,7 +261,12 @@ a {
   place-content: center;
   justify-items: center;
   text-align: center;
-  padding: var(--vx-space-2xl) var(--ruyin-shell-gutter);
+  /* Vertical padding stays large; horizontal gutters auto-optimize to the
+     content track and viewport. Smoothly scale between a small mobile
+     inset and the shell margin used by header/footer. Preferred value is
+     half the leftover space around a comfortable 1100px lockup. */
+  padding-block: var(--vx-space-2xl);
+  padding-inline: clamp(16px, calc((100vw - 1100px)/2), var(--ruyin-shell-margin-x));
 }
 
 /* Soft radial wash centred on the lockup so the hero lifts off the moving
@@ -280,7 +285,11 @@ a {
 }
 
 .hero {
-  width: min(100%, 1100px);
+  /* Keep the hero visually bounded while centering it in the same content
+     track as the header/footer (--ruyin-shell-max-width). The 1100px value
+     remains the visual lockup limit inside the wider track. */
+  width: min(100%, var(--ruyin-shell-max-width));
+  max-width: 1100px;
   display: grid;
   justify-items: center;
   /* Vertical rhythm between eyebrow / signature / lead / CTA. */
