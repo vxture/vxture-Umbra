@@ -129,229 +129,85 @@ a {
   padding-inline: var(--vx-space-xl);
 }
 
-/* -- Signed-in account menu (custom panel on DS primitives) -----------------
-   Popover + Avatar + StatusBadge + NativeSelect + Icon. Sections 3-5 share one
-   row grid (fixed icon column + content column) so every leading icon and every
-   label lines up across the personal-info, preference, and action blocks.
-   Layout only; all colors/typography come from DS tokens. */
-.um-menu {
-  --um-pad: var(--vx-space-md);
-  --um-icon-col: 1.5rem;
-  --um-control-w: 8.5rem;
-  width: 340px;
-  max-width: min(92vw, 380px);
-  padding: 0;
+/* -- Signed-in account menu --------------------------------------------------
+   The menu itself is the DS ShellUserMenu (avatar trigger, online dot, bold
+   identity, badges, separated sections, actions) with the DS ShellPreferencePanel
+   for the preference controls - same components the vxture-website header uses.
+   These rules only style the extra personal-info block this site adds at the top
+   of the menu's settings slot, above the preference panel. Tokens only. */
+.acct-settings {
+  display: flex;
+  flex-direction: column;
+  gap: var(--vx-space-sm);
 }
 
-/* Header avatar trigger: circular, with an online status dot. */
-.um-trigger {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  border: none;
-  background: transparent;
-  border-radius: var(--vx-radius-full);
-  cursor: pointer;
-  padding: 0;
+.acct-info {
+  display: flex;
+  flex-direction: column;
+  gap: var(--vx-space-3xs, var(--vx-space-xs));
 }
 
-.um-avatar {
-  width: var(--vx-avatar-size);
-  height: var(--vx-avatar-size);
-  flex: none;
-  border-radius: var(--vx-radius-full);
-  transition: box-shadow var(--vx-duration-fast) var(--vx-ease-standard);
-}
-
-.um-avatar--lg {
-  width: 2.75rem;
-  height: 2.75rem;
-}
-
-.um-trigger:hover .um-avatar,
-.um-trigger[data-state="open"] .um-avatar {
-  box-shadow:
-    0 0 0 4px color-mix(in srgb, var(--vx-control-brand) 12%, transparent),
-    0 0 12px color-mix(in srgb, var(--vx-control-brand) 18%, transparent);
-}
-
-/* Default silhouette / picture fill. */
-.um-avatar-fallback {
-  width: 100%;
-  height: 100%;
-  display: grid;
-  place-items: center;
-  background: linear-gradient(
-    135deg,
-    var(--vx-color-brand-600, var(--vx-control-brand)),
-    var(--vx-color-info-500, var(--vx-control-brand))
-  );
-  color: var(--vx-color-white);
-}
-
-/* Online dot, traced on the trigger avatar's lower-right. */
-.um-trigger-dot {
-  position: absolute;
-  right: 0;
-  bottom: 0;
-  width: 0.625rem;
-  height: 0.625rem;
-  border: 2px solid var(--vx-color-surface);
-  border-radius: var(--vx-radius-full);
-  background: var(--vx-color-success-400);
-}
-
-/* 1. Profile: avatar + identity, verification tag pushed to the right. */
-.um-profile {
+.acct-info-link,
+.acct-info-row {
   display: flex;
   align-items: center;
   gap: var(--vx-space-sm);
-  padding: var(--um-pad) var(--um-pad) var(--vx-space-sm);
-}
-
-.um-identity {
-  min-width: 0;
-  flex: 1 1 auto;
-}
-
-.um-name,
-.um-sub {
-  margin: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.um-name {
-  color: var(--vx-color-text-primary);
-  font-weight: 640;
-}
-
-.um-sub {
-  margin-top: 2px;
-  color: var(--vx-color-text-muted);
+  width: 100%;
+  padding: var(--vx-space-xs) 0;
   font-size: var(--vx-typography-body-sm-size);
-}
-
-/* Verification tag: a check glyph + label, loosely spaced from the name. */
-.um-verify {
-  margin-left: var(--vx-space-sm);
-  flex: none;
-  display: inline-flex;
-  align-items: center;
-  gap: var(--vx-space-xs);
-  white-space: nowrap;
-}
-
-.um-verify-icon {
-  flex: none;
-}
-
-/* 2. Badges: role type + tenant type. */
-.um-badges {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--vx-space-xs);
-  padding: 0 var(--um-pad) var(--vx-space-sm);
-}
-
-/* Full-bleed divider between sections. */
-.um-sep {
-  height: 1px;
-  background: var(--vx-color-border);
-}
-
-/* Each section (3, 4, 5) gets the same inset; rows inside share .um-row. */
-.um-section {
-  padding: var(--vx-space-xs) var(--um-pad);
-}
-
-/* Shared row grid: fixed icon column + content column. This is what keeps the
-   icons and labels strictly aligned across all three lower sections. */
-.um-row {
-  display: grid;
-  grid-template-columns: var(--um-icon-col) 1fr;
-  align-items: center;
-  gap: var(--vx-space-sm);
-  width: 100%;
-  padding: var(--vx-space-xs) var(--vx-space-xs);
-  border-radius: var(--vx-radius-md);
   text-align: left;
-  color: var(--vx-color-text-secondary);
 }
 
-/* Interactive rows (links / actions). */
-.um-row--action {
+.acct-info-link {
   border: none;
   background: transparent;
+  color: var(--vx-color-text-secondary);
   cursor: pointer;
-  transition:
-    background var(--vx-duration-fast) var(--vx-ease-standard),
-    color var(--vx-duration-fast) var(--vx-ease-standard);
+  border-radius: var(--vx-radius-md);
+  transition: color var(--vx-duration-fast) var(--vx-ease-standard);
 }
 
-.um-row--action:hover {
-  background: color-mix(in srgb, var(--vx-control-brand) 10%, transparent);
+.acct-info-link:hover {
   color: var(--vx-control-brand);
 }
 
-.um-row--danger:hover {
-  background: color-mix(in srgb, var(--vx-color-danger-500) 12%, transparent);
-  color: var(--vx-color-danger-600);
-}
-
-.um-row-icon {
-  width: var(--um-icon-col);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--vx-color-text-muted);
-}
-
-.um-row--danger:hover .um-row-icon {
-  color: inherit;
-}
-
-.um-row-main {
-  min-width: 0;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--vx-space-sm);
-}
-
-.um-row-label {
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-size: var(--vx-typography-body-sm-size);
-}
-
-.um-row-value {
+.acct-info-icon {
   flex: none;
-  max-width: 55%;
+  color: var(--vx-color-text-muted);
+}
+
+.acct-info-text {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-weight: 600;
+}
+
+.acct-info-go {
+  flex: none;
+  color: var(--vx-color-text-muted);
+}
+
+.acct-info-val {
+  flex: none;
+  max-width: 60%;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
   color: var(--vx-color-text-muted);
-  font-size: var(--vx-typography-body-sm-size);
   font-family: var(--vx-font-mono, ui-monospace, SFMono-Regular, Consolas, monospace);
 }
 
-.um-row-ext {
-  flex: none;
-  color: var(--vx-color-text-muted);
+/* Bordered separator between the personal-info block and the preference panel. */
+.acct-settings-divider {
+  height: var(--vx-control-border-width);
+  background: var(--vx-color-border);
 }
 
-/* Uniform control width so every dropdown shares the same left and right edge. */
-.um-row-control {
-  flex: none;
-}
-
-.um-select {
-  width: var(--um-control-w);
-  font-size: var(--vx-typography-body-sm-size);
+/* Check glyph + label inside the verification badge pill. */
+.acct-verify-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--vx-space-3xs, 0.25rem);
 }
 
 .site-tools {
