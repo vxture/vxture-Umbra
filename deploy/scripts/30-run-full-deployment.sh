@@ -145,16 +145,6 @@ add_cron() {
   fi
 }
 
-remove_legacy_cron() {
-  local pattern="$1"
-  if crontab -l 2>/dev/null | grep -qF "$pattern"; then
-    crontab -l 2>/dev/null | grep -vF "$pattern" | crontab -
-    log_ok "Removed legacy cron: $pattern"
-  fi
-}
-
-remove_legacy_cron "$REPO_DIR/scripts/91-compat-deploy-certs.sh"
-remove_legacy_cron "$REPO_DIR/scripts/steps/07-backup.sh"
 add_cron "$CRON_LINE"
 add_cron "$BACKUP_CRON_LINE"
 echo ""
