@@ -39,7 +39,11 @@ export function toIdentityClaims(idClaims: JWTPayload, accessClaims: JWTPayload)
     phone_verified: bool(accessClaims.phone_verified),
     account_status: str(accessClaims.account_status),
     active_org: str(accessClaims.active_org),
+    // Org/workspace display names are name-ready: shown when the IdP emits them
+    // (requested upstream), otherwise the UI falls back to the id claim.
+    active_org_name: str(accessClaims.active_org_name),
     active_workspace: str(accessClaims.active_workspace),
+    active_workspace_name: str(accessClaims.active_workspace_name),
     roles: strList(accessClaims.roles),
     user_type: str(accessClaims.userType) || str(idClaims.userType),
     exp: typeof accessClaims.exp === "number" ? accessClaims.exp : 0,

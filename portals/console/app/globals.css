@@ -360,6 +360,92 @@ body {
   display: inline-flex;
 }
 
+/* Redesigned personal-info panel: identity hero, context tiles, demoted id. */
+.profile-hero {
+  display: flex;
+  align-items: center;
+  gap: var(--vx-space-lg);
+  padding-bottom: var(--vx-space-md);
+}
+
+.profile-avatar {
+  width: 64px;
+  height: 64px;
+  flex: none;
+}
+
+.profile-hero-text {
+  display: flex;
+  flex-direction: column;
+  gap: var(--vx-space-2xs);
+  min-width: 0;
+}
+
+.profile-name {
+  color: var(--vx-color-text-primary);
+  font-weight: 700;
+  font-size: var(--vx-typography-heading-3-size);
+  line-height: 1.2;
+}
+
+.profile-contact {
+  color: var(--vx-color-text-secondary);
+  font-size: 14px;
+  overflow-wrap: anywhere;
+}
+
+.profile-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--vx-space-xs);
+  margin-top: var(--vx-space-2xs);
+}
+
+/* Responsive context tiles (DS MetricCard). */
+.tile-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--vx-space-md);
+}
+
+.tile-id {
+  font-family: var(--vx-font-mono);
+  font-size: 12px;
+  color: var(--vx-color-text-muted);
+  overflow-wrap: anywhere;
+}
+
+/* Technical account identifier (OIDC sub): masked, monospace, copyable. */
+.id-block {
+  display: grid;
+  gap: var(--vx-space-xs);
+}
+
+.id-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--vx-space-sm);
+}
+
+.id-mono {
+  font-family: var(--vx-font-mono);
+  font-size: 13px;
+  color: var(--vx-color-text-primary);
+  background: var(--vx-color-surface-muted);
+  padding: 2px 8px;
+  border-radius: var(--vx-radius-md);
+  overflow-wrap: anywhere;
+}
+
+.id-hint {
+  margin: 0;
+  max-width: 72ch;
+  color: var(--vx-color-text-muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
 /* Auth / form composition (DS Input + Button supply the control looks) */
 
 .auth-card {

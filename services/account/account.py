@@ -216,7 +216,11 @@ def public_vxture_user(payload: dict[str, Any]) -> dict[str, Any]:
         "phoneVerified": bool(payload.get("phone_verified")),
         "accountStatus": str(payload.get("account_status") or ""),
         "orgId": org,
+        # Display names are name-ready: surfaced when the IdP emits them
+        # (requested upstream), otherwise the portal falls back to the id.
+        "orgName": str(payload.get("active_org_name") or ""),
         "workspaceId": str(payload.get("active_workspace") or ""),
+        "workspaceName": str(payload.get("active_workspace_name") or ""),
         "roles": roles,
         "role": roles[0] if roles else "member",
         "userType": str(payload.get("user_type") or ""),

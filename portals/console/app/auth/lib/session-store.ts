@@ -37,7 +37,9 @@ export interface IdentityClaims {
   phone_verified: boolean;
   account_status: string;
   active_org: string;
+  active_org_name: string;
   active_workspace: string;
+  active_workspace_name: string;
   roles: string[];
   user_type: string;
   exp: number;

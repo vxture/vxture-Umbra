@@ -83,6 +83,19 @@ Four key families in `umbra-redis`:
 - `sid:<sid>` - SET of `rpsid` for back-channel logout (one central session can
   map to several RP sessions across the ruyin zone).
 
+## Pending upstream claims (requested from accounts.vxture.com)
+
+The console user panel shows organization and workspace, but the access_token
+currently carries only the identifiers `active_org` / `active_workspace`, not
+display names - so the panel falls back to showing the id. Requested upstream
+(same pattern as the email/phone scopes): add **`active_org_name`** and
+**`active_workspace_name`** string claims to the access_token alongside the
+existing `active_org` / `active_workspace`. The RP and the panel are already
+**name-ready** - `claims.ts` reads the name claims, the account DTO surfaces
+`orgName` / `workspaceName`, and the UI prefers the name and falls back to the
+id - so no client change is needed once the IdP emits them. No new scope is
+expected (they ride the existing tenant context); confirm during provisioning.
+
 ## Cookie model
 
 - `vx_rp_session`: opaque random id pointing at the server-side session;
