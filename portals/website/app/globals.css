@@ -80,7 +80,9 @@ a {
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: var(--vx-space-sm);
+  /* Make internal spacing responsive: smoothly scale with viewport width
+     between a small fixed minimum and a comfortable maximum. */
+  gap: clamp(var(--vx-space-2xs), 1.5vw, var(--vx-space-lg));
 }
 
 /* DS buttons are compact by default (padding-inline ~14px, font-size 0.84rem, no
