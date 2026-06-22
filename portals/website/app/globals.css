@@ -186,7 +186,7 @@ a {
     var(--vx-color-brand-600, var(--vx-control-brand)),
     var(--vx-color-info-500, var(--vx-control-brand))
   );
-  color: var(--vx-color-white, #fff);
+  color: var(--vx-color-white);
 }
 
 /* Online dot, traced on the trigger avatar's lower-right. */
@@ -198,7 +198,7 @@ a {
   height: 0.625rem;
   border: 2px solid var(--vx-color-surface);
   border-radius: var(--vx-radius-full);
-  background: var(--vx-color-success-400, #22c55e);
+  background: var(--vx-color-success-400);
 }
 
 /* 1. Profile: avatar + identity, verification tag pushed to the right. */
@@ -296,8 +296,8 @@ a {
 }
 
 .um-row--danger:hover {
-  background: color-mix(in srgb, var(--vx-color-danger-500, #ef4444) 12%, transparent);
-  color: var(--vx-color-danger-600, #dc2626);
+  background: color-mix(in srgb, var(--vx-color-danger-500) 12%, transparent);
+  color: var(--vx-color-danger-600);
 }
 
 .um-row-icon {
