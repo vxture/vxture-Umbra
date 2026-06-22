@@ -1,20 +1,25 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import {
   Icon,
-  ShellPreferencePanel,
   ShellUserMenu,
   useTheme,
-  type ShellThemePreference,
+  type IconName,
 } from "@vxture/design-system";
-import type { Locale } from "@vxture/shared";
+import {
+  LOCALE_CONFIGS,
+  SUPPORTED_LOCALES,
+  type Locale,
+} from "@vxture/shared";
 import {
   getFontSize,
   persistDensity,
   persistFontSize,
   persistTheme,
+  type PrefDensity,
   type PrefFontSize,
+  type PrefTheme,
 } from "@umbra/shared/preferences";
 import { useLocale } from "@/lib/locale-provider";
 import { ruyinBrand } from "@/lib/brand";
@@ -22,15 +27,17 @@ import { logout, type SessionUser } from "@/lib/session";
 
 type RoleKey = "owner" | "manager" | "member";
 
-/** Default account silhouette when the session carries no picture. Three states
- *  ship under /assets/icons; the signed-in account menu always represents an
- *  online user, so it uses the online variant (offline / fill are kept here for
- *  other surfaces and as the documented contract). */
+/** Default account silhouette when the session carries no picture; the signed-in
+ *  menu always represents an online user (offline / fill kept as the contract). */
 const DEFAULT_AVATAR = {
   online: "/assets/icons/avatar-default-online.svg",
   offline: "/assets/icons/avatar-default-offline.svg",
   fill: "/assets/icons/avatar-default.svg",
 } as const;
+
+const THEMES: readonly PrefTheme[] = ["system", "light", "dark"];
+const DENSITIES: readonly PrefDensity[] = ["compact", "default", "comfortable"];
+const FONT_SIZES: readonly PrefFontSize[] = ["small", "default", "large"];
 
 const COPY = {
   "en-US": {
@@ -40,7 +47,6 @@ const COPY = {
     profile: "Personal info",
     org: "Organization",
     workspace: "Workspace",
-    preferences: "Preferences",
     language: "Language",
     theme: "Theme",
     themeSystem: "System",
@@ -68,7 +74,6 @@ const COPY = {
     profile: "个人信息",
     org: "组织",
     workspace: "工作区",
-    preferences: "偏好设置",
     language: "语言",
     theme: "主题",
     themeSystem: "跟随系统",
@@ -91,8 +96,7 @@ const COPY = {
   },
 } as const;
 
-/** Drop a leading country code so Chinese users see only the national number:
- *  "+86 138 0000 0000" -> "138 0000 0000". */
+/** Drop a leading country code so CN users see only the national number. */
 function nationalPhone(phone: string): string {
   return phone
     .replace(/^\+?\s*86[\s-]*/, "")
@@ -111,16 +115,83 @@ function primaryRole(user: SessionUser): RoleKey {
   return "member";
 }
 
+/** DS segmented ("three-segment") control - reuses the platform .vx-shell-segmented
+ *  styling. Plain buttons, so a click only switches; it never dismisses the popover. */
+function Segmented<T extends string>({
+  value,
+  options,
+  optionLabels,
+  onSelect,
+  ariaLabel,
+}: {
+  value: T;
+  options: readonly T[];
+  optionLabels: Record<T, string>;
+  onSelect: (value: T) => void;
+  ariaLabel: string;
+}) {
+  return (
+    <div className="vx-shell-segmented" role="group" aria-label={ariaLabel}>
+      {options.map((option) => (
+        <button
+          key={option}
+          type="button"
+          className={`vx-shell-segmented__item${
+            value === option ? " vx-shell-segmented__item--active" : ""
+          }`}
+          onClick={() => onSelect(option)}
+        >
+          {optionLabels[option]}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+/** One row of the lower panel. Every row - personal info, preference, action -
+ *  uses the same [icon | label | control] grid, so icons, labels, and controls
+ *  line up across all three sections. `onClick` makes the whole row a button. */
+function Row({
+  icon,
+  label,
+  control,
+  onClick,
+  danger,
+}: {
+  icon: IconName;
+  label: string;
+  control?: ReactNode;
+  onClick?: () => void;
+  danger?: boolean;
+}) {
+  const className = `acct-row${onClick ? " acct-row--btn" : ""}${
+    danger ? " acct-row--danger" : ""
+  }`;
+  const inner = (
+    <>
+      <Icon name={icon} size="sm" className="acct-ico" />
+      <span className="acct-label">{label}</span>
+      <span className="acct-ctl">{control}</span>
+    </>
+  );
+  return onClick ? (
+    <button type="button" className={className} onClick={onClick}>
+      {inner}
+    </button>
+  ) : (
+    <div className={className}>{inner}</div>
+  );
+}
+
 /**
- * Signed-in account menu for the public site header. Built on the DS
- * ShellUserMenu + ShellPreferencePanel - the same components the vxture-website
- * header uses - so the website matches that look exactly: an avatar trigger with
- * an online dot opens a spacious popover with a bold identity line, role / tenant
- * / verification badges, separated sections, the personal-info block (profile
- * link + current org / workspace), the full preference panel (language dropdown
- * that scales to every supported locale, plus three-segment theme / density /
- * font controls), and the account actions. All preference changes also persist
- * to the cross-subdomain cookies (see @umbra/shared/preferences).
+ * Signed-in account menu for the public site header. The DS ShellUserMenu
+ * supplies the avatar trigger (with online dot), the bold identity line, the
+ * role / tenant / verification badges, the popover chrome and the section
+ * separators - the same shell the vxture-website header uses. The three lower
+ * sections (user info, quick settings, account actions) are rendered into the
+ * single settings slot on ONE shared [icon | label | control] grid so every
+ * icon, label and control aligns across them. Preference changes persist to the
+ * cross-subdomain cookies (see @umbra/shared/preferences).
  */
 export function UserDropdown({ user }: { user: SessionUser }) {
   const { locale, setLocale } = useLocale();
@@ -143,80 +214,122 @@ export function UserDropdown({ user }: { user: SessionUser }) {
   const verified = Boolean(user.emailVerified || user.phoneVerified);
   const role = primaryRole(user);
   const isOrg = user.userType === "organization" || Boolean(user.orgId);
-  const avatarFallback = Array.from(name.trim() || "U")[0]?.toLocaleUpperCase() ?? "U";
 
   const handleFontSize = (next: PrefFontSize) => {
     setFontSize(next);
     persistFontSize(next);
   };
-  const openProfile = () => {
-    window.open(`${ruyinBrand.consoleUrl}/account`, "_blank", "noopener,noreferrer");
-  };
 
   const settings = (
-    <div className="acct-settings">
-      <div className="acct-info">
-        <button type="button" className="acct-info-link" onClick={openProfile}>
-          <Icon name="user" size="sm" className="acct-info-icon" />
-          <span className="acct-info-text">{t.profile}</span>
-          <Icon name="arrow-long-right" size="xs" className="acct-info-go" />
-        </button>
-        {user.orgId ? (
-          <div className="acct-info-row">
-            <Icon name="building-library" size="sm" className="acct-info-icon" />
-            <span className="acct-info-text">{t.org}</span>
-            <span className="acct-info-val">{user.orgId}</span>
-          </div>
-        ) : null}
-        {user.workspaceId ? (
-          <div className="acct-info-row">
-            <Icon name="squares-four" size="sm" className="acct-info-icon" />
-            <span className="acct-info-text">{t.workspace}</span>
-            <span className="acct-info-val">{user.workspaceId}</span>
-          </div>
-        ) : null}
-      </div>
-
-      <div className="acct-settings-divider" />
-
-      <ShellPreferencePanel
-        locale={locale}
-        theme={mode}
-        density={density}
-        fontSize={fontSize}
-        labels={{
-          title: t.preferences,
-          locale: t.language,
-          theme: t.theme,
-          density: t.density,
-          fontSize: t.fontSize,
-          themeOptions: {
-            system: t.themeSystem,
-            light: t.themeLight,
-            dark: t.themeDark,
-          },
-          densityOptions: {
-            compact: t.densityCompact,
-            default: t.densityDefault,
-            comfortable: t.densityComfortable,
-          },
-          fontSizeOptions: {
-            small: t.fontSmall,
-            default: t.fontDefault,
-            large: t.fontLarge,
-          },
-        }}
-        onLocaleChange={(next: Locale) => setLocale(next)}
-        onThemeChange={(next: ShellThemePreference) => {
-          setMode(next);
-          persistTheme(next);
-        }}
-        onDensityChange={(next) => {
-          setDensity(next);
-          persistDensity(next);
-        }}
-        onFontSizeChange={(next) => handleFontSize(next)}
+    <div className="acct-panel">
+      {/* User info */}
+      <Row
+        icon="user"
+        label={t.profile}
+        control={<Icon name="arrow-long-right" size="xs" className="acct-go" />}
+        onClick={() =>
+          window.open(`${ruyinBrand.consoleUrl}/account`, "_blank", "noopener,noreferrer")
+        }
       />
+      {user.orgId ? (
+        <Row
+          icon="building-library"
+          label={t.org}
+          control={<span className="acct-val">{user.orgId}</span>}
+        />
+      ) : null}
+      {user.workspaceId ? (
+        <Row
+          icon="squares-four"
+          label={t.workspace}
+          control={<span className="acct-val">{user.workspaceId}</span>}
+        />
+      ) : null}
+
+      <div className="acct-div" />
+
+      {/* Quick settings */}
+      <Row
+        icon="globe"
+        label={t.language}
+        control={
+          <select
+            className="acct-sel"
+            value={locale}
+            onChange={(e) => setLocale(e.target.value as Locale)}
+            aria-label={t.language}
+          >
+            {SUPPORTED_LOCALES.map((loc) => (
+              <option key={loc} value={loc}>
+                {LOCALE_CONFIGS[loc]?.nativeName ?? loc}
+              </option>
+            ))}
+          </select>
+        }
+      />
+      <Row
+        icon="sun"
+        label={t.theme}
+        control={
+          <Segmented
+            ariaLabel={t.theme}
+            value={mode as PrefTheme}
+            options={THEMES}
+            optionLabels={{
+              system: t.themeSystem,
+              light: t.themeLight,
+              dark: t.themeDark,
+            }}
+            onSelect={(next) => {
+              setMode(next);
+              persistTheme(next);
+            }}
+          />
+        }
+      />
+      <Row
+        icon="rows"
+        label={t.density}
+        control={
+          <Segmented
+            ariaLabel={t.density}
+            value={density as PrefDensity}
+            options={DENSITIES}
+            optionLabels={{
+              compact: t.densityCompact,
+              default: t.densityDefault,
+              comfortable: t.densityComfortable,
+            }}
+            onSelect={(next) => {
+              setDensity(next);
+              persistDensity(next);
+            }}
+          />
+        }
+      />
+      <Row
+        icon="text-indent"
+        label={t.fontSize}
+        control={
+          <Segmented
+            ariaLabel={t.fontSize}
+            value={fontSize}
+            options={FONT_SIZES}
+            optionLabels={{
+              small: t.fontSmall,
+              default: t.fontDefault,
+              large: t.fontLarge,
+            }}
+            onSelect={handleFontSize}
+          />
+        }
+      />
+
+      <div className="acct-div" />
+
+      {/* Account actions */}
+      <Row icon="user-switch" label={t.switchUser} onClick={() => logout()} />
+      <Row icon="sign-out" label={t.signout} danger onClick={() => logout()} />
     </div>
   );
 
@@ -227,7 +340,7 @@ export function UserDropdown({ user }: { user: SessionUser }) {
         uniqueLine,
         avatarSrc: user.avatarUrl?.trim() || DEFAULT_AVATAR.online,
         avatarAlt: name,
-        avatarFallback,
+        avatarFallback: Array.from(name.trim() || "U")[0]?.toLocaleUpperCase() ?? "U",
         badges: [
           { key: "role", label: t.roles[role] },
           { key: "tenant", label: isOrg ? t.tenantOrg : t.tenantPersonal },
@@ -244,21 +357,8 @@ export function UserDropdown({ user }: { user: SessionUser }) {
       }}
       openLabel={t.account}
       online
+      contentClassName="acct-menu"
       settings={settings}
-      actions={[
-        {
-          key: "switch-user",
-          label: t.switchUser,
-          icon: "user-switch",
-          onClick: () => logout(),
-        },
-        {
-          key: "sign-out",
-          label: t.signout,
-          icon: "sign-out",
-          onClick: () => logout(),
-        },
-      ]}
     />
   );
 }
