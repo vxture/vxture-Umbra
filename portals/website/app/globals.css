@@ -148,17 +148,18 @@ a {
 
 .acct-panel {
   --acct-ico-col: 1.25rem;
-  --acct-ctl-col: 10.5rem;
+  --acct-label-col: 4.75rem;
   display: flex;
   flex-direction: column;
 }
 
-/* Shared row grid: a fixed icon column, a flexible label, and a fixed-width
-   control column. Fixed outer columns are what keep every icon and every
-   control on the same left/right edge across the three sections. */
+/* Shared row grid: fixed icon column + fixed label column + a control that
+   fills the rest. The two fixed leading columns keep every icon and every label
+   on the same edge across the three sections, and the filling control sits right
+   after the label (no dead gap) and ends on the shared right edge. */
 .acct-row {
   display: grid;
-  grid-template-columns: var(--acct-ico-col) 1fr var(--acct-ctl-col);
+  grid-template-columns: var(--acct-ico-col) var(--acct-label-col) 1fr;
   align-items: center;
   gap: var(--vx-space-sm);
   width: 100%;
@@ -168,14 +169,14 @@ a {
   font-size: var(--vx-typography-body-sm-size);
 }
 
-/* Clickable rows (profile link, switch user, sign out). */
+/* Clickable rows (profile link, switch user, sign out). Same box as the other
+   rows - no negative margin - so all three sections stay column-aligned; the
+   hover wash simply spans the row. */
 .acct-row--btn {
   border: none;
   background: transparent;
   cursor: pointer;
   border-radius: var(--vx-radius-md);
-  margin-inline: calc(var(--vx-space-xs) * -1);
-  padding-inline: var(--vx-space-xs);
   transition:
     background var(--vx-duration-fast) var(--vx-ease-standard),
     color var(--vx-duration-fast) var(--vx-ease-standard);
