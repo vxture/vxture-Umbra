@@ -43,6 +43,7 @@ _SKIP_ROOT_FILES = frozenset({
     ".editorconfig",
     ".npmrc",
     ".env.example",
+    ".gitleaks.toml",
 })
 
 # Prefixes whose changes never reach a runtime image or the deploy step.
