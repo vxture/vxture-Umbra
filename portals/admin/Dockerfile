@@ -19,6 +19,9 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 # Brand identity PNG/ICO files from repo-level canonical source
 COPY --from=brand_context / ./public/assets/brand/
+# Shared portal source, consumed via the @shared/* tsconfig alias (../_shared).
+# Mirrors brand_context; injected at /_shared so /app/../_shared resolves.
+COPY --from=shared_context / /_shared/
 RUN npm run build
 
 FROM ${NODE_BASE_IMAGE} AS runner

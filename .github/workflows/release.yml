@@ -95,15 +95,21 @@ jobs:
           - image: ruyin-website
             context: ./portals/website
             dockerfile: ./portals/website/Dockerfile
-            build_contexts: brand_context=./brand
+            build_contexts: |
+              brand_context=./brand
+              shared_context=./portals/_shared
           - image: ruyin-console
             context: ./portals/console
             dockerfile: ./portals/console/Dockerfile
-            build_contexts: brand_context=./brand
+            build_contexts: |
+              brand_context=./brand
+              shared_context=./portals/_shared
           - image: ruyin-admin
             context: ./portals/admin
             dockerfile: ./portals/admin/Dockerfile
-            build_contexts: brand_context=./brand
+            build_contexts: |
+              brand_context=./brand
+              shared_context=./portals/_shared
           - image: ruyin-nginx
             context: .
             dockerfile: ./docker/ruyin-nginx.Dockerfile
