@@ -169,37 +169,6 @@ case "$CMD" in
     exec bash "$SCRIPT_DIR/scripts/25-run-post-deploy-wizard.sh"
     ;;
 
-  # -- Legacy aliases -------------------------------------------------------------
-  check)
-    log_warn "'check' is deprecated. Use: bash deploy/deploy.sh environment"
-    exec bash "$SCRIPT_DIR/scripts/11-check-runtime-environment.sh"
-    ;;
-
-  dirs)
-    log_warn "'dirs' is deprecated. Use: bash deploy/deploy.sh directories"
-    exec bash "$SCRIPT_DIR/scripts/12-prepare-runtime-directories.sh"
-    ;;
-
-  keys)
-    log_warn "'keys' is deprecated. Use: bash deploy/deploy.sh reality-keys"
-    exec bash "$SCRIPT_DIR/scripts/13-generate-runtime-secrets.sh"
-    ;;
-
-  certs)
-    log_warn "'certs' is deprecated. Use: bash deploy/deploy.sh certificates"
-    exec bash "$SCRIPT_DIR/scripts/20-issue-tls-certificates.sh"
-    ;;
-
-  up)
-    log_warn "'up' is deprecated. Use: bash deploy/deploy.sh start"
-    exec bash "$SCRIPT_DIR/scripts/23-start-docker-services.sh"
-    ;;
-
-  post)
-    log_warn "'post' is deprecated. Use: bash deploy/deploy.sh wizard"
-    exec bash "$SCRIPT_DIR/scripts/25-run-post-deploy-wizard.sh"
-    ;;
-
   "")
     _usage
     exit 1
