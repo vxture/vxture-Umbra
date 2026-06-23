@@ -73,12 +73,18 @@ export function Shell({
     <div id={PAGE_FULLSCREEN_ID} className="app-page">
       <header className={`site-header${isScrolled ? " is-scrolled" : ""}`}>
         <div className="site-header-inner">
+          {/* Logo + name link to the ruyin.ai homepage (not the console root).
+              The studio tag reuses the DS pill class (no custom CSS). */}
           <ShellBrand
-            href="/"
+            href={ruyinBrand.siteUrl}
             logoSrc={markSrc(theme)}
             logoAlt=""
-            label={ruyinBrand.productDomain}
-            labelClassName="site-brand-name"
+            label={
+              <>
+                <span className="site-brand-name">{ruyinBrand.productDomain}</span>{" "}
+                <span className="vx-shell-user-badge">vxture studio</span>
+              </>
+            }
           />
           <div className="site-actions">
             {actions}
