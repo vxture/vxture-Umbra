@@ -156,10 +156,11 @@ function MenuRow({
  * separators. Quick settings delegate to the DS ShellPreferencePanel (the same
  * unified control the vxture header uses) - the per-row labels are intentionally
  * omitted so each row renders as icon + control, leaving only the panel title.
- * Switch-user / sign-out are native DS actions. Preference changes persist to the
- * cross-subdomain cookies (see @umbra/shared/preferences). The installed DS
- * (1.3.0) has no `links` / `statusTag` props, so the profile link rides the
- * settings slot and the verification tag rides `meta`.
+ * Switch-user / sign-out are native DS actions; the profile link is a native DS
+ * `links` entry and verification is a native DS `statusTag` (next to the name).
+ * The only custom row is the workspace info line (value + switch glyph), which
+ * the DS link has no slot for. Preference changes persist to the cross-subdomain
+ * cookies (see @umbra/shared/preferences).
  */
 export function UserDropdown({ user }: { user: SessionUser }) {
   const { locale, setLocale } = useLocale();
@@ -194,14 +195,9 @@ export function UserDropdown({ user }: { user: SessionUser }) {
 
   const settings = (
     <>
-      {/* Personal info: profile link (chevron = "open page", iOS/Android row
-          convention) + current workspace with a switch affordance. */}
-      <MenuRow
-        icon="user"
-        label={t.profile}
-        href={`${ruyinBrand.consoleUrl}/account`}
-        trailing={<Icon name="chevron-right" size="sm" className="acct-row__go" />}
-      />
+      {/* Current workspace info row with a switch affordance. The profile link is
+          a native DS `links` entry (see below); workspace stays a custom row
+          because the DS link has no value / trailing-switch slot. */}
       {workspacePath ? (
         <MenuRow
           icon="squares-four"
@@ -217,7 +213,7 @@ export function UserDropdown({ user }: { user: SessionUser }) {
         />
       ) : null}
 
-      {/* Divider between personal info and quick settings. */}
+      {/* Divider between the workspace info and quick settings. */}
       <div className="acct-div" />
 
       {/* Quick settings - DS preference panel, labels omitted (icon + control) */}
@@ -271,14 +267,8 @@ export function UserDropdown({ user }: { user: SessionUser }) {
         avatarSrc: user.avatarUrl?.trim() || DEFAULT_AVATAR.online,
         avatarAlt: name,
         avatarFallback: Array.from(name.trim() || "U")[0]?.toLocaleUpperCase() ?? "U",
-        meta: (
-          <span
-            className={`acct-verify${verified ? " acct-verify--ok" : ""}`}
-          >
-            <Icon name={verified ? "shield-check" : "warning"} size="xs" />
-            {verified ? t.verified : t.unverified}
-          </span>
-        ),
+        // DS native verification tag, rendered next to the name.
+        statusTag: { label: verified ? t.verified : t.unverified, verified },
         badges: [
           { key: "role", label: t.roles[role] },
           { key: "tenant", label: isOrg ? t.tenantOrg : t.tenantPersonal },
@@ -287,6 +277,15 @@ export function UserDropdown({ user }: { user: SessionUser }) {
       openLabel={t.account}
       online
       contentClassName="acct-menu"
+      links={[
+        {
+          key: "profile",
+          label: t.profile,
+          icon: "user",
+          href: `${ruyinBrand.consoleUrl}/account`,
+          newTab: true,
+        },
+      ]}
       settings={settings}
       actions={[
         {

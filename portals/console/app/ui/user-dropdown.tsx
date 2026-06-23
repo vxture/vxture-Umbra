@@ -1,13 +1,11 @@
 "use client";
 
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useState } from "react";
 import {
-  Icon,
   ShellPreferencePanel,
   ShellUserMenu,
   useTheme,
   type Density,
-  type IconName,
   type LocaleSelectOption,
   type ShellFontSizePreference,
   type ShellThemePreference,
@@ -90,32 +88,6 @@ function primaryRole(user: VxtureUser): RoleKey {
   return "member";
 }
 
-/** A link / info row reusing the DS action markup so it shares the icon column
- *  with the native switch / sign-out actions below the preference panel. */
-function MenuRow({
-  icon,
-  label,
-  trailing,
-  onClick,
-}: {
-  icon: IconName;
-  label: string;
-  trailing?: ReactNode;
-  onClick?: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      className="vx-shell-user-menu__action acct-row"
-      onClick={onClick}
-    >
-      <Icon name={icon} className="vx-shell-user-menu__action-icon" />
-      <span className="acct-row__label">{label}</span>
-      {trailing ? <span className="acct-row__trailing">{trailing}</span> : null}
-    </button>
-  );
-}
-
 /**
  * Console account menu - the same panel the public site header uses. The DS
  * ShellUserMenu supplies the avatar trigger, identity, role / tenant badges,
@@ -154,18 +126,7 @@ export function UserDropdown({ user }: { user: VxtureUser }) {
   }));
 
   const settings = (
-    <>
-      {/* Personal info link (same-app navigation, console is the account home). */}
-      <MenuRow
-        icon="user"
-        label={t.profile}
-        trailing={<Icon name="chevron-right" size="sm" className="acct-row__go" />}
-        onClick={() => window.location.assign("/account")}
-      />
-
-      <div className="acct-div" />
-
-      {/* Quick settings - DS preference panel, row labels omitted. */}
+    /* Quick settings - DS preference panel, row labels omitted. */
       <ShellPreferencePanel
         className="acct-prefs"
         locale={locale}
@@ -205,7 +166,6 @@ export function UserDropdown({ user }: { user: VxtureUser }) {
           persistFontSize(next);
         }}
       />
-    </>
   );
 
   return (
@@ -215,13 +175,8 @@ export function UserDropdown({ user }: { user: VxtureUser }) {
         uniqueLine,
         avatarSrc: user.avatarUrl?.trim() || undefined,
         avatarAlt: name,
-        avatarFallback: Array.from(name.trim() || "U")[0]?.toLocaleUpperCase() ?? "U",
-        meta: (
-          <span className={`acct-verify${verified ? " acct-verify--ok" : ""}`}>
-            <Icon name={verified ? "shield-check" : "warning"} size="xs" />
-            {verified ? t.verified : t.unverified}
-          </span>
-        ),
+        // DS native verification tag, rendered next to the name.
+        statusTag: { label: verified ? t.verified : t.unverified, verified },
         badges: [
           { key: "role", label: t.roles[role] },
           { key: "tenant", label: isOrg ? t.tenantOrg : t.tenantPersonal },
@@ -230,6 +185,14 @@ export function UserDropdown({ user }: { user: VxtureUser }) {
       openLabel={t.account}
       online
       contentClassName="acct-menu"
+      links={[
+        {
+          key: "profile",
+          label: t.profile,
+          icon: "user",
+          href: "/account",
+        },
+      ]}
       settings={settings}
       actions={[
         {
