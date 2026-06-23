@@ -4,26 +4,37 @@ import { useEffect, useState, type ReactNode } from "react";
 import {
   Icon,
   ShellBrand,
+  ShellFullscreenToggle,
   ShellLegalFooter,
   ShellLocaleSwitcher,
+  ShellPreferencePanel,
   ShellThemeToggle,
   ShellUserMenu,
   useTheme,
+  type Density,
+  type IconName,
+  type LocaleSelectOption,
+  type ShellFontSizePreference,
+  type ShellThemePreference,
 } from "@vxture/design-system";
-import type { IconName } from "@vxture/design-system";
-import type { Locale } from "@vxture/shared";
-import { persistTheme, type PrefTheme } from "@umbra/shared/preferences";
+import { LOCALE_CONFIGS, SUPPORTED_LOCALES, type Locale } from "@vxture/shared";
+import {
+  getFontSize,
+  persistDensity,
+  persistFontSize,
+  persistTheme,
+  type PrefTheme,
+} from "@umbra/shared/preferences";
 import { markSrc, ruyinBrand } from "../../lib/brand";
 import { useLocale } from "@umbra/shared/locale-provider";
 
 /**
- * Admin chrome - the same fixed glass-on-scroll header/footer treatment as the
- * marketing site and tenant console, so the three portals read as one product.
- * The brand wordmark is the admin platform name; the right side carries the
- * display tools (theme + language) and, once authenticated, the account menu
- * (avatar + sign out). The signed-in header also carries the two business nav
- * links (VPN access, password security); the Marzban dashboard jump-link lives
- * in the content title bar (see AdminApp).
+ * Admin chrome - the same header/footer treatment as the marketing site and the
+ * tenant console, so the three portals read as one product. The right side
+ * carries the grouped quick-controls pill [theme | language | fullscreen] and,
+ * once authenticated, the account menu (avatar + preferences + sign out). The
+ * signed-in header also carries the two business nav links (VPN access, password
+ * security); the Marzban dashboard jump-link lives in the content title bar.
  */
 
 interface NavItem {
@@ -34,10 +45,78 @@ interface NavItem {
   external?: boolean;
 }
 
-/** Header nav labels, localized. Account-menu / aria copy stays English. */
-const SHELL_COPY: Record<Locale, { navVpn: string; navPass: string; nav: string }> = {
-  "en-US": { navVpn: "VPN access", navPass: "Password security", nav: "Admin navigation" },
-  "zh-CN": { navVpn: "科学上网", navPass: "密码安全", nav: "管理导航" },
+/** Element the fullscreen toggle expands; the page root carries this id. */
+const PAGE_FULLSCREEN_ID = "admin-page-root";
+
+const SHELL_COPY: Record<
+  Locale,
+  {
+    navVpn: string;
+    navPass: string;
+    nav: string;
+    display: string;
+    theme: string;
+    language: string;
+    fullscreenEnter: string;
+    fullscreenExit: string;
+    account: string;
+    settings: string;
+    themeSystem: string;
+    themeLight: string;
+    themeDark: string;
+    densityCompact: string;
+    densityDefault: string;
+    densityComfortable: string;
+    fontSmall: string;
+    fontDefault: string;
+    fontLarge: string;
+    signout: string;
+  }
+> = {
+  "en-US": {
+    navVpn: "VPN access",
+    navPass: "Password security",
+    nav: "Admin navigation",
+    display: "Display controls",
+    theme: "Switch theme",
+    language: "Language",
+    fullscreenEnter: "Enter fullscreen",
+    fullscreenExit: "Exit fullscreen",
+    account: "Account menu",
+    settings: "Preferences",
+    themeSystem: "System",
+    themeLight: "Light",
+    themeDark: "Dark",
+    densityCompact: "Compact",
+    densityDefault: "Default",
+    densityComfortable: "Comfortable",
+    fontSmall: "Small",
+    fontDefault: "Default",
+    fontLarge: "Large",
+    signout: "Sign out",
+  },
+  "zh-CN": {
+    navVpn: "科学上网",
+    navPass: "密码安全",
+    nav: "管理导航",
+    display: "显示设置",
+    theme: "切换主题",
+    language: "切换语言",
+    fullscreenEnter: "进入全屏",
+    fullscreenExit: "退出全屏",
+    account: "账户菜单",
+    settings: "偏好设置",
+    themeSystem: "跟随系统",
+    themeLight: "亮色",
+    themeDark: "暗色",
+    densityCompact: "紧凑",
+    densityDefault: "默认",
+    densityComfortable: "宽松",
+    fontSmall: "小",
+    fontDefault: "默认",
+    fontLarge: "大",
+    signout: "退出登录",
+  },
 };
 
 export function AdminShell({
@@ -51,11 +130,16 @@ export function AdminShell({
   authed?: boolean;
   onSignOut?: () => void | Promise<void>;
 }) {
-  const { theme, setTheme } = useTheme();
+  const { theme, setTheme, mode, setMode, density, setDensity } = useTheme();
   const { locale, setLocale } = useLocale();
   const [isScrolled, setIsScrolled] = useState(false);
 
-  const m = SHELL_COPY[locale];
+  const [fontSize, setFontSize] = useState<ShellFontSizePreference>("default");
+  useEffect(() => {
+    setFontSize(getFontSize());
+  }, []);
+
+  const m = SHELL_COPY[locale] ?? SHELL_COPY["en-US"];
   const nav: NavItem[] = [
     { id: "vpn", label: m.navVpn, href: "/", icon: "shield-check" },
     { id: "pass", label: m.navPass, href: "https://pas.ruyin.ai/admin", icon: "key", external: true },
@@ -68,8 +152,47 @@ export function AdminShell({
     return () => window.removeEventListener("scroll", update);
   }, []);
 
+  const localeOptions: LocaleSelectOption[] = SUPPORTED_LOCALES.map((loc) => ({
+    locale: loc,
+    nativeName: LOCALE_CONFIGS[loc]?.nativeName ?? loc,
+  }));
+
+  const accountSettings = (
+    <ShellPreferencePanel
+      className="acct-prefs"
+      locale={locale}
+      localeOptions={localeOptions}
+      theme={mode as ShellThemePreference}
+      density={density}
+      fontSize={fontSize}
+      labels={{
+        title: m.settings,
+        themeOptions: { system: m.themeSystem, light: m.themeLight, dark: m.themeDark },
+        densityOptions: {
+          compact: m.densityCompact,
+          default: m.densityDefault,
+          comfortable: m.densityComfortable,
+        },
+        fontSizeOptions: { small: m.fontSmall, default: m.fontDefault, large: m.fontLarge },
+      }}
+      onLocaleChange={(next) => setLocale(next)}
+      onThemeChange={(next) => {
+        setMode(next);
+        persistTheme(next);
+      }}
+      onDensityChange={(next: Density) => {
+        setDensity(next);
+        persistDensity(next);
+      }}
+      onFontSizeChange={(next) => {
+        setFontSize(next);
+        persistFontSize(next);
+      }}
+    />
+  );
+
   return (
-    <div className="app-page">
+    <div id={PAGE_FULLSCREEN_ID} className="app-page">
       <header className={`site-header${isScrolled ? " is-scrolled" : ""}`}>
         <div className="site-header-inner">
           <ShellBrand
@@ -114,10 +237,18 @@ export function AdminShell({
             </nav>
           ) : null}
           <div className="site-actions">
-            <div className="site-tools" aria-label="Display controls">
+            {/* Grouped quick controls [theme | language | fullscreen], mirroring
+                the website / console header action group. */}
+            <div
+              className="vx-shell-header__action-group"
+              role="group"
+              aria-label={m.display}
+            >
               <ShellThemeToggle
                 currentTheme={theme}
-                buttonLabel="Switch theme"
+                buttonLabel={m.theme}
+                className="vx-shell-icon-button vx-shell-icon-button--toolbar"
+                activeClassName="vx-shell-icon-button--active"
                 onThemeChange={(next) => {
                   setTheme(next);
                   persistTheme(next as PrefTheme);
@@ -125,13 +256,25 @@ export function AdminShell({
               />
               <ShellLocaleSwitcher
                 currentLocale={locale as Locale}
-                buttonLabel="Language"
+                buttonLabel={m.language}
+                buttonClassName="vx-shell-icon-button vx-shell-icon-button--toolbar"
+                activeButtonClassName="vx-shell-icon-button--active"
                 onLocaleChange={(next) => setLocale(next)}
               />
+              <ShellFullscreenToggle
+                targetId={PAGE_FULLSCREEN_ID}
+                enterLabel={m.fullscreenEnter}
+                exitLabel={m.fullscreenExit}
+                className="vx-shell-icon-button vx-shell-icon-button--toolbar"
+                activeClassName="vx-shell-icon-button--active"
+              />
             </div>
+
             {authed ? (
               <ShellUserMenu
-                openLabel="Account menu"
+                openLabel={m.account}
+                online
+                contentClassName="acct-menu"
                 user={{
                   displayName: "Administrator",
                   uniqueLine: "admin.ruyin.ai",
@@ -139,9 +282,10 @@ export function AdminShell({
                   avatarFallback: "AD",
                   badges: [{ key: "role", label: "Admin" }],
                 }}
+                settings={accountSettings}
                 actions={
                   onSignOut
-                    ? [{ key: "logout", label: "Sign out", icon: "sign-out", onClick: onSignOut }]
+                    ? [{ key: "logout", label: m.signout, icon: "sign-out", onClick: onSignOut }]
                     : undefined
                 }
               />
@@ -158,7 +302,11 @@ export function AdminShell({
         className="site-footer"
         innerClassName="site-footer-inner"
         copyright={ruyinBrand.copyright}
-        links={ruyinBrand.legalLinks.map(([label, href]) => ({ label, href }))}
+        links={ruyinBrand.legalLinks
+          .filter(([label]) =>
+            /Terms of Service|Privacy Policy|Cookie Policy/.test(label),
+          )
+          .map(([label, href]) => ({ label, href }))}
       />
     </div>
   );
