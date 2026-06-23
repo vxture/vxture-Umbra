@@ -69,6 +69,7 @@ const SHELL_COPY: Record<
     fontSmall: string;
     fontDefault: string;
     fontLarge: string;
+    profile: string;
     signout: string;
   }
 > = {
@@ -92,6 +93,7 @@ const SHELL_COPY: Record<
     fontSmall: "Small",
     fontDefault: "Default",
     fontLarge: "Large",
+    profile: "Personal info",
     signout: "Sign out",
   },
   "zh-CN": {
@@ -114,6 +116,7 @@ const SHELL_COPY: Record<
     fontSmall: "小",
     fontDefault: "默认",
     fontLarge: "大",
+    profile: "个人信息",
     signout: "退出登录",
   },
 };
@@ -295,6 +298,15 @@ export function AdminShell({
                   avatarAlt: "Administrator",
                   badges: [{ key: "role", label: "Admin" }],
                 }}
+                links={[
+                  {
+                    key: "profile",
+                    label: m.profile,
+                    icon: "user",
+                    href: "https://console.ruyin.ai/account",
+                    newTab: true,
+                  },
+                ]}
                 settings={accountSettings}
                 actions={
                   onSignOut

@@ -45,7 +45,7 @@ const COPY = {
     verified: "Verified",
     unverified: "Unverified",
     profile: "Profile",
-    workspace: "Workspace",
+    tenantSettings: "Tenant settings",
     settings: "Preferences",
     themeSystem: "System",
     themeLight: "Light",
@@ -68,7 +68,7 @@ const COPY = {
     verified: "已认证",
     unverified: "未认证",
     profile: "个人信息",
-    workspace: "工作区",
+    tenantSettings: "租户设置",
     settings: "偏好设置",
     themeSystem: "跟随系统",
     themeLight: "亮色",
@@ -156,11 +156,11 @@ function MenuRow({
  * separators. Quick settings delegate to the DS ShellPreferencePanel (the same
  * unified control the vxture header uses) - the per-row labels are intentionally
  * omitted so each row renders as icon + control, leaving only the panel title.
- * Switch-user / sign-out are native DS actions; the profile link is a native DS
- * `links` entry and verification is a native DS `statusTag` (next to the name).
- * The only custom row is the workspace info line (value + switch glyph), which
- * the DS link has no slot for. Preference changes persist to the cross-subdomain
- * cookies (see @umbra/shared/preferences).
+ * Switch-user / sign-out are native DS actions and verification is a native DS
+ * `statusTag` (next to the name). Personal info + tenant settings are custom rows
+ * grouped in one block (the DS `links` section would separate them and has no
+ * slot for the tenant value + switch glyph). Preference changes persist to the
+ * cross-subdomain cookies (see @umbra/shared/preferences).
  */
 export function UserDropdown({ user }: { user: SessionUser }) {
   const { locale, setLocale } = useLocale();
@@ -195,13 +195,20 @@ export function UserDropdown({ user }: { user: SessionUser }) {
 
   const settings = (
     <>
-      {/* Current workspace info row with a switch affordance. The profile link is
-          a native DS `links` entry (see below); workspace stays a custom row
-          because the DS link has no value / trailing-switch slot. */}
+      {/* Personal info + tenant settings in one block (no divider between). Both
+          are custom rows: profile links to the console account page; tenant
+          settings shows the current {org}.{workspace} with a switch affordance.
+          Kept as custom rows (not DS `links`) so they group without the DS link
+          section separator. */}
+      <MenuRow
+        icon="user"
+        label={t.profile}
+        href={`${ruyinBrand.consoleUrl}/account`}
+      />
       {workspacePath ? (
         <MenuRow
           icon="squares-four"
-          label={t.workspace}
+          label={t.tenantSettings}
           value={workspacePath}
           trailing={
             <ArrowsLeftRightIcon
@@ -211,9 +218,11 @@ export function UserDropdown({ user }: { user: SessionUser }) {
             />
           }
         />
-      ) : null}
+      ) : (
+        <MenuRow icon="squares-four" label={t.tenantSettings} />
+      )}
 
-      {/* Divider between the workspace info and quick settings. */}
+      {/* Divider between the personal-info block and quick settings. */}
       <div className="acct-div" />
 
       {/* Quick settings - DS preference panel, labels omitted (icon + control) */}
@@ -277,15 +286,6 @@ export function UserDropdown({ user }: { user: SessionUser }) {
       openLabel={t.account}
       online
       contentClassName="acct-menu"
-      links={[
-        {
-          key: "profile",
-          label: t.profile,
-          icon: "user",
-          href: `${ruyinBrand.consoleUrl}/account`,
-          newTab: true,
-        },
-      ]}
       settings={settings}
       actions={[
         {
