@@ -30,15 +30,15 @@
 .app-shell {
   /* Grow to push the footer to the bottom when content is short. */
   flex: 1 0 auto;
-  /* Align the content box to the SAME inset as the header/footer bars: those use
-     an outer page margin (--ruyin-shell-margin-x) plus a 32px inner gutter on a
-     1680 track. Mirror that here so the whitespace is identical at every width. */
+  /* Align the content box to the SAME inset as the header/footer bars: an outer
+     page margin (--ruyin-shell-margin-x) on a 1680 track, matching the website
+     portal exactly so the whitespace is identical at every width. */
   width: 100%;
   max-width: calc(var(--ruyin-shell-max-width) + 2 * var(--ruyin-shell-margin-x));
   margin: 0 auto;
   padding:
     calc(var(--ruyin-header-height) + var(--vx-space-xl))
-    calc(var(--ruyin-shell-margin-x) + var(--vx-space-2xl))
+    var(--ruyin-shell-margin-x)
     var(--vx-space-3xl);
 }
 
@@ -74,7 +74,10 @@ body {
   width: min(100%, var(--ruyin-shell-max-width));
   min-height: var(--ruyin-header-height);
   margin: 0 auto;
-  padding: 0 var(--vx-space-2xl);
+  /* No inner gutter - content sits on the same --ruyin-shell-margin-x track as
+     the website header (brand/actions at 48px), so the two portals' headers have
+     identical left/right whitespace. The body + footer below use the same track. */
+  padding: 0;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -348,7 +351,8 @@ body {
   min-height: 48px;
   border-top: 1px solid var(--vx-color-border);
   margin: 0 auto;
-  padding: 0 var(--vx-space-2xl);
+  /* Same --ruyin-shell-margin-x track as the header/body (and the website). */
+  padding: 0;
   font-size: 14px;
   color: var(--vx-color-text-muted);
 }
