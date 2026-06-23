@@ -79,10 +79,10 @@ export function SiteHeader() {
           logoSrc={markSrc(theme)}
           logoAlt=""
           label={
-            <>
-              <span className="site-brand-name">{ruyinBrand.productDomain}</span>{" "}
-              <span className="vx-shell-user-badge">vxture studio</span>
-            </>
+            <span className="site-brand-lockup">
+              <span className="site-brand-name">{ruyinBrand.productDomain}</span>
+              <span className="site-brand-tag">vxture studio</span>
+            </span>
           }
         />
 
