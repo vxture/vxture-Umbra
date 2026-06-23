@@ -81,15 +81,21 @@ a {
   align-items: center;
   justify-content: flex-end;
   /* Make internal spacing responsive: smoothly scale with viewport width
-     between a small fixed minimum and a comfortable maximum. */
-  gap: clamp(var(--vx-space-2xs), 1.5vw, var(--vx-space-lg));
+     between a small fixed minimum and a comfortable maximum. NOTE: the floor
+     must be a DEFINED token - `--vx-space-2xs` does not exist in the scale, and
+     an undefined var() with no fallback makes the whole clamp() (and thus `gap`)
+     invalid, which collapsed the spacing to zero and squashed the controls. */
+  gap: clamp(var(--vx-space-sm), 1.5vw, var(--vx-space-lg));
 }
 
 /* DS buttons are compact by default (padding-inline ~14px, font-size 0.84rem, no
    min-width), which reads too narrow/small for the header auth CTAs. Widen and
    bump the label via DS tokens (spacing + typography), not raw values, so they
    track the density/type scale - DS exposes no wider button size or fullWidth
-   prop. */
+   prop. The primary (filled "Sign in") gets the widest 2xl padding here; the
+   secondary ghost buttons ("Sign up" / "Workspace") step down to xl below.
+   Cannot key off `.vx-btn--default` (size="default" also emits it, so the ghost
+   buttons match it too) - the primary is the one WITHOUT `.vx-btn--ghost`. */
 .site-actions .vx-btn {
   padding-inline: var(--vx-space-2xl);
   font-size: var(--vx-typography-body-size);
@@ -114,6 +120,8 @@ a {
 .site-actions .vx-btn--ghost {
   background: transparent;
   color: var(--vx-color-text-secondary);
+  /* Secondary CTAs (Sign up, Workspace) sit one step tighter than the primary. */
+  padding-inline: var(--vx-space-xl);
 }
 
 /* Hover/active affordance: reuse the exact DS shell tool-button hover wash so the
@@ -123,21 +131,16 @@ a {
   background: var(--vx-shell-tool-button-hover-background);
 }
 
-/* Workspace (signed-in) is a lighter, secondary CTA than the signed-out auth
-   pair, so it gets a tighter horizontal padding (xl) than the shared 2xl. */
-.site-actions .site-workspace-btn {
-  padding-inline: var(--vx-space-xl);
-}
-
 /* -- Signed-in account menu --------------------------------------------------
-   The DS ShellUserMenu supplies the avatar trigger, bold identity, badges,
-   popover chrome and separators. The three lower sections (user info, quick
-   settings, account actions) are rendered into the single settings slot on ONE
-   shared three-column grid - [icon | label | control] - so every icon, label
-   and control aligns across all three. Tokens only. */
+   Aligned to the vxture-website header: the DS ShellUserMenu supplies the avatar
+   trigger, identity, badges, popover chrome, separators and the native switch /
+   sign-out actions; the DS ShellPreferencePanel renders quick settings. The only
+   custom pieces are the profile / workspace info rows (the installed DS 1.3.0 has
+   no `links` prop) and the verification tag in `meta` (no `statusTag` prop).
+   Tokens only. */
 .acct-menu {
-  width: 360px;
-  max-width: min(92vw, 400px);
+  width: 320px;
+  max-width: min(92vw, 360px);
   /* DS PopoverContent sets its stacking via a Tailwind `z-50` utility that this
      portal's Tailwind build does not emit, so the portaled menu had no z-index
      and the hero band (.hero-section, z-index: 1) overlapped its lower half and
@@ -146,84 +149,56 @@ a {
   z-index: 1200;
 }
 
-.acct-panel {
-  --acct-ico-col: 1.25rem;
-  --acct-label-col: 4.75rem;
-  display: flex;
-  flex-direction: column;
+/* Single icon column for the whole menu. The DS action rows (profile, org,
+   workspace, switch, sign-out) carry an extra 0.75rem inline padding and the DS
+   preference rows center their glyph, so the two groups' icons did not share a
+   left edge. Drop the action inline padding, pin both icon boxes to 1rem, give
+   both the same gap, and left-align the preference glyph - now every icon (and,
+   since the boxes + gaps match, every label / control) starts on one column. */
+.acct-menu .vx-shell-user-menu__section .vx-shell-user-menu__action {
+  padding-inline: 0;
+  gap: var(--vx-shell-preferences-row-gap);
 }
 
-/* Shared row grid: fixed icon column + fixed label column + a control that
-   fills the rest. The two fixed leading columns keep every icon and every label
-   on the same edge across the three sections, and the filling control sits right
-   after the label (no dead gap) and ends on the shared right edge. */
+.acct-menu .vx-shell-user-menu__action-icon {
+  width: 1rem;
+  height: 1rem;
+}
+
+.acct-menu .vx-shell-preferences__icon {
+  justify-content: flex-start;
+  width: 1rem;
+  flex-basis: 1rem;
+}
+
+/* Profile link + workspace info rows reuse the DS action markup so they sit in
+   the shared icon column; we only add the trailing value and the static
+   (non-interactive) variant. */
 .acct-row {
-  display: grid;
-  grid-template-columns: var(--acct-ico-col) var(--acct-label-col) 1fr;
-  align-items: center;
-  gap: var(--vx-space-sm);
-  width: 100%;
-  padding: var(--vx-space-xs) 0;
-  text-align: left;
-  color: var(--vx-color-text-secondary);
-  font-size: var(--vx-typography-body-sm-size);
+  justify-content: flex-start;
+  text-decoration: none;
 }
 
-/* Clickable rows (profile link, switch user, sign out). Same box as the other
-   rows - no negative margin - so all three sections stay column-aligned; the
-   hover wash simply spans the row. */
-.acct-row--btn {
-  border: none;
-  background: transparent;
-  cursor: pointer;
-  border-radius: var(--vx-radius-md);
-  transition:
-    background var(--vx-duration-fast) var(--vx-ease-standard),
-    color var(--vx-duration-fast) var(--vx-ease-standard);
+/* Divider between the personal-info rows and the preference panel. Sits inside
+   the DS settings section (1rem padding), so it spans the same width as the DS
+   separators above / below it. */
+.acct-div {
+  height: var(--vx-control-border-width);
+  margin: 0.4rem 0;
+  background: var(--vx-color-border);
 }
 
-.acct-row--btn:hover {
-  background: color-mix(in srgb, var(--vx-control-brand) 10%, transparent);
-  color: var(--vx-control-brand);
-}
-
-.acct-row--danger:hover {
-  background: color-mix(in srgb, var(--vx-color-danger-500) 12%, transparent);
-  color: var(--vx-color-danger-600);
-}
-
-.acct-ico {
-  flex: none;
-  color: var(--vx-color-text-muted);
-}
-
-.acct-row--btn:hover .acct-ico {
-  color: inherit;
-}
-
-.acct-label {
-  min-width: 0;
+.acct-row__label {
+  flex: 0 0 auto;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-weight: 600;
 }
 
-/* Control column: right-aligned, holds a segmented control, a select, a value
-   or a trailing glyph. Fixed width keeps all controls on one right edge. */
-.acct-ctl {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
+/* Inline value sits right after the label (close to it), not pushed to the far
+   edge - the trailing glyph owns the right side. */
+.acct-row__value {
   min-width: 0;
-}
-
-.acct-ctl .vx-shell-segmented {
-  width: 100%;
-}
-
-.acct-val {
-  max-width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -231,42 +206,44 @@ a {
   font-family: var(--vx-font-mono, ui-monospace, SFMono-Regular, Consolas, monospace);
 }
 
-.acct-go {
+/* Far-right glyph (profile "open" chevron, workspace switch). margin-left:auto
+   pins it to the edge; padding-left keeps a comfortable gap from the value/text. */
+.acct-row__trailing {
+  display: inline-flex;
+  align-items: center;
+  margin-left: auto;
+  padding-left: var(--vx-space-md);
   color: var(--vx-color-text-muted);
 }
 
-/* Native language select, sized to the shared control column. */
-.acct-sel {
-  width: 100%;
-  border: var(--vx-control-border-width) solid var(--vx-color-border);
-  border-radius: var(--vx-radius-md);
-  background: var(--vx-color-surface);
-  color: var(--vx-color-text-primary);
-  padding: var(--vx-space-2xs, 0.25rem) var(--vx-space-xs);
-  font-size: var(--vx-typography-body-sm-size);
-  cursor: pointer;
+.acct-row__go,
+.acct-row__switch {
+  color: var(--vx-color-text-muted);
 }
 
-/* Full-width divider between the three sections. */
-.acct-div {
-  height: var(--vx-control-border-width);
-  margin: var(--vx-space-xs) 0;
-  background: var(--vx-color-border);
+/* Static info rows are not links: no pointer, no hover wash. */
+.acct-row--static {
+  cursor: default;
+  color: var(--vx-color-text-secondary);
 }
 
-/* Check glyph + label inside the verification badge pill. */
-.acct-verify-badge {
+.vx-shell-user-menu__action.acct-row--static:hover {
+  background: transparent;
+  color: var(--vx-color-text-secondary);
+}
+
+/* Verification tag rendered into the identity `meta` line. */
+.acct-verify {
   display: inline-flex;
   align-items: center;
   gap: 0.25rem;
+  color: var(--vx-color-text-muted);
 }
 
-.site-tools {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: var(--vx-space-sm);
+.acct-verify--ok {
+  color: var(--vx-color-success-600, var(--vx-control-brand));
 }
+
 
 /* Brand wordmark: DS ShellBrand's label uses neither the brand typeface nor a
    larger size by default. Apply the brand font (Funnel Display) at the DS

@@ -157,6 +157,26 @@ Otherwise the Umbra usage audit will allowlist that single token read.
 
 Reference: `portals/website/components/network-canvas.tsx` (umbra)
 
+## 6. Add `arrows-left-right` to the Icon dictionary (horizontal swap glyph)
+
+Gap: the DS `iconDictionary` (1.3.0) has no plain horizontal swap glyph. The
+only switch-semantic name is `user-switch` (person + arrows), which already
+denotes the "Switch user" account action - reusing it for "switch workspace"
+collides. The account menu's workspace row needs a neutral left-right swap.
+
+Request: map an `arrows-left-right` name to phosphor `ArrowsLeftRightIcon`
+(already a transitive dep the DS re-exports), same as the other arrow glyphs.
+
+Acceptance:
+
+- `<Icon name="arrows-left-right" />` renders the phosphor ArrowsLeftRight glyph
+  and the name is part of the exported `IconName` union.
+
+Interim (Umbra, 2026-06-23): `portals/website/components/user-dropdown.tsx`
+imports `ArrowsLeftRightIcon` directly from `@phosphor-icons/react` for the
+workspace switch affordance. Swap it back to `<Icon name="arrows-left-right" />`
+once the DS ships the name.
+
 ## 5. Mirror typography size tokens into :root (no-Tailwind consumability)
 
 Gap: the DS is authored for a Tailwind v4 build. `styles/globals.css` does
