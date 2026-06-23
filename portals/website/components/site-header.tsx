@@ -72,12 +72,18 @@ export function SiteHeader() {
   return (
     <header className="site-header" aria-label={ruyinBrand.productName}>
       <div className="site-header-inner">
+        {/* Logo + name link to the ruyin.ai homepage (website root). The studio
+            tag reuses the DS pill class (no custom CSS). */}
         <ShellBrand
           href="/"
           logoSrc={markSrc(theme)}
           logoAlt=""
-          label={ruyinBrand.productDomain}
-          labelClassName="site-brand-name"
+          label={
+            <>
+              <span className="site-brand-name">{ruyinBrand.productDomain}</span>{" "}
+              <span className="vx-shell-user-badge">vxture studio</span>
+            </>
+          }
         />
 
         <div className="site-actions">

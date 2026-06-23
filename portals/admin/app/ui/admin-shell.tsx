@@ -3,7 +3,6 @@
 import { useEffect, useState, type ReactNode } from "react";
 import {
   Icon,
-  ShellBrand,
   ShellFullscreenToggle,
   ShellLegalFooter,
   ShellLocaleSwitcher,
@@ -195,13 +194,26 @@ export function AdminShell({
     <div id={PAGE_FULLSCREEN_ID} className="app-page">
       <header className={`site-header${isScrolled ? " is-scrolled" : ""}`}>
         <div className="site-header-inner">
-          <ShellBrand
-            href="/"
-            logoSrc={markSrc(theme)}
-            logoAlt=""
-            label={ruyinBrand.productName}
-            labelClassName="site-brand-name"
-          />
+          {/* Admin brand is NOT a link (no navigation). The DS ShellBrand always
+              renders an <a>, so render the same DS `vx-shell-brand` markup as a
+              non-anchor - DS semantic classes only, no custom CSS. The studio /
+              platform tag reuses the DS pill class. */}
+          <div className="vx-shell-brand">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              className="vx-shell-brand__logo"
+              src={markSrc(theme)}
+              alt=""
+              aria-hidden
+              width={24}
+              height={24}
+              draggable={false}
+            />
+            <span className="vx-shell-brand__label">
+              <span className="site-brand-name">{ruyinBrand.productDomain}</span>{" "}
+              <span className="vx-shell-user-badge">Operation Platform</span>
+            </span>
+          </div>
           {authed ? (
             <nav className="site-nav" aria-label={m.nav}>
               {nav.map((item) => {
@@ -278,8 +290,9 @@ export function AdminShell({
                 user={{
                   displayName: "Administrator",
                   uniqueLine: "admin.ruyin.ai",
+                  // No avatarSrc -> the DS ShellUserMenu renders its default
+                  // AvatarSilhouette (the DS-native default avatar).
                   avatarAlt: "Administrator",
-                  avatarFallback: "AD",
                   badges: [{ key: "role", label: "Admin" }],
                 }}
                 settings={accountSettings}

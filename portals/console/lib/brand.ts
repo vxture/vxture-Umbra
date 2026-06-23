@@ -9,6 +9,8 @@ export function markSrc(resolved: string): string {
  *  header/footer chrome renders identically. */
 export const ruyinBrand = {
   productDomain: "ruyin.ai",
+  /** Public marketing front door; the header brand links here. */
+  siteUrl: "https://ruyin.ai",
   studioUrl: "https://vxture.com",
   // ASCII source escape so the contract check (portals/console/lib is scanned)
   // passes, while the rendered footer shows the same copyright glyph as the
