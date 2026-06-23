@@ -213,8 +213,10 @@ export function AdminShell({
               draggable={false}
             />
             <span className="vx-shell-brand__label">
-              <span className="site-brand-name">{ruyinBrand.productDomain}</span>{" "}
-              <span className="vx-shell-user-badge">Operation Platform</span>
+              <span className="site-brand-lockup">
+                <span className="site-brand-name">{ruyinBrand.productDomain}</span>
+                <span className="site-brand-tag">Operation Platform</span>
+              </span>
             </span>
           </div>
           {authed ? (

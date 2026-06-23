@@ -248,6 +248,31 @@ a {
   letter-spacing: var(--vx-typography-logo-letter-spacing);
 }
 
+/* Brand lockup: wordmark + tag, vertically centered, with a 16px gap. */
+.site-brand-lockup {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--vx-space-lg);
+}
+
+/* Studio / platform tag after the brand wordmark: a compact, near-square pill.
+   Its own class (not the DS .vx-shell-user-badge) so it can be short + 4px-radius
+   without touching the account-menu badges. */
+.site-brand-tag {
+  display: inline-flex;
+  align-items: center;
+  height: var(--vx-space-xl);
+  padding: 0 var(--vx-space-sm);
+  border-radius: var(--vx-radius-sm);
+  background: var(--vx-color-primary-soft);
+  color: var(--vx-color-primary);
+  font-size: var(--vx-typography-body-sm-size);
+  font-weight: 600;
+  line-height: 1.45;
+  letter-spacing: 0;
+  white-space: nowrap;
+}
+
 /* Hero band: fills the space between header and footer; content centered both
  * axes within that remaining height. No dividers - whitespace separates. */
 .hero-section {
