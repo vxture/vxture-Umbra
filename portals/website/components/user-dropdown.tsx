@@ -3,23 +3,27 @@
 import { useEffect, useState, type ReactNode } from "react";
 import {
   Icon,
+  ShellPreferencePanel,
   ShellUserMenu,
   useTheme,
+  type Density,
   type IconName,
+  type LocaleSelectOption,
+  type ShellFontSizePreference,
+  type ShellThemePreference,
 } from "@vxture/design-system";
-import {
-  LOCALE_CONFIGS,
-  SUPPORTED_LOCALES,
-  type Locale,
-} from "@vxture/shared";
+// TEMP: the installed DS (1.3.0) icon dictionary has no horizontal swap glyph,
+// so the "switch workspace" affordance pulls ArrowsLeftRight straight from the
+// same phosphor package the DS itself re-exports. Pending DS adding an
+// `arrows-left-right` name (see docs/design/ds-extension-requests.md); swap this
+// back to <Icon name="arrows-left-right" /> once published.
+import { ArrowsLeftRightIcon } from "@phosphor-icons/react";
+import { LOCALE_CONFIGS, SUPPORTED_LOCALES, type Locale } from "@vxture/shared";
 import {
   getFontSize,
   persistDensity,
   persistFontSize,
   persistTheme,
-  type PrefDensity,
-  type PrefFontSize,
-  type PrefTheme,
 } from "@umbra/shared/preferences";
 import { useLocale } from "@/lib/locale-provider";
 import { ruyinBrand } from "@/lib/brand";
@@ -35,32 +39,24 @@ const DEFAULT_AVATAR = {
   fill: "/assets/icons/avatar-default.svg",
 } as const;
 
-const THEMES: readonly PrefTheme[] = ["system", "light", "dark"];
-const DENSITIES: readonly PrefDensity[] = ["compact", "default", "comfortable"];
-const FONT_SIZES: readonly PrefFontSize[] = ["small", "default", "large"];
-
 const COPY = {
   "en-US": {
     account: "Account menu",
     verified: "Verified",
     unverified: "Unverified",
     profile: "Profile",
-    org: "Org",
     workspace: "Workspace",
-    language: "Language",
-    theme: "Theme",
+    settings: "Preferences",
     themeSystem: "System",
     themeLight: "Light",
     themeDark: "Dark",
-    density: "Density",
     densityCompact: "Compact",
     densityDefault: "Default",
     densityComfortable: "Comfortable",
-    fontSize: "Font size",
     fontSmall: "Small",
     fontDefault: "Default",
     fontLarge: "Large",
-    switchUser: "Switch",
+    switchUser: "Switch user",
     signout: "Sign out",
     fallbackName: "Account",
     roles: { owner: "Owner", manager: "Manager", member: "Member" },
@@ -72,18 +68,14 @@ const COPY = {
     verified: "已认证",
     unverified: "未认证",
     profile: "个人信息",
-    org: "组织",
     workspace: "工作区",
-    language: "语言",
-    theme: "主题",
+    settings: "偏好设置",
     themeSystem: "跟随系统",
     themeLight: "亮色",
     themeDark: "暗色",
-    density: "密度",
     densityCompact: "紧凑",
     densityDefault: "默认",
     densityComfortable: "宽松",
-    fontSize: "字号",
     fontSmall: "小",
     fontDefault: "默认",
     fontLarge: "大",
@@ -115,90 +107,66 @@ function primaryRole(user: SessionUser): RoleKey {
   return "member";
 }
 
-/** DS segmented ("three-segment") control - reuses the platform .vx-shell-segmented
- *  styling. Plain buttons, so a click only switches; it never dismisses the popover. */
-function Segmented<T extends string>({
+/** A link / info row that reuses the DS action markup (`vx-shell-user-menu__action`)
+ *  so the profile + workspace rows share the icon column with the native switch /
+ *  sign-out actions below the preference panel. `value` sits inline right after
+ *  the label (close to it); `trailing` is a glyph pinned to the far right with a
+ *  comfortable gap from the text. */
+function MenuRow({
+  icon,
+  label,
   value,
-  options,
-  optionLabels,
-  onSelect,
-  ariaLabel,
+  trailing,
+  href,
 }: {
-  value: T;
-  options: readonly T[];
-  optionLabels: Record<T, string>;
-  onSelect: (value: T) => void;
-  ariaLabel: string;
+  icon: IconName;
+  label: string;
+  value?: ReactNode;
+  trailing?: ReactNode;
+  href?: string;
 }) {
-  return (
-    <div className="vx-shell-segmented" role="group" aria-label={ariaLabel}>
-      {options.map((option) => (
-        <button
-          key={option}
-          type="button"
-          className={`vx-shell-segmented__item${
-            value === option ? " vx-shell-segmented__item--active" : ""
-          }`}
-          onClick={() => onSelect(option)}
-        >
-          {optionLabels[option]}
-        </button>
-      ))}
+  const inner = (
+    <>
+      <Icon name={icon} className="vx-shell-user-menu__action-icon" />
+      <span className="acct-row__label">{label}</span>
+      {value ? <span className="acct-row__value">{value}</span> : null}
+      {trailing ? <span className="acct-row__trailing">{trailing}</span> : null}
+    </>
+  );
+  return href ? (
+    <a
+      className="vx-shell-user-menu__action acct-row"
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+    >
+      {inner}
+    </a>
+  ) : (
+    <div className="vx-shell-user-menu__action acct-row acct-row--static">
+      {inner}
     </div>
   );
 }
 
-/** One row of the lower panel. Every row - personal info, preference, action -
- *  uses the same [icon | label | control] grid, so icons, labels, and controls
- *  line up across all three sections. `onClick` makes the whole row a button. */
-function Row({
-  icon,
-  label,
-  control,
-  onClick,
-  danger,
-}: {
-  icon: IconName;
-  label: string;
-  control?: ReactNode;
-  onClick?: () => void;
-  danger?: boolean;
-}) {
-  const className = `acct-row${onClick ? " acct-row--btn" : ""}${
-    danger ? " acct-row--danger" : ""
-  }`;
-  const inner = (
-    <>
-      <Icon name={icon} size="sm" className="acct-ico" />
-      <span className="acct-label">{label}</span>
-      <span className="acct-ctl">{control}</span>
-    </>
-  );
-  return onClick ? (
-    <button type="button" className={className} onClick={onClick}>
-      {inner}
-    </button>
-  ) : (
-    <div className={className}>{inner}</div>
-  );
-}
-
 /**
- * Signed-in account menu for the public site header. The DS ShellUserMenu
- * supplies the avatar trigger (with online dot), the bold identity line, the
- * role / tenant / verification badges, the popover chrome and the section
- * separators - the same shell the vxture-website header uses. The three lower
- * sections (user info, quick settings, account actions) are rendered into the
- * single settings slot on ONE shared [icon | label | control] grid so every
- * icon, label and control aligns across them. Preference changes persist to the
- * cross-subdomain cookies (see @umbra/shared/preferences).
+ * Signed-in account menu for the public site header, aligned to the
+ * vxture-website header. The DS ShellUserMenu supplies the avatar trigger, the
+ * identity line, the role / tenant badges, the popover chrome and the section
+ * separators. Quick settings delegate to the DS ShellPreferencePanel (the same
+ * unified control the vxture header uses) - the per-row labels are intentionally
+ * omitted so each row renders as icon + control, leaving only the panel title.
+ * Switch-user / sign-out are native DS actions. Preference changes persist to the
+ * cross-subdomain cookies (see @umbra/shared/preferences). The installed DS
+ * (1.3.0) has no `links` / `statusTag` props, so the profile link rides the
+ * settings slot and the verification tag rides `meta`.
  */
 export function UserDropdown({ user }: { user: SessionUser }) {
   const { locale, setLocale } = useLocale();
   const { mode, setMode, density, setDensity } = useTheme();
   const t = COPY[locale] ?? COPY["en-US"];
 
-  const [fontSize, setFontSize] = useState<PrefFontSize>("default");
+  const [fontSize, setFontSize] = useState<ShellFontSizePreference>("default");
   useEffect(() => {
     setFontSize(getFontSize());
   }, []);
@@ -215,122 +183,84 @@ export function UserDropdown({ user }: { user: SessionUser }) {
   const role = primaryRole(user);
   const isOrg = user.userType === "organization" || Boolean(user.orgId);
 
-  const handleFontSize = (next: PrefFontSize) => {
-    setFontSize(next);
-    persistFontSize(next);
-  };
+  // Single workspace line: "{org}.{workspace}" (e.g. vxture.workspace), falling
+  // back to whichever part exists so personal tenants still show their workspace.
+  const workspacePath = [user.orgId, user.workspaceId].filter(Boolean).join(".");
+
+  const localeOptions: LocaleSelectOption[] = SUPPORTED_LOCALES.map((loc) => ({
+    locale: loc,
+    nativeName: LOCALE_CONFIGS[loc]?.nativeName ?? loc,
+  }));
 
   const settings = (
-    <div className="acct-panel">
-      {/* User info */}
-      <Row
+    <>
+      {/* Personal info: profile link (chevron = "open page", iOS/Android row
+          convention) + current workspace with a switch affordance. */}
+      <MenuRow
         icon="user"
         label={t.profile}
-        control={<Icon name="arrow-long-right" size="xs" className="acct-go" />}
-        onClick={() =>
-          window.open(`${ruyinBrand.consoleUrl}/account`, "_blank", "noopener,noreferrer")
-        }
+        href={`${ruyinBrand.consoleUrl}/account`}
+        trailing={<Icon name="chevron-right" size="sm" className="acct-row__go" />}
       />
-      {user.orgId ? (
-        <Row
-          icon="building-library"
-          label={t.org}
-          control={<span className="acct-val">{user.orgId}</span>}
-        />
-      ) : null}
-      {user.workspaceId ? (
-        <Row
+      {workspacePath ? (
+        <MenuRow
           icon="squares-four"
           label={t.workspace}
-          control={<span className="acct-val">{user.workspaceId}</span>}
+          value={workspacePath}
+          trailing={
+            <ArrowsLeftRightIcon
+              size={16}
+              className="acct-row__switch"
+              aria-hidden
+            />
+          }
         />
       ) : null}
 
+      {/* Divider between personal info and quick settings. */}
       <div className="acct-div" />
 
-      {/* Quick settings */}
-      <Row
-        icon="globe"
-        label={t.language}
-        control={
-          <select
-            className="acct-sel"
-            value={locale}
-            onChange={(e) => setLocale(e.target.value as Locale)}
-            aria-label={t.language}
-          >
-            {SUPPORTED_LOCALES.map((loc) => (
-              <option key={loc} value={loc}>
-                {LOCALE_CONFIGS[loc]?.nativeName ?? loc}
-              </option>
-            ))}
-          </select>
-        }
+      {/* Quick settings - DS preference panel, labels omitted (icon + control) */}
+      <ShellPreferencePanel
+        className="acct-prefs"
+        locale={locale}
+        localeOptions={localeOptions}
+        theme={mode as ShellThemePreference}
+        density={density}
+        fontSize={fontSize}
+        labels={{
+          title: t.settings,
+          themeOptions: {
+            system: t.themeSystem,
+            light: t.themeLight,
+            dark: t.themeDark,
+          },
+          densityOptions: {
+            compact: t.densityCompact,
+            default: t.densityDefault,
+            comfortable: t.densityComfortable,
+          },
+          fontSizeOptions: {
+            small: t.fontSmall,
+            default: t.fontDefault,
+            large: t.fontLarge,
+          },
+        }}
+        onLocaleChange={(next) => setLocale(next)}
+        onThemeChange={(next) => {
+          setMode(next);
+          persistTheme(next);
+        }}
+        onDensityChange={(next: Density) => {
+          setDensity(next);
+          persistDensity(next);
+        }}
+        onFontSizeChange={(next) => {
+          setFontSize(next);
+          persistFontSize(next);
+        }}
       />
-      <Row
-        icon="sun"
-        label={t.theme}
-        control={
-          <Segmented
-            ariaLabel={t.theme}
-            value={mode as PrefTheme}
-            options={THEMES}
-            optionLabels={{
-              system: t.themeSystem,
-              light: t.themeLight,
-              dark: t.themeDark,
-            }}
-            onSelect={(next) => {
-              setMode(next);
-              persistTheme(next);
-            }}
-          />
-        }
-      />
-      <Row
-        icon="rows"
-        label={t.density}
-        control={
-          <Segmented
-            ariaLabel={t.density}
-            value={density as PrefDensity}
-            options={DENSITIES}
-            optionLabels={{
-              compact: t.densityCompact,
-              default: t.densityDefault,
-              comfortable: t.densityComfortable,
-            }}
-            onSelect={(next) => {
-              setDensity(next);
-              persistDensity(next);
-            }}
-          />
-        }
-      />
-      <Row
-        icon="text-indent"
-        label={t.fontSize}
-        control={
-          <Segmented
-            ariaLabel={t.fontSize}
-            value={fontSize}
-            options={FONT_SIZES}
-            optionLabels={{
-              small: t.fontSmall,
-              default: t.fontDefault,
-              large: t.fontLarge,
-            }}
-            onSelect={handleFontSize}
-          />
-        }
-      />
-
-      <div className="acct-div" />
-
-      {/* Account actions */}
-      <Row icon="user-switch" label={t.switchUser} onClick={() => logout()} />
-      <Row icon="sign-out" label={t.signout} danger onClick={() => logout()} />
-    </div>
+    </>
   );
 
   return (
@@ -341,24 +271,37 @@ export function UserDropdown({ user }: { user: SessionUser }) {
         avatarSrc: user.avatarUrl?.trim() || DEFAULT_AVATAR.online,
         avatarAlt: name,
         avatarFallback: Array.from(name.trim() || "U")[0]?.toLocaleUpperCase() ?? "U",
+        meta: (
+          <span
+            className={`acct-verify${verified ? " acct-verify--ok" : ""}`}
+          >
+            <Icon name={verified ? "shield-check" : "warning"} size="xs" />
+            {verified ? t.verified : t.unverified}
+          </span>
+        ),
         badges: [
           { key: "role", label: t.roles[role] },
           { key: "tenant", label: isOrg ? t.tenantOrg : t.tenantPersonal },
-          {
-            key: "verified",
-            label: (
-              <span className="acct-verify-badge">
-                <Icon name="check" size="xs" />
-                {verified ? t.verified : t.unverified}
-              </span>
-            ),
-          },
         ],
       }}
       openLabel={t.account}
       online
       contentClassName="acct-menu"
       settings={settings}
+      actions={[
+        {
+          key: "switch-user",
+          label: t.switchUser,
+          icon: "user-switch",
+          onClick: () => logout(),
+        },
+        {
+          key: "sign-out",
+          label: t.signout,
+          icon: "sign-out",
+          onClick: () => logout(),
+        },
+      ]}
     />
   );
 }

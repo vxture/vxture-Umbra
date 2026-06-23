@@ -10,7 +10,7 @@ import { HeroSection } from "@/components/hero-section";
  */
 export default function HomePage() {
   return (
-    <div className="ruyin-page">
+    <div id="ruyin-page-root" className="ruyin-page">
       <BgCanvas />
       <SiteHeader />
       <HeroSection />

@@ -1,7 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { ThemeProvider } from "@vxture/design-system";
+import { FullscreenProvider, ThemeProvider } from "@vxture/design-system";
 import { LocaleProvider } from "@/lib/locale-provider";
 import { PreferenceSync } from "@/components/preference-sync";
 
@@ -10,13 +10,16 @@ import { PreferenceSync } from "@/components/preference-sync";
  *
  * - ThemeProvider from @vxture/design-system wraps next-themes and adds density.
  * - LocaleProvider manages en-US / zh-CN toggling (ja-JP is not in @vxture/shared).
+ * - FullscreenProvider backs the header's ShellFullscreenToggle (page fullscreen).
  */
 export function Providers({ children }: { children: ReactNode }) {
   return (
     <ThemeProvider defaultMode="system" defaultDensity="default">
       <LocaleProvider>
-        <PreferenceSync />
-        {children}
+        <FullscreenProvider>
+          <PreferenceSync />
+          {children}
+        </FullscreenProvider>
       </LocaleProvider>
     </ThemeProvider>
   );

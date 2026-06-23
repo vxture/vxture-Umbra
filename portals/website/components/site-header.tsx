@@ -3,6 +3,7 @@
 import {
   Button,
   ShellBrand,
+  ShellFullscreenToggle,
   ShellLocaleSwitcher,
   ShellThemeToggle,
   useTheme,
@@ -14,10 +15,42 @@ import { useLocale } from "@/lib/locale-provider";
 import { useSession } from "@/lib/session";
 import { UserDropdown } from "@/components/user-dropdown";
 
-const HEADER_TEXT: Record<string, { register: string; login: string; workspace: string }> = {
-  "en-US": { register: "Sign up", login: "Log in", workspace: "Workspace" },
-  "zh-CN": { register: "注册", login: "登录", workspace: "工作台" },
+interface HeaderText {
+  register: string;
+  login: string;
+  workspace: string;
+  display: string;
+  theme: string;
+  language: string;
+  fullscreenEnter: string;
+  fullscreenExit: string;
+}
+
+const HEADER_TEXT: Record<string, HeaderText> = {
+  "en-US": {
+    register: "Sign up",
+    login: "Sign in",
+    workspace: "Workspace",
+    display: "Display controls",
+    theme: "Switch theme",
+    language: "Language",
+    fullscreenEnter: "Enter fullscreen",
+    fullscreenExit: "Exit fullscreen",
+  },
+  "zh-CN": {
+    register: "注册",
+    login: "登录",
+    workspace: "工作台",
+    display: "显示设置",
+    theme: "切换主题",
+    language: "切换语言",
+    fullscreenEnter: "进入全屏",
+    fullscreenExit: "退出全屏",
+  },
 };
+
+/** Element the fullscreen toggle expands; the homepage root carries this id. */
+const PAGE_FULLSCREEN_ID = "ruyin-page-root";
 
 /** All login entries route through the OIDC RP login on the apex front door
  *  (ruyin.ai/auth/*, proxied to umbra-account-web), which redirects to
@@ -48,10 +81,18 @@ export function SiteHeader() {
         />
 
         <div className="site-actions">
-          <div className="site-tools" aria-label="Display controls">
+          {/* Grouped quick controls [theme | language | fullscreen], mirroring
+              the vxture-console header action group. */}
+          <div
+            className="vx-shell-header__action-group"
+            role="group"
+            aria-label={text.display}
+          >
             <ShellThemeToggle
               currentTheme={theme}
-              buttonLabel="Switch theme"
+              buttonLabel={text.theme}
+              className="vx-shell-icon-button vx-shell-icon-button--toolbar"
+              activeClassName="vx-shell-icon-button--active"
               onThemeChange={(next) => {
                 setTheme(next);
                 persistTheme(next as PrefTheme);
@@ -59,8 +100,17 @@ export function SiteHeader() {
             />
             <ShellLocaleSwitcher
               currentLocale={locale as Locale}
-              buttonLabel="Language"
+              buttonLabel={text.language}
+              buttonClassName="vx-shell-icon-button vx-shell-icon-button--toolbar"
+              activeButtonClassName="vx-shell-icon-button--active"
               onLocaleChange={(next) => setLocale(next)}
+            />
+            <ShellFullscreenToggle
+              targetId={PAGE_FULLSCREEN_ID}
+              enterLabel={text.fullscreenEnter}
+              exitLabel={text.fullscreenExit}
+              className="vx-shell-icon-button vx-shell-icon-button--toolbar"
+              activeClassName="vx-shell-icon-button--active"
             />
           </div>
 
