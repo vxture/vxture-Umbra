@@ -353,7 +353,8 @@ body {
   margin: 0 auto;
   /* Same --ruyin-shell-margin-x track as the header/body (and the website). */
   padding: 0;
-  font-size: 14px;
+  /* Compact legal band - match the website footer's 0.75rem (12px) text. */
+  font-size: 0.75rem;
   color: var(--vx-color-text-muted);
 }
 
