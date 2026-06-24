@@ -44,6 +44,8 @@
     "tenantOrg": "Organization",
     "tenantPersonal": "Personal",
     "personalWorkspace": "Personal workspace",
+    "personalOrgFallback": "{name}'s Personal Org",
+    "defaultWorkspace": "Default workspace",
     "planFree": "Free",
     "member": "member",
     "statusActive": "Active",

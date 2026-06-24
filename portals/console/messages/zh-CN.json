@@ -44,6 +44,8 @@
     "tenantOrg": "组织租户",
     "tenantPersonal": "个人租户",
     "personalWorkspace": "个人工作区",
+    "personalOrgFallback": "{name}的个人组织",
+    "defaultWorkspace": "默认工作区",
     "planFree": "免费版",
     "member": "成员",
     "statusActive": "正常",

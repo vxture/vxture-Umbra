@@ -191,9 +191,11 @@ def vxture_payload_from_session(rpsid: str | None) -> dict[str, Any] | None:
         "phone_verified": bool(data.get("phone_verified")),
         "account_status": str(data.get("account_status") or ""),
         "active_org": str(data.get("active_org") or ""),
-        # Display names ride the session so public_vxture_user can surface them;
-        # without forwarding these two keys the org/workspace names are always
-        # dropped and the UI falls back to the raw id. Empty until the IdP emits.
+        # active_org_type ("personal" | "team") is the personal-vs-team
+        # discriminator. Display names ride the session so public_vxture_user can
+        # surface them; without forwarding these keys org/workspace names/type are
+        # dropped and the UI falls back. Empty until the IdP emits them.
+        "active_org_type": str(data.get("active_org_type") or ""),
         "active_org_name": str(data.get("active_org_name") or ""),
         "active_workspace": str(data.get("active_workspace") or ""),
         "active_workspace_name": str(data.get("active_workspace_name") or ""),
@@ -221,8 +223,11 @@ def public_vxture_user(payload: dict[str, Any]) -> dict[str, Any]:
         "phoneVerified": bool(payload.get("phone_verified")),
         "accountStatus": str(payload.get("account_status") or ""),
         "orgId": org,
+        # orgType ("personal" | "team") drives the personal-vs-team label; empty
+        # until the IdP emits it, in which case the UI defaults to personal.
+        "orgType": str(payload.get("active_org_type") or ""),
         # Display names are name-ready: surfaced when the IdP emits them
-        # (requested upstream), otherwise the portal falls back to the id.
+        # (requested upstream), otherwise the portal falls back.
         "orgName": str(payload.get("active_org_name") or ""),
         "workspaceId": str(payload.get("active_workspace") or ""),
         "workspaceName": str(payload.get("active_workspace_name") or ""),

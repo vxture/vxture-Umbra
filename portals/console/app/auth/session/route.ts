@@ -59,6 +59,7 @@ export async function GET(request: NextRequest) {
       phoneVerified: identity.phone_verified,
       accountStatus: identity.account_status,
       orgId: identity.active_org,
+      orgType: identity.active_org_type,
       orgName: identity.active_org_name,
       workspaceId: identity.active_workspace,
       workspaceName: identity.active_workspace_name,

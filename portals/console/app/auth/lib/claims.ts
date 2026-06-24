@@ -39,8 +39,11 @@ export function toIdentityClaims(idClaims: JWTPayload, accessClaims: JWTPayload)
     phone_verified: bool(accessClaims.phone_verified),
     account_status: str(accessClaims.account_status),
     active_org: str(accessClaims.active_org),
-    // Org/workspace display names are name-ready: shown when the IdP emits them
-    // (requested upstream), otherwise the UI falls back to the id claim.
+    // active_org_type ("personal" | "team") is the personal-vs-team discriminator
+    // (every account has a personal org, so active_org alone cannot tell them
+    // apart). Org/workspace display names are shown when the IdP emits them;
+    // otherwise the UI applies its own fallbacks (see tenant-panel.tsx).
+    active_org_type: str(accessClaims.active_org_type),
     active_org_name: str(accessClaims.active_org_name),
     active_workspace: str(accessClaims.active_workspace),
     active_workspace_name: str(accessClaims.active_workspace_name),
