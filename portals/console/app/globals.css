@@ -248,6 +248,9 @@ body {
   padding: var(--vx-space-md);
 }
 
+/* Identity header - mirrors the DS account-menu profile block
+   (.vx-shell-user-menu__profile): a square mark in the avatar slot, the name +
+   inline type tag, and a muted id line. */
 .tenant-head {
   display: flex;
   align-items: center;
@@ -273,9 +276,18 @@ body {
   flex: 1 1 auto;
 }
 
+/* Name + inline type tag share one row, like the account name + status tag. */
+.tenant-head__name-row {
+  display: flex;
+  align-items: center;
+  gap: var(--vx-space-xs);
+  min-width: 0;
+}
+
 .tenant-head__name {
   margin: 0;
-  font-weight: 650;
+  min-width: 0;
+  font-weight: 720; /* matches DS .vx-shell-user-menu__name */
   font-size: var(--vx-typography-body-size);
   overflow: hidden;
   text-overflow: ellipsis;
@@ -283,7 +295,7 @@ body {
 }
 
 .tenant-head__id {
-  margin: 0;
+  margin: var(--vx-space-3xs, 0.125rem) 0 0;
   color: var(--vx-color-text-muted);
   font-size: var(--vx-typography-body-sm-size);
   font-family: var(--vx-font-mono, ui-monospace, SFMono-Regular, Consolas, monospace);
@@ -292,19 +304,29 @@ body {
   white-space: nowrap;
 }
 
-/* Type tag: mirrors the brand-tag pill (primary-soft bg, primary text). */
+/* Type tag: compact primary-soft pill, sized to sit inline beside the name. */
 .tenant-head__type {
   flex: none;
   display: inline-flex;
   align-items: center;
-  height: var(--vx-space-xl); /* 24px */
-  padding: 0 var(--vx-space-sm);
-  border-radius: var(--vx-radius-sm);
+  padding: 0.0625rem var(--vx-space-xs);
+  border-radius: var(--vx-radius-full);
   background: var(--vx-color-primary-soft);
   color: var(--vx-color-primary);
-  font-size: var(--vx-typography-body-sm-size);
-  font-weight: 600;
+  font-size: var(--vx-typography-caption-size, var(--vx-typography-body-sm-size));
+  font-weight: 650;
+  line-height: 1.5;
   white-space: nowrap;
+}
+
+/* Badges row - role + status pills under the identity, mirroring the DS account
+   menu badges (.vx-shell-user-menu__badges). Indented to align with the name. */
+.tenant-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--vx-space-xs);
+  padding: var(--vx-space-2xs) 0 var(--vx-space-2xs)
+    calc(2.5rem + var(--vx-space-sm));
 }
 
 .tenant-row {

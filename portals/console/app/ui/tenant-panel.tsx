@@ -35,9 +35,10 @@ function TenantRow({
 }
 
 /**
- * Tenant info panel (leftmost header module), modeled on Vultr's account/tenant
- * dropdown: an identity header (tenant name + type badge + tenant id) over a
- * sectioned detail card (workspace, role, status, members, plan) and a settings
+ * Tenant info panel (leftmost header module), styled as a sibling of the account
+ * menu (see user-dropdown.tsx): an identity header (square mark + tenant name
+ * with an inline type tag + tenant id) over a pill badges row (role + status)
+ * and a sectioned detail card (workspace, members, plan), closed by a settings
  * link. Real fields (tenant id, org/workspace, role, status) come from the
  * session; members / plan are placeholders pending a tenancy/billing backend
  * (designed now, to be wired later). The panel reuses the account-menu popover
@@ -77,33 +78,37 @@ export function TenantPanel({ user }: { user: VxtureUser }) {
       </PopoverTrigger>
 
       <PopoverContent align="end" sideOffset={10} className="acct-menu tenant-menu">
-        {/* Identity header */}
+        {/* Identity header - mirrors the account menu profile block: a square
+            mark stands in for the avatar, the name carries an inline type tag
+            (like the account status tag), and the tenant id is the muted line. */}
         <div className="tenant-head">
           <span className="tenant-head__mark">
-            <Icon name="buildings" size={20} />
+            <Icon name="buildings" size={22} />
           </span>
           <div className="tenant-head__identity">
-            <p className="tenant-head__name">{tenantName}</p>
+            <div className="tenant-head__name-row">
+              <p className="tenant-head__name">{tenantName}</p>
+              <span className="tenant-head__type">{tenantType}</span>
+            </div>
             <p className="tenant-head__id">
               {t("tenantId")}: {tenantId}
             </p>
           </div>
-          <span className="tenant-head__type">{tenantType}</span>
+        </div>
+
+        {/* Badges row - role + status as pills, mirroring the account menu. */}
+        <div className="tenant-badges">
+          <StatusBadge tone="info">{roleLabel}</StatusBadge>
+          <StatusBadge tone={statusTone} dot>
+            {statusLabel}
+          </StatusBadge>
         </div>
 
         <div className="acct-div" />
 
-        {/* Detail card */}
+        {/* Detail card - context fields not surfaced as badges. */}
         <TenantRow icon="squares-four" label={t("workspace")}>
           <span className="tenant-row__text">{workspace}</span>
-        </TenantRow>
-        <TenantRow icon="role" label={t("role")}>
-          <StatusBadge tone="info">{roleLabel}</StatusBadge>
-        </TenantRow>
-        <TenantRow icon="shield-check" label={t("status")}>
-          <StatusBadge tone={statusTone} dot>
-            {statusLabel}
-          </StatusBadge>
         </TenantRow>
         <TenantRow icon="users" label={t("members")}>
           {/* TODO: real member count once a tenancy backend exists. */}
