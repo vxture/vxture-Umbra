@@ -20,11 +20,7 @@ import { UserDropdown } from "@/components/user-dropdown";
 /** Element the fullscreen toggle expands; the homepage root carries this id. */
 const PAGE_FULLSCREEN_ID = "ruyin-page-root";
 
-/** All login entries route through the OIDC RP login on the apex front door
- *  (ruyin.ai/auth/*, proxied to umbra-account-web), which redirects to
- *  accounts.vxture.com and comes back to this site. The IdP hosts the
- *  login/signup UI, so the screen hint is no longer forwarded. */
-function authStartUrl(_hint: "login" | "signup"): string {
+function authStartUrl(): string {
   const returnTo = encodeURIComponent(ruyinBrand.siteUrl);
   return `${ruyinBrand.siteUrl}/auth/login?returnTo=${returnTo}`;
 }
@@ -99,10 +95,10 @@ export function SiteHeader() {
           ) : (
             <>
               <Button variant="ghost" asChild>
-                <a href={authStartUrl("signup")}>{t("signUp")}</a>
+                <a href={authStartUrl()}>{t("signUp")}</a>
               </Button>
               <Button asChild>
-                <a href={authStartUrl("login")}>{t("signIn")}</a>
+                <a href={authStartUrl()}>{t("signIn")}</a>
               </Button>
             </>
           )}

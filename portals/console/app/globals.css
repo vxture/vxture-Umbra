@@ -127,8 +127,8 @@ body {
    The DS ShellUserMenu supplies the avatar trigger, identity, badges, popover
    chrome, separators and the native switch / sign-out actions; the DS
    ShellPreferencePanel renders quick settings. Custom pieces: the profile info
-   row (DS 1.3.0 has no `links` prop) and the verification tag in `meta` (no
-   `statusTag` prop). Tokens only. */
+   row (kept custom so it groups with the tenant panel row without a DS section
+   separator, and to carry value / trailing slots). Tokens only. */
 .acct-menu {
   width: 320px;
   max-width: min(92vw, 360px);
