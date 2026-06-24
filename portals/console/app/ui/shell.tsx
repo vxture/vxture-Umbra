@@ -16,6 +16,7 @@ import type { IconName } from "@vxture/design-system";
 import type { Locale } from "@vxture/shared";
 import { persistTheme, type PrefTheme } from "@umbra/shared/preferences";
 import { useLocale } from "@umbra/shared/locale-provider";
+import { useTranslations } from "@umbra/shared/i18n";
 import { markSrc, ruyinBrand } from "../../lib/brand";
 import { TenantPanel } from "./tenant-panel";
 import { UserDropdown } from "./user-dropdown";
@@ -24,22 +25,6 @@ import type { VxtureUser } from "./types";
 /** Element the fullscreen toggle expands; the page root carries this id. */
 const PAGE_FULLSCREEN_ID = "console-page-root";
 
-const TOOL_COPY = {
-  "en-US": {
-    display: "Display controls",
-    theme: "Switch theme",
-    language: "Language",
-    fullscreenEnter: "Enter fullscreen",
-    fullscreenExit: "Exit fullscreen",
-  },
-  "zh-CN": {
-    display: "显示设置",
-    theme: "切换主题",
-    language: "切换语言",
-    fullscreenEnter: "进入全屏",
-    fullscreenExit: "退出全屏",
-  },
-} as const;
 
 /**
  * Console chrome - the same header/footer treatment as the marketing site
@@ -59,7 +44,7 @@ export function Shell({
 }) {
   const { theme, setTheme } = useTheme();
   const { locale, setLocale } = useLocale();
-  const tt = TOOL_COPY[locale] ?? TOOL_COPY["en-US"];
+  const tt = useTranslations("header");
   const [isScrolled, setIsScrolled] = useState(false);
 
   useEffect(() => {
@@ -94,11 +79,11 @@ export function Shell({
             <div
               className="vx-shell-header__action-group"
               role="group"
-              aria-label={tt.display}
+              aria-label={tt("display")}
             >
               <ShellThemeToggle
                 currentTheme={theme}
-                buttonLabel={tt.theme}
+                buttonLabel={tt("theme")}
                 className="vx-shell-icon-button vx-shell-icon-button--toolbar"
                 activeClassName="vx-shell-icon-button--active"
                 onThemeChange={(next) => {
@@ -108,15 +93,15 @@ export function Shell({
               />
               <ShellLocaleSwitcher
                 currentLocale={locale as Locale}
-                buttonLabel={tt.language}
+                buttonLabel={tt("language")}
                 buttonClassName="vx-shell-icon-button vx-shell-icon-button--toolbar"
                 activeButtonClassName="vx-shell-icon-button--active"
                 onLocaleChange={(next) => setLocale(next)}
               />
               <ShellFullscreenToggle
                 targetId={PAGE_FULLSCREEN_ID}
-                enterLabel={tt.fullscreenEnter}
-                exitLabel={tt.fullscreenExit}
+                enterLabel={tt("fullscreenEnter")}
+                exitLabel={tt("fullscreenExit")}
                 className="vx-shell-icon-button vx-shell-icon-button--toolbar"
                 activeClassName="vx-shell-icon-button--active"
               />

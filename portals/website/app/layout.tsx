@@ -3,6 +3,8 @@ import type { ReactNode } from "react";
 import { Funnel_Display } from "next/font/google";
 import { ruyinBrand } from "@/lib/brand";
 import { preferenceBootstrapScript } from "@umbra/shared/preferences";
+import { I18nProvider } from "@umbra/shared/i18n";
+import { messages } from "../messages";
 import { Providers } from "./providers";
 import "@vxture/design-system/styles/globals.css";
 import "@vxture/design-system/styles/brands/ruyin.css";
@@ -47,7 +49,9 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         <script dangerouslySetInnerHTML={{ __html: preferenceBootstrapScript }} />
       </head>
       <body>
-        <Providers>{children}</Providers>
+        <Providers>
+          <I18nProvider messages={messages}>{children}</I18nProvider>
+        </Providers>
       </body>
     </html>
   );

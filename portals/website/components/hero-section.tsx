@@ -1,20 +1,8 @@
 "use client";
 
-import { useLocale } from "@/lib/locale-provider";
+import { useTranslations } from "@umbra/shared/i18n";
 import { ruyinBrand } from "@/lib/brand";
 import { HeroSignature } from "@/components/hero-signature";
-import type { Locale } from "@vxture/shared";
-
-const HERO_TEXT: Record<Locale, { lead: string; action: string }> = {
-  "en-US": {
-    lead: "Build your own dedicated intelligent companion",
-    action: "VXTURE STUDIO",
-  },
-  "zh-CN": {
-    lead: "打造你的专属智能搭档",
-    action: "VXTURE STUDIO",
-  },
-};
 
 /**
  * Hero band of the homepage: the middle of the three sections. Fills the space
@@ -23,8 +11,7 @@ const HERO_TEXT: Record<Locale, { lead: string; action: string }> = {
  * eyebrow -> signature artwork -> accessible title -> lead -> CTA.
  */
 export function HeroSection() {
-  const { locale } = useLocale();
-  const text = HERO_TEXT[locale] ?? HERO_TEXT["en-US"];
+  const t = useTranslations("hero");
 
   return (
     <main className="hero-section">
@@ -40,9 +27,9 @@ export function HeroSection() {
         <h1 id="hero-title" className="hero-title">
           {ruyinBrand.fullName}
         </h1>
-        <p className="hero-lead">{text.lead}</p>
+        <p className="hero-lead">{t("lead")}</p>
         <a className="hero-cta" href={ruyinBrand.studioUrl}>
-          {text.action}
+          {t("action")}
         </a>
       </section>
     </main>

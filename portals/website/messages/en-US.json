@@ -1,0 +1,43 @@
+{
+  "header": {
+    "signUp": "Sign up",
+    "signIn": "Sign in",
+    "workspace": "Workspace",
+    "display": "Display controls",
+    "theme": "Switch theme",
+    "language": "Language",
+    "fullscreenEnter": "Enter fullscreen",
+    "fullscreenExit": "Exit fullscreen"
+  },
+  "hero": {
+    "lead": "Build your own dedicated intelligent companion",
+    "action": "VXTURE STUDIO"
+  },
+  "account": {
+    "account": "Account menu",
+    "verified": "Verified",
+    "unverified": "Unverified",
+    "profile": "Profile",
+    "tenantSettings": "Tenant settings",
+    "settings": "Preferences",
+    "themeSystem": "System",
+    "themeLight": "Light",
+    "themeDark": "Dark",
+    "densityCompact": "Compact",
+    "densityDefault": "Default",
+    "densityComfortable": "Comfortable",
+    "fontSmall": "Small",
+    "fontDefault": "Default",
+    "fontLarge": "Large",
+    "switchUser": "Switch user",
+    "signout": "Sign out",
+    "fallbackName": "Account",
+    "roles": {
+      "owner": "Owner",
+      "manager": "Manager",
+      "member": "Member"
+    },
+    "tenantOrg": "Organization",
+    "tenantPersonal": "Personal"
+  }
+}

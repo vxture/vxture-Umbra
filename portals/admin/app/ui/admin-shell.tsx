@@ -26,6 +26,7 @@ import {
 } from "@umbra/shared/preferences";
 import { markSrc, ruyinBrand } from "../../lib/brand";
 import { useLocale } from "@umbra/shared/locale-provider";
+import { useTranslations } from "@umbra/shared/i18n";
 
 /**
  * Admin chrome - the same header/footer treatment as the marketing site and the
@@ -47,79 +48,6 @@ interface NavItem {
 /** Element the fullscreen toggle expands; the page root carries this id. */
 const PAGE_FULLSCREEN_ID = "admin-page-root";
 
-const SHELL_COPY: Record<
-  Locale,
-  {
-    navVpn: string;
-    navPass: string;
-    nav: string;
-    display: string;
-    theme: string;
-    language: string;
-    fullscreenEnter: string;
-    fullscreenExit: string;
-    account: string;
-    settings: string;
-    themeSystem: string;
-    themeLight: string;
-    themeDark: string;
-    densityCompact: string;
-    densityDefault: string;
-    densityComfortable: string;
-    fontSmall: string;
-    fontDefault: string;
-    fontLarge: string;
-    profile: string;
-    signout: string;
-  }
-> = {
-  "en-US": {
-    navVpn: "VPN access",
-    navPass: "Password security",
-    nav: "Admin navigation",
-    display: "Display controls",
-    theme: "Switch theme",
-    language: "Language",
-    fullscreenEnter: "Enter fullscreen",
-    fullscreenExit: "Exit fullscreen",
-    account: "Account menu",
-    settings: "Preferences",
-    themeSystem: "System",
-    themeLight: "Light",
-    themeDark: "Dark",
-    densityCompact: "Compact",
-    densityDefault: "Default",
-    densityComfortable: "Comfortable",
-    fontSmall: "Small",
-    fontDefault: "Default",
-    fontLarge: "Large",
-    profile: "Personal info",
-    signout: "Sign out",
-  },
-  "zh-CN": {
-    navVpn: "科学上网",
-    navPass: "密码安全",
-    nav: "管理导航",
-    display: "显示设置",
-    theme: "切换主题",
-    language: "切换语言",
-    fullscreenEnter: "进入全屏",
-    fullscreenExit: "退出全屏",
-    account: "账户菜单",
-    settings: "偏好设置",
-    themeSystem: "跟随系统",
-    themeLight: "亮色",
-    themeDark: "暗色",
-    densityCompact: "紧凑",
-    densityDefault: "默认",
-    densityComfortable: "宽松",
-    fontSmall: "小",
-    fontDefault: "默认",
-    fontLarge: "大",
-    profile: "个人信息",
-    signout: "退出登录",
-  },
-};
 
 export function AdminShell({
   children,
@@ -141,10 +69,10 @@ export function AdminShell({
     setFontSize(getFontSize());
   }, []);
 
-  const m = SHELL_COPY[locale] ?? SHELL_COPY["en-US"];
+  const m = useTranslations("shell");
   const nav: NavItem[] = [
-    { id: "vpn", label: m.navVpn, href: "/", icon: "shield-check" },
-    { id: "pass", label: m.navPass, href: "https://pas.ruyin.ai/admin", icon: "key", external: true },
+    { id: "vpn", label: m("navVpn"), href: "/", icon: "shield-check" },
+    { id: "pass", label: m("navPass"), href: "https://pas.ruyin.ai/admin", icon: "key", external: true },
   ];
 
   useEffect(() => {
@@ -168,14 +96,14 @@ export function AdminShell({
       density={density}
       fontSize={fontSize}
       labels={{
-        title: m.settings,
-        themeOptions: { system: m.themeSystem, light: m.themeLight, dark: m.themeDark },
+        title: m("settings"),
+        themeOptions: { system: m("themeSystem"), light: m("themeLight"), dark: m("themeDark") },
         densityOptions: {
-          compact: m.densityCompact,
-          default: m.densityDefault,
-          comfortable: m.densityComfortable,
+          compact: m("densityCompact"),
+          default: m("densityDefault"),
+          comfortable: m("densityComfortable"),
         },
-        fontSizeOptions: { small: m.fontSmall, default: m.fontDefault, large: m.fontLarge },
+        fontSizeOptions: { small: m("fontSmall"), default: m("fontDefault"), large: m("fontLarge") },
       }}
       onLocaleChange={(next) => setLocale(next)}
       onThemeChange={(next) => {
@@ -220,7 +148,7 @@ export function AdminShell({
             </span>
           </div>
           {authed ? (
-            <nav className="site-nav" aria-label={m.nav}>
+            <nav className="site-nav" aria-label={m("nav")}>
               {nav.map((item) => {
                 const isActive = item.id === active;
                 const className = `site-nav-item${isActive ? " is-active" : ""}`;
@@ -259,11 +187,11 @@ export function AdminShell({
             <div
               className="vx-shell-header__action-group"
               role="group"
-              aria-label={m.display}
+              aria-label={m("display")}
             >
               <ShellThemeToggle
                 currentTheme={theme}
-                buttonLabel={m.theme}
+                buttonLabel={m("theme")}
                 className="vx-shell-icon-button vx-shell-icon-button--toolbar"
                 activeClassName="vx-shell-icon-button--active"
                 onThemeChange={(next) => {
@@ -273,15 +201,15 @@ export function AdminShell({
               />
               <ShellLocaleSwitcher
                 currentLocale={locale as Locale}
-                buttonLabel={m.language}
+                buttonLabel={m("language")}
                 buttonClassName="vx-shell-icon-button vx-shell-icon-button--toolbar"
                 activeButtonClassName="vx-shell-icon-button--active"
                 onLocaleChange={(next) => setLocale(next)}
               />
               <ShellFullscreenToggle
                 targetId={PAGE_FULLSCREEN_ID}
-                enterLabel={m.fullscreenEnter}
-                exitLabel={m.fullscreenExit}
+                enterLabel={m("fullscreenEnter")}
+                exitLabel={m("fullscreenExit")}
                 className="vx-shell-icon-button vx-shell-icon-button--toolbar"
                 activeClassName="vx-shell-icon-button--active"
               />
@@ -289,7 +217,7 @@ export function AdminShell({
 
             {authed ? (
               <ShellUserMenu
-                openLabel={m.account}
+                openLabel={m("account")}
                 online
                 contentClassName="acct-menu"
                 user={{
@@ -303,7 +231,7 @@ export function AdminShell({
                 links={[
                   {
                     key: "profile",
-                    label: m.profile,
+                    label: m("profile"),
                     icon: "user",
                     href: "https://console.ruyin.ai/account",
                     newTab: true,
@@ -312,7 +240,7 @@ export function AdminShell({
                 settings={accountSettings}
                 actions={
                   onSignOut
-                    ? [{ key: "logout", label: m.signout, icon: "sign-out", onClick: onSignOut }]
+                    ? [{ key: "logout", label: m("signout"), icon: "sign-out", onClick: onSignOut }]
                     : undefined
                 }
               />

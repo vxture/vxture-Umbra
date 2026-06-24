@@ -25,6 +25,7 @@ import {
   persistFontSize,
   persistTheme,
 } from "@umbra/shared/preferences";
+import { useTranslations } from "@umbra/shared/i18n";
 import { useLocale } from "@/lib/locale-provider";
 import { ruyinBrand } from "@/lib/brand";
 import { logout, type SessionUser } from "@/lib/session";
@@ -37,55 +38,6 @@ const DEFAULT_AVATAR = {
   online: "/assets/icons/avatar-default-online.svg",
   offline: "/assets/icons/avatar-default-offline.svg",
   fill: "/assets/icons/avatar-default.svg",
-} as const;
-
-const COPY = {
-  "en-US": {
-    account: "Account menu",
-    verified: "Verified",
-    unverified: "Unverified",
-    profile: "Profile",
-    tenantSettings: "Tenant settings",
-    settings: "Preferences",
-    themeSystem: "System",
-    themeLight: "Light",
-    themeDark: "Dark",
-    densityCompact: "Compact",
-    densityDefault: "Default",
-    densityComfortable: "Comfortable",
-    fontSmall: "Small",
-    fontDefault: "Default",
-    fontLarge: "Large",
-    switchUser: "Switch user",
-    signout: "Sign out",
-    fallbackName: "Account",
-    roles: { owner: "Owner", manager: "Manager", member: "Member" },
-    tenantOrg: "Organization",
-    tenantPersonal: "Personal",
-  },
-  "zh-CN": {
-    account: "账户菜单",
-    verified: "已认证",
-    unverified: "未认证",
-    profile: "个人信息",
-    tenantSettings: "租户设置",
-    settings: "偏好设置",
-    themeSystem: "跟随系统",
-    themeLight: "亮色",
-    themeDark: "暗色",
-    densityCompact: "紧凑",
-    densityDefault: "默认",
-    densityComfortable: "宽松",
-    fontSmall: "小",
-    fontDefault: "默认",
-    fontLarge: "大",
-    switchUser: "切换用户",
-    signout: "退出登录",
-    fallbackName: "账号",
-    roles: { owner: "拥有者", manager: "管理员", member: "成员" },
-    tenantOrg: "组织租户",
-    tenantPersonal: "个人租户",
-  },
 } as const;
 
 /** Drop a leading country code so CN users see only the national number. */
@@ -165,7 +117,7 @@ function MenuRow({
 export function UserDropdown({ user }: { user: SessionUser }) {
   const { locale, setLocale } = useLocale();
   const { mode, setMode, density, setDensity } = useTheme();
-  const t = COPY[locale] ?? COPY["en-US"];
+  const t = useTranslations("account");
 
   const [fontSize, setFontSize] = useState<ShellFontSizePreference>("default");
   useEffect(() => {
@@ -173,7 +125,7 @@ export function UserDropdown({ user }: { user: SessionUser }) {
   }, []);
 
   const name =
-    user.displayName || user.username || user.email || user.phone || t.fallbackName;
+    user.displayName || user.username || user.email || user.phone || t("fallbackName");
   const uniqueLine =
     user.email && name !== user.email
       ? user.email
@@ -202,13 +154,13 @@ export function UserDropdown({ user }: { user: SessionUser }) {
           section separator. */}
       <MenuRow
         icon="user"
-        label={t.profile}
+        label={t("profile")}
         href={`${ruyinBrand.consoleUrl}/account`}
       />
       {workspacePath ? (
         <MenuRow
           icon="squares-four"
-          label={t.tenantSettings}
+          label={t("tenantSettings")}
           value={workspacePath}
           trailing={
             <ArrowsLeftRightIcon
@@ -219,7 +171,7 @@ export function UserDropdown({ user }: { user: SessionUser }) {
           }
         />
       ) : (
-        <MenuRow icon="squares-four" label={t.tenantSettings} />
+        <MenuRow icon="squares-four" label={t("tenantSettings")} />
       )}
 
       {/* Divider between the personal-info block and quick settings. */}
@@ -234,21 +186,21 @@ export function UserDropdown({ user }: { user: SessionUser }) {
         density={density}
         fontSize={fontSize}
         labels={{
-          title: t.settings,
+          title: t("settings"),
           themeOptions: {
-            system: t.themeSystem,
-            light: t.themeLight,
-            dark: t.themeDark,
+            system: t("themeSystem"),
+            light: t("themeLight"),
+            dark: t("themeDark"),
           },
           densityOptions: {
-            compact: t.densityCompact,
-            default: t.densityDefault,
-            comfortable: t.densityComfortable,
+            compact: t("densityCompact"),
+            default: t("densityDefault"),
+            comfortable: t("densityComfortable"),
           },
           fontSizeOptions: {
-            small: t.fontSmall,
-            default: t.fontDefault,
-            large: t.fontLarge,
+            small: t("fontSmall"),
+            default: t("fontDefault"),
+            large: t("fontLarge"),
           },
         }}
         onLocaleChange={(next) => setLocale(next)}
@@ -277,26 +229,26 @@ export function UserDropdown({ user }: { user: SessionUser }) {
         avatarAlt: name,
         avatarFallback: Array.from(name.trim() || "U")[0]?.toLocaleUpperCase() ?? "U",
         // DS native verification tag, rendered next to the name.
-        statusTag: { label: verified ? t.verified : t.unverified, verified },
+        statusTag: { label: verified ? t("verified") : t("unverified"), verified },
         badges: [
-          { key: "role", label: t.roles[role] },
-          { key: "tenant", label: isOrg ? t.tenantOrg : t.tenantPersonal },
+          { key: "role", label: t(`roles.${role}`) },
+          { key: "tenant", label: isOrg ? t("tenantOrg") : t("tenantPersonal") },
         ],
       }}
-      openLabel={t.account}
+      openLabel={t("account")}
       online
       contentClassName="acct-menu"
       settings={settings}
       actions={[
         {
           key: "switch-user",
-          label: t.switchUser,
+          label: t("switchUser"),
           icon: "user-switch",
           onClick: () => logout(),
         },
         {
           key: "sign-out",
-          label: t.signout,
+          label: t("signout"),
           icon: "sign-out",
           onClick: () => logout(),
         },
