@@ -237,7 +237,7 @@ body {
 .tenant-trigger__caret {
   color: var(--vx-color-text-muted);
   flex: none;
-  margin-left: var(--vx-space-2xs);
+  margin-left: var(--vx-space-xs);
 }
 
 /* Tenant popover: slightly wider than the account menu to accommodate more
@@ -265,7 +265,7 @@ body {
   display: flex;
   align-items: center;
   gap: var(--vx-space-sm);
-  padding-bottom: var(--vx-space-2xs);
+  padding-bottom: var(--vx-space-xs);
 }
 
 /* Mark: square avatar-equivalent tinted with primary, matches DS identity blocks. */
@@ -335,7 +335,7 @@ body {
   display: flex;
   flex-wrap: wrap;
   gap: var(--vx-space-xs);
-  padding: var(--vx-space-2xs) 0 var(--vx-space-2xs)
+  padding: var(--vx-space-xs) 0 var(--vx-space-xs)
     calc(2.5rem + var(--vx-space-sm));
 }
 
@@ -537,7 +537,7 @@ body {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: var(--vx-space-2xs);
+  gap: var(--vx-space-xs);
 }
 
 .info-grid {
@@ -592,7 +592,7 @@ body {
 .profile-hero-text {
   display: flex;
   flex-direction: column;
-  gap: var(--vx-space-2xs);
+  gap: var(--vx-space-xs);
   min-width: 0;
 }
 
@@ -613,7 +613,7 @@ body {
   display: flex;
   flex-wrap: wrap;
   gap: var(--vx-space-xs);
-  margin-top: var(--vx-space-2xs);
+  margin-top: var(--vx-space-xs);
 }
 
 /* Responsive context tiles (DS MetricCard). */

@@ -44,6 +44,8 @@
     "tenantOrg": "組織テナント",
     "tenantPersonal": "個人テナント",
     "personalWorkspace": "個人ワークスペース",
+    "personalOrgFallback": "{name}の個人組織",
+    "defaultWorkspace": "デフォルトワークスペース",
     "planFree": "無料",
     "member": "メンバー",
     "statusActive": "有効",
