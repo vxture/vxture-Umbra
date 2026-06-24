@@ -4,7 +4,6 @@ import { useEffect, useState, type ReactNode } from "react";
 import {
   Icon,
   MetricCard,
-  PageHeader as DsPageHeader,
   ShellBrand,
   ShellFullscreenToggle,
   ShellLegalFooter,
@@ -134,20 +133,6 @@ export function Shell({
       />
     </div>
   );
-}
-
-export function PageHeader({
-  title,
-  description,
-  icon,
-  actions,
-}: {
-  title: string;
-  description: string;
-  icon?: IconName;
-  actions?: ReactNode;
-}) {
-  return <DsPageHeader icon={icon} title={title} description={description} actions={actions} />;
 }
 
 /**

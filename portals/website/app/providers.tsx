@@ -9,7 +9,7 @@ import { PreferenceSync } from "@/components/preference-sync";
  * Root providers for the Ruyin website.
  *
  * - ThemeProvider from @vxture/design-system wraps next-themes and adds density.
- * - LocaleProvider manages en-US / zh-CN toggling (ja-JP is not in @vxture/shared).
+ * - LocaleProvider manages en-US / zh-CN / ja-JP toggling (UmbraLocale superset of @vxture/shared).
  * - FullscreenProvider backs the header's ShellFullscreenToggle (page fullscreen).
  */
 export function Providers({ children }: { children: ReactNode }) {

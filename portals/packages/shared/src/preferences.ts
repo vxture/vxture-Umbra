@@ -17,7 +17,6 @@
 
 import { useEffect, useRef } from "react";
 import {
-  DEFAULT_LOCALE,
   LOCALE_CONSTANTS,
   PREFERENCE_CONSTANTS,
   THEME_CONSTANTS,
@@ -52,8 +51,6 @@ export const FONT_SIZE_PX: Record<PrefFontSize, string> = {
   default: "16px",
   large: "18px",
 };
-
-const DENSITIES: readonly PrefDensity[] = ["compact", "default", "comfortable"];
 
 const isTheme = (v: unknown): v is PrefTheme =>
   v === "system" || v === "light" || v === "dark";
@@ -283,5 +280,3 @@ export function usePreferenceLiveSync(setters: PreferenceSetters): void {
   }, []);
 }
 
-/** Default locale, re-exported so callers need not import @vxture/shared. */
-export { DEFAULT_LOCALE };
