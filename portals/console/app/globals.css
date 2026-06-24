@@ -333,11 +333,16 @@ body {
 }
 
 /* Header quick-controls pill: drop the DS padding + border so the pill height
-   equals the 32px toolbar buttons inside it. Re-draw the light capsule edge with
-   an outline (outline does not add to the box height, so it stays 32px). */
+   equals the 32px toolbar buttons inside it. The light capsule edge shows on
+   hover / focus only (DS behavior), drawn with an outline so it does not add to
+   the box height (the pill stays 32px). */
 .vx-shell-header__action-group {
   padding: 0;
   border-width: 0;
+}
+
+.vx-shell-header__action-group:hover,
+.vx-shell-header__action-group:focus-within {
   outline: 1px solid var(--vx-color-border);
   outline-offset: -1px;
 }
