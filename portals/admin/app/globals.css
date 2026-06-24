@@ -123,6 +123,13 @@ a {
   letter-spacing: var(--vx-typography-logo-letter-spacing);
 }
 
+/* Header quick-controls pill: drop the DS padding + (transparent, height-adding)
+   border so the pill height equals the 32px toolbar buttons inside it. */
+.vx-shell-header__action-group {
+  padding: 0;
+  border-width: 0;
+}
+
 /* Brand lockup: wordmark + tag, vertically centered, with a 16px gap. */
 .site-brand-lockup {
   display: inline-flex;
