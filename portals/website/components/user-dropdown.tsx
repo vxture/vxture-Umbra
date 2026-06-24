@@ -32,13 +32,7 @@ import { logout, type SessionUser } from "@/lib/session";
 
 type RoleKey = "owner" | "manager" | "member";
 
-/** Default account silhouette when the session carries no picture; the signed-in
- *  menu always represents an online user (offline / fill kept as the contract). */
-const DEFAULT_AVATAR = {
-  online: "/assets/icons/avatar-default-online.svg",
-  offline: "/assets/icons/avatar-default-offline.svg",
-  fill: "/assets/icons/avatar-default.svg",
-} as const;
+const DEFAULT_AVATAR_ONLINE = "/assets/icons/avatar-default-online.svg";
 
 /** Drop a leading country code so CN users see only the national number. */
 function nationalPhone(phone: string): string {
@@ -220,7 +214,7 @@ export function UserDropdown({ user }: { user: SessionUser }) {
       user={{
         displayName: name,
         uniqueLine,
-        avatarSrc: user.avatarUrl?.trim() || DEFAULT_AVATAR.online,
+        avatarSrc: user.avatarUrl?.trim() || DEFAULT_AVATAR_ONLINE,
         avatarAlt: name,
         avatarFallback: Array.from(name.trim() || "U")[0]?.toLocaleUpperCase() ?? "U",
         // DS native verification tag, rendered next to the name.
