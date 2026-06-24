@@ -6,6 +6,8 @@ import "@vxture/design-system/styles/globals.css";
 import "@vxture/design-system/styles/brands/ruyin.css";
 import "./globals.css";
 import { Providers } from "@umbra/shared/providers";
+import { I18nProvider } from "@umbra/shared/i18n";
+import { messages } from "../messages";
 
 /** DS brand typeface (Funnel Display) wired to the DS brand-font loader slot. */
 const brandFont = Funnel_Display({
@@ -30,7 +32,9 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         <script dangerouslySetInnerHTML={{ __html: preferenceBootstrapScript }} />
       </head>
       <body>
-        <Providers>{children}</Providers>
+        <Providers>
+          <I18nProvider messages={messages}>{children}</I18nProvider>
+        </Providers>
       </body>
     </html>
   );

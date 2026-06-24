@@ -121,6 +121,10 @@ LOCALIZED_CONTENT_PREFIXES = (
     # admin signed-in surface carries zh/en copy (nav, title, stats, cards);
     # admin/lib stays ASCII-scanned (non-content code).
     Path("portals/admin/app"),
+    # i18n translation bundles: zh-CN.json holds the localized (non-ASCII) copy.
+    Path("portals/website/messages"),
+    Path("portals/console/messages"),
+    Path("portals/admin/messages"),
 )
 
 
@@ -874,6 +878,12 @@ CHECKS: list[tuple[str, Path, list[str]]] = [
         Path("portals/admin/app/ui/admin-app.tsx"),
         [
             "inviteUrl",
+        ],
+    ),
+    (
+        "admin invite labels present in en-US messages",
+        Path("portals/admin/messages/en-US.json"),
+        [
             "Invite link",
             "Subscription URL",
             "Copy link",

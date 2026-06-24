@@ -10,44 +10,11 @@ import {
 } from "@vxture/design-system";
 import type { Locale } from "@vxture/shared";
 import { persistTheme, type PrefTheme } from "@umbra/shared/preferences";
+import { useTranslations } from "@umbra/shared/i18n";
 import { ruyinBrand, markSrc } from "@/lib/brand";
 import { useLocale } from "@/lib/locale-provider";
 import { useSession } from "@/lib/session";
 import { UserDropdown } from "@/components/user-dropdown";
-
-interface HeaderText {
-  register: string;
-  login: string;
-  workspace: string;
-  display: string;
-  theme: string;
-  language: string;
-  fullscreenEnter: string;
-  fullscreenExit: string;
-}
-
-const HEADER_TEXT: Record<string, HeaderText> = {
-  "en-US": {
-    register: "Sign up",
-    login: "Sign in",
-    workspace: "Workspace",
-    display: "Display controls",
-    theme: "Switch theme",
-    language: "Language",
-    fullscreenEnter: "Enter fullscreen",
-    fullscreenExit: "Exit fullscreen",
-  },
-  "zh-CN": {
-    register: "注册",
-    login: "登录",
-    workspace: "工作台",
-    display: "显示设置",
-    theme: "切换主题",
-    language: "切换语言",
-    fullscreenEnter: "进入全屏",
-    fullscreenExit: "退出全屏",
-  },
-};
 
 /** Element the fullscreen toggle expands; the homepage root carries this id. */
 const PAGE_FULLSCREEN_ID = "ruyin-page-root";
@@ -64,8 +31,8 @@ function authStartUrl(_hint: "login" | "signup"): string {
 export function SiteHeader() {
   const { theme, setTheme } = useTheme();
   const { locale, setLocale } = useLocale();
+  const t = useTranslations("header");
   const session = useSession();
-  const text = HEADER_TEXT[locale] ?? HEADER_TEXT["en-US"];
 
   const user = session.user;
 
@@ -92,11 +59,11 @@ export function SiteHeader() {
           <div
             className="vx-shell-header__action-group"
             role="group"
-            aria-label={text.display}
+            aria-label={t("display")}
           >
             <ShellThemeToggle
               currentTheme={theme}
-              buttonLabel={text.theme}
+              buttonLabel={t("theme")}
               className="vx-shell-icon-button vx-shell-icon-button--toolbar"
               activeClassName="vx-shell-icon-button--active"
               onThemeChange={(next) => {
@@ -106,15 +73,15 @@ export function SiteHeader() {
             />
             <ShellLocaleSwitcher
               currentLocale={locale as Locale}
-              buttonLabel={text.language}
+              buttonLabel={t("language")}
               buttonClassName="vx-shell-icon-button vx-shell-icon-button--toolbar"
               activeButtonClassName="vx-shell-icon-button--active"
               onLocaleChange={(next) => setLocale(next)}
             />
             <ShellFullscreenToggle
               targetId={PAGE_FULLSCREEN_ID}
-              enterLabel={text.fullscreenEnter}
-              exitLabel={text.fullscreenExit}
+              enterLabel={t("fullscreenEnter")}
+              exitLabel={t("fullscreenExit")}
               className="vx-shell-icon-button vx-shell-icon-button--toolbar"
               activeClassName="vx-shell-icon-button--active"
             />
@@ -123,17 +90,17 @@ export function SiteHeader() {
           {session.status === "loading" ? null : session.status === "active" && user ? (
             <>
               <Button variant="ghost" className="site-workspace-btn" asChild>
-                <a href={ruyinBrand.consoleUrl}>{text.workspace}</a>
+                <a href={ruyinBrand.consoleUrl}>{t("workspace")}</a>
               </Button>
               <UserDropdown user={user} />
             </>
           ) : (
             <>
               <Button variant="ghost" asChild>
-                <a href={authStartUrl("signup")}>{text.register}</a>
+                <a href={authStartUrl("signup")}>{t("signUp")}</a>
               </Button>
               <Button asChild>
-                <a href={authStartUrl("login")}>{text.login}</a>
+                <a href={authStartUrl("login")}>{t("signIn")}</a>
               </Button>
             </>
           )}

@@ -18,56 +18,10 @@ import {
   persistTheme,
 } from "@umbra/shared/preferences";
 import { useLocale } from "@umbra/shared/locale-provider";
+import { useTranslations } from "@umbra/shared/i18n";
 import type { VxtureUser } from "./types";
 
 type RoleKey = "owner" | "manager" | "member";
-
-const COPY = {
-  "en-US": {
-    account: "Account menu",
-    verified: "Verified",
-    unverified: "Unverified",
-    profile: "Personal info",
-    settings: "Preferences",
-    themeSystem: "System",
-    themeLight: "Light",
-    themeDark: "Dark",
-    densityCompact: "Compact",
-    densityDefault: "Default",
-    densityComfortable: "Comfortable",
-    fontSmall: "Small",
-    fontDefault: "Default",
-    fontLarge: "Large",
-    switchUser: "Switch user",
-    signout: "Sign out",
-    fallbackName: "Account",
-    roles: { owner: "Owner", manager: "Manager", member: "Member" },
-    tenantOrg: "Organization",
-    tenantPersonal: "Personal",
-  },
-  "zh-CN": {
-    account: "账户菜单",
-    verified: "已认证",
-    unverified: "未认证",
-    profile: "个人信息",
-    settings: "偏好设置",
-    themeSystem: "跟随系统",
-    themeLight: "亮色",
-    themeDark: "暗色",
-    densityCompact: "紧凑",
-    densityDefault: "默认",
-    densityComfortable: "宽松",
-    fontSmall: "小",
-    fontDefault: "默认",
-    fontLarge: "大",
-    switchUser: "切换用户",
-    signout: "退出登录",
-    fallbackName: "账号",
-    roles: { owner: "拥有者", manager: "管理员", member: "成员" },
-    tenantOrg: "组织租户",
-    tenantPersonal: "个人租户",
-  },
-} as const;
 
 /** Drop a leading country code so CN users see only the national number. */
 function nationalPhone(phone: string): string {
@@ -101,7 +55,7 @@ function primaryRole(user: VxtureUser): RoleKey {
 export function UserDropdown({ user }: { user: VxtureUser }) {
   const { locale, setLocale } = useLocale();
   const { mode, setMode, density, setDensity } = useTheme();
-  const t = COPY[locale] ?? COPY["en-US"];
+  const t = useTranslations("account");
 
   const [fontSize, setFontSize] = useState<ShellFontSizePreference>("default");
   useEffect(() => {
@@ -109,7 +63,7 @@ export function UserDropdown({ user }: { user: VxtureUser }) {
   }, []);
 
   const name =
-    user.displayName || user.username || user.email || user.phone || t.fallbackName;
+    user.displayName || user.username || user.email || user.phone || t("fallbackName");
   const uniqueLine =
     user.email && name !== user.email
       ? user.email
@@ -135,21 +89,21 @@ export function UserDropdown({ user }: { user: VxtureUser }) {
         density={density}
         fontSize={fontSize}
         labels={{
-          title: t.settings,
+          title: t("settings"),
           themeOptions: {
-            system: t.themeSystem,
-            light: t.themeLight,
-            dark: t.themeDark,
+            system: t("themeSystem"),
+            light: t("themeLight"),
+            dark: t("themeDark"),
           },
           densityOptions: {
-            compact: t.densityCompact,
-            default: t.densityDefault,
-            comfortable: t.densityComfortable,
+            compact: t("densityCompact"),
+            default: t("densityDefault"),
+            comfortable: t("densityComfortable"),
           },
           fontSizeOptions: {
-            small: t.fontSmall,
-            default: t.fontDefault,
-            large: t.fontLarge,
+            small: t("fontSmall"),
+            default: t("fontDefault"),
+            large: t("fontLarge"),
           },
         }}
         onLocaleChange={(next) => setLocale(next)}
@@ -176,19 +130,19 @@ export function UserDropdown({ user }: { user: VxtureUser }) {
         avatarSrc: user.avatarUrl?.trim() || undefined,
         avatarAlt: name,
         // DS native verification tag, rendered next to the name.
-        statusTag: { label: verified ? t.verified : t.unverified, verified },
+        statusTag: { label: verified ? t("verified") : t("unverified"), verified },
         badges: [
-          { key: "role", label: t.roles[role] },
-          { key: "tenant", label: isOrg ? t.tenantOrg : t.tenantPersonal },
+          { key: "role", label: t(`roles.${role}`) },
+          { key: "tenant", label: isOrg ? t("tenantOrg") : t("tenantPersonal") },
         ],
       }}
-      openLabel={t.account}
+      openLabel={t("account")}
       online
       contentClassName="acct-menu"
       links={[
         {
           key: "profile",
-          label: t.profile,
+          label: t("profile"),
           icon: "user",
           href: "/account",
         },
@@ -197,14 +151,14 @@ export function UserDropdown({ user }: { user: VxtureUser }) {
       actions={[
         {
           key: "switch-user",
-          label: t.switchUser,
+          label: t("switchUser"),
           icon: "user-switch",
           // Re-authenticate as someone else via the OIDC RP login entry.
           onClick: () => window.location.assign("/auth/login"),
         },
         {
           key: "sign-out",
-          label: t.signout,
+          label: t("signout"),
           icon: "sign-out",
           onClick: () => window.location.assign("/auth/logout"),
         },

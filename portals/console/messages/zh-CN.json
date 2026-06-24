@@ -1,0 +1,80 @@
+{
+  "header": {
+    "display": "显示设置",
+    "theme": "切换主题",
+    "language": "切换语言",
+    "fullscreenEnter": "进入全屏",
+    "fullscreenExit": "退出全屏"
+  },
+  "account": {
+    "account": "账户菜单",
+    "verified": "已认证",
+    "unverified": "未认证",
+    "profile": "个人信息",
+    "settings": "偏好设置",
+    "themeSystem": "跟随系统",
+    "themeLight": "亮色",
+    "themeDark": "暗色",
+    "densityCompact": "紧凑",
+    "densityDefault": "默认",
+    "densityComfortable": "宽松",
+    "fontSmall": "小",
+    "fontDefault": "默认",
+    "fontLarge": "大",
+    "switchUser": "切换用户",
+    "signout": "退出登录",
+    "fallbackName": "账号",
+    "roles": {
+      "owner": "拥有者",
+      "manager": "管理员",
+      "member": "成员"
+    },
+    "tenantOrg": "组织租户",
+    "tenantPersonal": "个人租户"
+  },
+  "tenant": {
+    "open": "租户",
+    "tenantId": "租户 ID",
+    "workspace": "工作区",
+    "role": "角色",
+    "status": "状态",
+    "members": "成员",
+    "plan": "套餐",
+    "settings": "租户设置",
+    "tenantOrg": "组织租户",
+    "tenantPersonal": "个人租户",
+    "personalWorkspace": "个人工作区",
+    "planFree": "免费版",
+    "member": "成员",
+    "statusActive": "正常",
+    "placeholder": "未设置",
+    "roles": {
+      "owner": "拥有者",
+      "manager": "管理员",
+      "admin": "管理员",
+      "member": "成员"
+    }
+  },
+  "personalInfo": {
+    "overview": "概览",
+    "contactAndId": "联系方式与标识",
+    "accountId": "账号 ID",
+    "email": "邮箱",
+    "phone": "手机",
+    "accountStatus": "账号状态",
+    "org": "组织",
+    "workspace": "工作空间",
+    "roles": "角色",
+    "userType": "用户类型",
+    "verified": "已验证",
+    "unverified": "未验证",
+    "idFallback": "ID",
+    "idHint": "你的全局 Vxture 账号标识(OIDC subject)。稳定且唯一,联系支持时可提供。",
+    "copy": "复制",
+    "copied": "已复制",
+    "copyOk": "账号 ID 已复制",
+    "copyFail": "复制失败",
+    "none": "-",
+    "fallbackName": "账号"
+  }
+}

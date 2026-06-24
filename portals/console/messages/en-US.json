@@ -1,0 +1,80 @@
+{
+  "header": {
+    "display": "Display controls",
+    "theme": "Switch theme",
+    "language": "Language",
+    "fullscreenEnter": "Enter fullscreen",
+    "fullscreenExit": "Exit fullscreen"
+  },
+  "account": {
+    "account": "Account menu",
+    "verified": "Verified",
+    "unverified": "Unverified",
+    "profile": "Personal info",
+    "settings": "Preferences",
+    "themeSystem": "System",
+    "themeLight": "Light",
+    "themeDark": "Dark",
+    "densityCompact": "Compact",
+    "densityDefault": "Default",
+    "densityComfortable": "Comfortable",
+    "fontSmall": "Small",
+    "fontDefault": "Default",
+    "fontLarge": "Large",
+    "switchUser": "Switch user",
+    "signout": "Sign out",
+    "fallbackName": "Account",
+    "roles": {
+      "owner": "Owner",
+      "manager": "Manager",
+      "member": "Member"
+    },
+    "tenantOrg": "Organization",
+    "tenantPersonal": "Personal"
+  },
+  "tenant": {
+    "open": "Tenant",
+    "tenantId": "Tenant ID",
+    "workspace": "Workspace",
+    "role": "Role",
+    "status": "Status",
+    "members": "Members",
+    "plan": "Plan",
+    "settings": "Tenant settings",
+    "tenantOrg": "Organization",
+    "tenantPersonal": "Personal",
+    "personalWorkspace": "Personal workspace",
+    "planFree": "Free",
+    "member": "member",
+    "statusActive": "Active",
+    "placeholder": "Not set",
+    "roles": {
+      "owner": "Owner",
+      "manager": "Manager",
+      "admin": "Manager",
+      "member": "Member"
+    }
+  },
+  "personalInfo": {
+    "overview": "Overview",
+    "contactAndId": "Contact and identifiers",
+    "accountId": "Account ID",
+    "email": "Email",
+    "phone": "Phone",
+    "accountStatus": "Account status",
+    "org": "Organization",
+    "workspace": "Workspace",
+    "roles": "Roles",
+    "userType": "User type",
+    "verified": "verified",
+    "unverified": "unverified",
+    "idFallback": "ID",
+    "idHint": "Your global Vxture account identifier (OIDC subject). Stable and unique; use it for support requests.",
+    "copy": "Copy",
+    "copied": "Copied",
+    "copyOk": "Account ID copied",
+    "copyFail": "Copy failed",
+    "none": "-",
+    "fallbackName": "Account"
+  }
+}

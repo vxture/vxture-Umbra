@@ -1,0 +1,43 @@
+{
+  "header": {
+    "signUp": "注册",
+    "signIn": "登录",
+    "workspace": "工作台",
+    "display": "显示设置",
+    "theme": "切换主题",
+    "language": "切换语言",
+    "fullscreenEnter": "进入全屏",
+    "fullscreenExit": "退出全屏"
+  },
+  "hero": {
+    "lead": "打造你的专属智能搭档",
+    "action": "VXTURE STUDIO"
+  },
+  "account": {
+    "account": "账户菜单",
+    "verified": "已认证",
+    "unverified": "未认证",
+    "profile": "个人信息",
+    "tenantSettings": "租户设置",
+    "settings": "偏好设置",
+    "themeSystem": "跟随系统",
+    "themeLight": "亮色",
+    "themeDark": "暗色",
+    "densityCompact": "紧凑",
+    "densityDefault": "默认",
+    "densityComfortable": "宽松",
+    "fontSmall": "小",
+    "fontDefault": "默认",
+    "fontLarge": "大",
+    "switchUser": "切换用户",
+    "signout": "退出登录",
+    "fallbackName": "账号",
+    "roles": {
+      "owner": "拥有者",
+      "manager": "管理员",
+      "member": "成员"
+    },
+    "tenantOrg": "组织租户",
+    "tenantPersonal": "个人租户"
+  }
+}
