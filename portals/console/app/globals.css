@@ -241,11 +241,21 @@ body {
 }
 
 /* Tenant popover: slightly wider than the account menu to accommodate more
-   content columns. Reuses .acct-menu for z-index; overrides the width here. */
+   content columns. Reuses .acct-menu for z-index; overrides the width here.
+   Unlike the account menu (whose surface is painted by the DS .vx-shell-user-menu
+   class), this is a bare PopoverContent, so it must paint its own surface -
+   background, border, radius and shadow are taken from the DS account-menu
+   tokens so both header modules read as one system. */
 .tenant-menu {
   width: 360px;
   max-width: min(92vw, 420px);
   padding: var(--vx-space-md);
+  background: var(--vx-color-surface);
+  color: var(--vx-color-text-primary);
+  border: var(--vx-control-border-width) solid
+    color-mix(in srgb, var(--vx-color-brand-200) 65%, transparent);
+  border-radius: var(--vx-shell-user-menu-radius);
+  box-shadow: var(--vx-shell-user-menu-shadow);
 }
 
 /* Identity header - mirrors the DS account-menu profile block
