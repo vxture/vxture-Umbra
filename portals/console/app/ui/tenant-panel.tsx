@@ -47,19 +47,24 @@ function TenantRow({
 export function TenantPanel({ user }: { user: VxtureUser }) {
   const t = useTranslations("tenant");
 
-  // Org vs personal is decided ONLY by the IdP userType claim. active_org /
-  // orgId is the active *tenant* id - every account (personal included) has one,
-  // so it must NOT be used as an "is an organization" signal.
-  const isOrg = user.userType === "organization";
+  // Org vs personal is decided by the IdP orgType claim ("personal" | "team").
+  // NOT userType (a realm marker: tenant_user|operator, never "organization") and
+  // NOT active_org/orgId (the active *tenant* id every account carries). Absent
+  // orgType defaults to personal - the unified model gives every account a
+  // personal org.
+  const isOrg = (user.orgType || "").toLowerCase() === "team";
+  const tenantType = isOrg ? t("tenantOrg") : t("tenantPersonal");
+
+  // Fallbacks when the IdP omits the display names: org name -> "<owner> Personal
+  // Org" (owner = the real display name / username from the session), workspace
+  // name -> "Default workspace".
+  const ownerName = user.displayName?.trim() || user.username?.trim() || "";
   const tenantName =
     user.orgName?.trim() ||
-    (isOrg ? user.orgId : "") ||
-    t("personalWorkspace");
-  const tenantType = isOrg ? t("tenantOrg") : t("tenantPersonal");
+    (ownerName ? t("personalOrgFallback", { name: ownerName }) : t("personalWorkspace"));
   const tenantId = user.tenantId || user.orgId || "-";
 
-  const workspace =
-    user.workspaceName?.trim() || user.workspaceId || t("placeholder");
+  const workspace = user.workspaceName?.trim() || t("defaultWorkspace");
 
   const roleKey = (user.roles?.[0] || user.role || "member").toLowerCase();
   const roleLabel =
