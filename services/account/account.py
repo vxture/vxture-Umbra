@@ -349,11 +349,6 @@ def init_db() -> None:
               username TEXT NOT NULL UNIQUE,
               display_name TEXT,
               display_name_key TEXT,
-              -- Retired local-password IdP columns: kept NOT NULL for legacy rows.
-              -- Vxture SSO is the sole identity source; binding writes inert
-              -- placeholders here (see bind_invite_to_vxture_account).
-              password_salt TEXT NOT NULL,
-              password_hash TEXT NOT NULL,
               subscription_url TEXT NOT NULL,
               created_at TEXT NOT NULL,
               last_login_at TEXT,
@@ -447,6 +442,12 @@ def init_db() -> None:
         # user). See docs/design/platform-identity.md.
         if "avatar_url" not in columns:
             conn.execute("ALTER TABLE accounts ADD COLUMN avatar_url TEXT")
+        # Drop the retired local-password columns (OIDC is the sole IdP).
+        # SQLite >= 3.35 supports DROP COLUMN; idempotent (only if present).
+        if "password_salt" in columns:
+            conn.execute("ALTER TABLE accounts DROP COLUMN password_salt")
+        if "password_hash" in columns:
+            conn.execute("ALTER TABLE accounts DROP COLUMN password_hash")
 
         # Generalize invites to carry the target application (default 'vpn').
         invite_columns = {row["name"] for row in conn.execute("PRAGMA table_info(invites)").fetchall()}
@@ -537,39 +538,86 @@ def marzban_users(token: str) -> list[dict[str, Any]]:
     return []
 
 
-def fetch_marzban_subscription_url(username: str) -> str | None:
+def marzban_revoke_sub(username: str) -> str | None:
+    """Revoke (regenerate) the user's Marzban subscription token. The old
+    /sub/<token> stops working immediately; returns the new subscription_url."""
     if not MARZBAN_ADMIN_USER or not MARZBAN_ADMIN_PASSWORD:
         return None
     token = marzban_login(MARZBAN_ADMIN_USER, MARZBAN_ADMIN_PASSWORD)
-    user = marzban_user(token, username)
+    safe = urllib.parse.quote(username, safe="")
+    user = request_json(f"{MARZBAN_BASE_URL}/api/user/{safe}/revoke_sub", token=token, data={})
     sub_url = user.get("subscription_url")
     if not isinstance(sub_url, str) or "/sub/" not in sub_url:
         return None
-    token_path_from_url(sub_url)
     return sub_url
 
 
 def reset_bound_account_subscription_url(username: str) -> str:
+    """User-initiated subscription rotation: revoke the Marzban token (old URL
+    dies) and store the new one. All-or-nothing: if the revoke fails nothing
+    changes. Only an active VPN binding may rotate."""
     try:
-        fresh_sub_url = fetch_marzban_subscription_url(username)
-        if not fresh_sub_url:
-            return "failed"
         with db() as conn:
             account = conn.execute(
-                "SELECT subscription_url FROM accounts WHERE username = ? AND disabled = 0",
-                (username,),
+                "SELECT id FROM accounts WHERE username = ? AND disabled = 0", (username,)
             ).fetchone()
             if not account:
                 return "failed"
-            changed = fresh_sub_url != account["subscription_url"]
-            if changed:
-                conn.execute("UPDATE accounts SET subscription_url = ? WHERE username = ?", (fresh_sub_url, username))
-            # Keep the VPN app binding metadata in sync (user-side source of truth).
+            binding = conn.execute(
+                "SELECT 1 FROM app_bindings WHERE app_key = 'vpn' AND resource_ref = ? AND status = 'active'",
+                (username,),
+            ).fetchone()
+            if not binding:
+                return "failed"
+        new_sub_url = marzban_revoke_sub(username)  # external; abort on failure
+        if not new_sub_url:
+            return "failed"
+        with db() as conn:
+            conn.execute(
+                "UPDATE accounts SET subscription_url = ? WHERE username = ? AND disabled = 0",
+                (new_sub_url, username),
+            )
             conn.execute(
                 "UPDATE app_bindings SET metadata = ?, updated_at = ? WHERE app_key = 'vpn' AND resource_ref = ?",
-                (json.dumps({"subscription_url": fresh_sub_url}, separators=(",", ":")), iso_now(), username),
+                (json.dumps({"subscription_url": new_sub_url}, separators=(",", ":")), iso_now(), username),
             )
-            return "updated" if changed else "current"
+        return "updated"
+    except Exception:
+        return "failed"
+
+
+def unbind_account(username: str) -> str:
+    """Admin unbind = revoke authorization. Rotate the Marzban token (old sub
+    dies immediately), then detach: binding -> revoked, account -> disabled,
+    invite -> disabled. All-or-nothing on the revoke. To restore, the admin
+    regenerates an invite and the user re-binds (USER name unchanged)."""
+    try:
+        with db() as conn:
+            account = conn.execute(
+                "SELECT id FROM accounts WHERE username = ? AND disabled = 0", (username,)
+            ).fetchone()
+            if not account:
+                return "not_bound"
+        new_sub_url = marzban_revoke_sub(username)  # external; abort on failure
+        if not new_sub_url:
+            return "failed"
+        now = iso_now()
+        conn = db()
+        try:
+            conn.execute("BEGIN IMMEDIATE")
+            conn.execute(
+                "UPDATE app_bindings SET status = 'revoked', updated_at = ? WHERE resource_ref = ? AND status = 'active'",
+                (now, username),
+            )
+            conn.execute("UPDATE accounts SET disabled = 1 WHERE username = ? AND disabled = 0", (username,))
+            conn.execute("UPDATE invites SET disabled = 1 WHERE username = ? AND disabled = 0", (username,))
+            conn.commit()
+        except Exception:
+            conn.rollback()
+            raise
+        finally:
+            conn.close()
+        return "unbound"
     except Exception:
         return "failed"
 
@@ -690,12 +738,14 @@ def bind_invite_to_vxture_account(code: str, user: dict[str, Any]) -> dict[str, 
         conn = db()
         conn.execute("BEGIN IMMEDIATE")
         invite = conn.execute("SELECT * FROM invites WHERE code_hash = ?", (code_digest,)).fetchone()
-        if not invite or invite["disabled"] or invite["used_at"]:
-            raise ValueError("Invitation is invalid or already used.")
+        # Invites are persistent (re-verifiable), not one-shot: only disabled or
+        # expired makes them invalid. used_at is recorded but does not invalidate.
+        if not invite or invite["disabled"]:
+            raise ValueError("Invitation is invalid or disabled.")
         expires = parse_iso(invite["expires_at"])
         if expires and expires < utcnow():
             raise ValueError("Invitation is invalid or already used.")
-        if conn.execute("SELECT id FROM accounts WHERE username = ?", (invite["username"],)).fetchone():
+        if conn.execute("SELECT id FROM accounts WHERE username = ? AND disabled = 0", (invite["username"],)).fetchone():
             raise ValueError("This user code is already bound.")
 
         info = subscription_info(invite["subscription_url"])
@@ -709,17 +759,15 @@ def bind_invite_to_vxture_account(code: str, user: dict[str, Any]) -> dict[str, 
             """
             INSERT INTO accounts(
               username, display_name, display_name_key,
-              password_salt, password_hash, subscription_url, created_at,
+              subscription_url, created_at,
               vxture_account_id, vxture_email, vxture_tenant_id, bound_at
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 invite["username"],
                 display_name,
                 display_name_key,
-                "vxture-sso",
-                "vxture-sso",
                 invite["subscription_url"],
                 now,
                 user_id,
@@ -751,7 +799,7 @@ def bind_invite_to_vxture_account(code: str, user: dict[str, Any]) -> dict[str, 
         conn.execute(
             """
             UPDATE invites
-               SET used_at = ?, used_by_account_id = ?, code_plain = NULL
+               SET used_at = ?, used_by_account_id = ?
              WHERE id = ?
             """,
             (now, account_id, invite["id"]),
@@ -939,8 +987,8 @@ class AccountHandler(BaseHTTPRequestHandler):
             self.api_admin_logout()
         elif path == "/api/account/admin/invites":
             self.api_admin_create_invite()
-        elif path == "/api/account/admin/reset-subscription":
-            self.api_admin_reset_subscription()
+        elif path == "/api/account/admin/unbind":
+            self.api_admin_unbind()
         elif path == "/api/account/admin/revoke":
             self.api_admin_revoke_invite()
         elif path == "/invites/login":
@@ -949,8 +997,8 @@ class AccountHandler(BaseHTTPRequestHandler):
             self.admin_logout()
         elif path == "/invites/create":
             self.admin_create_invite()
-        elif path == "/invites/reset-subscription":
-            self.admin_reset_subscription()
+        elif path == "/invites/unbind":
+            self.admin_unbind()
         elif path == "/invites/revoke":
             self.admin_revoke_invite()
         else:
@@ -1328,7 +1376,7 @@ class AccountHandler(BaseHTTPRequestHandler):
                 "UPDATE invites SET disabled = 1, code_plain = NULL WHERE username = ? AND used_at IS NULL AND disabled = 0",
                 (username,),
             )
-            if conn.execute("SELECT id FROM accounts WHERE username = ?", (username,)).fetchone():
+            if conn.execute("SELECT id FROM accounts WHERE username = ? AND disabled = 0", (username,)).fetchone():
                 conn.rollback()
                 self.json(409, {"status": "failed", "message": "User is already bound."})
                 return
@@ -1342,14 +1390,14 @@ class AccountHandler(BaseHTTPRequestHandler):
             conn.commit()
         self.json(200, {"status": "created", "username": username, "inviteCode": code, "inviteUrl": invite_url(code)})
 
-    def api_admin_reset_subscription(self) -> None:
+    def api_admin_unbind(self) -> None:
         if not self.require_invite_admin():
             return
         username = str(self.json_body().get("username") or "").upper()
         if not USER_RE.match(username):
             self.json(400, {"status": "failed"})
             return
-        self.json(200, {"status": reset_bound_account_subscription_url(username)})
+        self.json(200, {"status": unbind_account(username)})
 
     def api_admin_revoke_invite(self) -> None:
         if not self.require_invite_admin():
@@ -1443,9 +1491,10 @@ class AccountHandler(BaseHTTPRequestHandler):
                 invite_cell = f'<code id="{sub_id}">{html.escape(account["subscription_url"] or "-")}</code>'
                 action = (
                     f'<button class="secondary" type="button" data-copy="{sub_id}">Copy URL</button>'
-                    '<form method="post" action="/invites/reset-subscription">'
+                    '<form method="post" action="/invites/unbind" '
+                    'onsubmit="return confirm(\'Unbind this user? The old subscription stops working immediately; restore needs a new invite + re-bind.\');">'
                     f'<input type="hidden" name="username" value="{html.escape(username)}">'
-                    '<button class="danger" type="submit">Reset URL</button>'
+                    '<button class="danger" type="submit">Unbind</button>'
                     '</form>'
                 )
             elif invite:
@@ -1560,7 +1609,7 @@ document.addEventListener("click", function (event) {{
                 "UPDATE invites SET disabled = 1, code_plain = NULL WHERE username = ? AND used_at IS NULL AND disabled = 0",
                 (username,),
             )
-            if conn.execute("SELECT id FROM accounts WHERE username = ?", (username,)).fetchone():
+            if conn.execute("SELECT id FROM accounts WHERE username = ? AND disabled = 0", (username,)).fetchone():
                 conn.rollback()
                 self.redirect("/invites/")
                 return
@@ -1574,16 +1623,16 @@ document.addEventListener("click", function (event) {{
             conn.commit()
         self.redirect("/invites/")
 
-    def admin_reset_subscription(self) -> None:
+    def admin_unbind(self) -> None:
         if not self.admin_session():
             self.redirect("/invites/")
             return
         username = self.form().get("username", "").upper()
         if not USER_RE.match(username):
-            self.redirect("/invites/?subscription=failed")
+            self.redirect("/invites/?unbind=failed")
             return
-        status = reset_bound_account_subscription_url(username)
-        self.redirect(f"/invites/?subscription={status}")
+        status = unbind_account(username)
+        self.redirect(f"/invites/?unbind={status}")
 
     def admin_revoke_invite(self) -> None:
         if not self.admin_session():
