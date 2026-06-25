@@ -83,19 +83,6 @@ def request_headers(source: BaseHTTPRequestHandler) -> dict[str, str]:
     return headers
 
 
-def _build_tls_context() -> ssl.SSLContext:
-    """If MARZBAN_CA_CERT points to a CA bundle, verify Marzban's chain against it
-    (hostname check left off: the internal cert CN need not match the service
-    name); otherwise fall back to an explicit unverified context for the
-    self-signed cert reached over the private Docker network."""
-    ca = os.environ.get("MARZBAN_CA_CERT", "").strip()
-    if ca and os.path.exists(ca):
-        ctx = ssl.create_default_context(cafile=ca)
-        ctx.check_hostname = False
-        return ctx
-    return ssl._create_unverified_context()
-
-
 class _NoRedirect(urllib.request.HTTPRedirectHandler):
     """Refuse redirects: Marzban never legitimately redirects /sub, so following a
     3xx would let a spoofed upstream bounce us to an arbitrary host (SSRF)."""
@@ -104,12 +91,11 @@ class _NoRedirect(urllib.request.HTTPRedirectHandler):
         return None
 
 
-_OPENER = urllib.request.build_opener(_NoRedirect, urllib.request.HTTPSHandler(context=_build_tls_context()))
-
-
 def open_url(url: str, headers: dict[str, str], timeout: int = 10):
+    context = ssl._create_unverified_context()
+    opener = urllib.request.build_opener(_NoRedirect, urllib.request.HTTPSHandler(context=context))
     request = urllib.request.Request(url, headers=headers, method="GET")
-    return _OPENER.open(request, timeout=timeout)
+    return opener.open(request, timeout=timeout)
 
 
 def fetch_username(token: str) -> str | None:

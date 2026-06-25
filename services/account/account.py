@@ -83,21 +83,7 @@ def require_secret(name: str, value: str) -> bytes:
 
 SESSION_KEY = require_secret("ACCOUNT_SESSION_SECRET", SESSION_SECRET)
 INVITE_KEY = require_secret("ACCOUNT_INVITE_SECRET", INVITE_SECRET)
-def _build_tls_context() -> ssl.SSLContext:
-    """TLS context for the internal Marzban calls. If MARZBAN_CA_CERT points to a
-    CA bundle, verify the chain against it (the hostname check is left off because
-    the internal cert CN need not match the service name); otherwise fall back to
-    an explicit unverified context for the self-signed cert reached over the
-    private Docker network."""
-    ca = os.environ.get("MARZBAN_CA_CERT", "").strip()
-    if ca and os.path.exists(ca):
-        ctx = ssl.create_default_context(cafile=ca)
-        ctx.check_hostname = False
-        return ctx
-    return ssl._create_unverified_context()
-
-
-TLS_CONTEXT = _build_tls_context()
+TLS_CONTEXT = ssl._create_unverified_context()
 
 
 class _NoRedirect(urllib.request.HTTPRedirectHandler):
@@ -109,8 +95,9 @@ class _NoRedirect(urllib.request.HTTPRedirectHandler):
 
 
 # Every outbound call targets the fixed internal Marzban through this opener: it
-# pins the TLS context and refuses redirects, so a spoofed or compromised
-# upstream can neither strip TLS nor bounce the request to an arbitrary host.
+# refuses redirects, so a spoofed or compromised upstream cannot bounce the
+# request to an arbitrary host. (Verifying the chain against the internal Marzban
+# cert is a follow-up: it needs the cert SAN confirmed and a CA provisioned.)
 _OPENER = urllib.request.build_opener(_NoRedirect, urllib.request.HTTPSHandler(context=TLS_CONTEXT))
 
 
