@@ -23,6 +23,30 @@ fi
 
 log_banner "Umbra - Generate REALITY Keys"
 
+# -- Internal Marzban service certificate -------------------------------------
+# Marzban's API port 8000 is internal-only (nginx terminates public TLS on 8443
+# and proxies to it with proxy_ssl_verify off). Give it a self-signed cert whose
+# SAN matches the in-cluster service name so account + subproxy can verify the
+# chain AND the hostname instead of skipping TLS. Independent of the public edge
+# certs; idempotent (kept across deploys to avoid breaking live verification).
+INTERNAL_TLS_DIR="$DATA_DIR/marzban/internal-tls"
+INTERNAL_CERT="$INTERNAL_TLS_DIR/cert.pem"
+INTERNAL_KEY="$INTERNAL_TLS_DIR/key.pem"
+if [[ -f "$INTERNAL_CERT" && -f "$INTERNAL_KEY" ]]; then
+  log_info "internal Marzban TLS cert already exists - skipping"
+else
+  log_step "Generating internal Marzban TLS cert (SAN=umbra-marzban)..."
+  mkdir -p "$INTERNAL_TLS_DIR"
+  ( umask 077
+    openssl req -x509 -newkey rsa:2048 -nodes -days 3650 \
+      -keyout "$INTERNAL_KEY" -out "$INTERNAL_CERT" \
+      -subj "/CN=umbra-marzban" \
+      -addext "subjectAltName=DNS:umbra-marzban,DNS:localhost" 2>/dev/null )
+  chmod 644 "$INTERNAL_CERT"
+  chmod 600 "$INTERNAL_KEY"
+  log_ok "internal Marzban TLS cert written (SAN=umbra-marzban)"
+fi
+
 REALITY_FILE="$DATA_DIR/private/reality.json"
 
 if [[ -f "$REALITY_FILE" ]]; then

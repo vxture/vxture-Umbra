@@ -91,8 +91,18 @@ class _NoRedirect(urllib.request.HTTPRedirectHandler):
         return None
 
 
+def _build_tls_context() -> ssl.SSLContext:
+    """Verify the internal Marzban chain + hostname against MARZBAN_CA_CERT
+    (SAN=umbra-marzban) when provisioned; fall back to unverified only when no
+    internal CA is set."""
+    ca = os.environ.get("MARZBAN_CA_CERT", "").strip()
+    if ca and os.path.exists(ca):
+        return ssl.create_default_context(cafile=ca)
+    return ssl._create_unverified_context()  # NOSONAR: fallback only when no internal CA is set
+
+
 def open_url(url: str, headers: dict[str, str], timeout: int = 10):
-    context = ssl._create_unverified_context()
+    context = _build_tls_context()
     opener = urllib.request.build_opener(_NoRedirect, urllib.request.HTTPSHandler(context=context))
     request = urllib.request.Request(url, headers=headers, method="GET")
     return opener.open(request, timeout=timeout)

@@ -83,7 +83,17 @@ def require_secret(name: str, value: str) -> bytes:
 
 SESSION_KEY = require_secret("ACCOUNT_SESSION_SECRET", SESSION_SECRET)
 INVITE_KEY = require_secret("ACCOUNT_INVITE_SECRET", INVITE_SECRET)
-TLS_CONTEXT = ssl._create_unverified_context()
+def _build_tls_context() -> ssl.SSLContext:
+    """TLS context for the internal Marzban calls. When MARZBAN_CA_CERT points to
+    the internal cert (SAN=umbra-marzban), verify the chain AND the hostname.
+    Fall back to an unverified context only when no internal CA is provisioned."""
+    ca = os.environ.get("MARZBAN_CA_CERT", "").strip()
+    if ca and os.path.exists(ca):
+        return ssl.create_default_context(cafile=ca)
+    return ssl._create_unverified_context()  # NOSONAR: fallback only when no internal CA is set
+
+
+TLS_CONTEXT = _build_tls_context()
 
 
 class _NoRedirect(urllib.request.HTTPRedirectHandler):
@@ -95,9 +105,9 @@ class _NoRedirect(urllib.request.HTTPRedirectHandler):
 
 
 # Every outbound call targets the fixed internal Marzban through this opener: it
-# refuses redirects, so a spoofed or compromised upstream cannot bounce the
-# request to an arbitrary host. (Verifying the chain against the internal Marzban
-# cert is a follow-up: it needs the cert SAN confirmed and a CA provisioned.)
+# pins the TLS context (verified against MARZBAN_CA_CERT when provisioned) and
+# refuses redirects, so a spoofed/compromised upstream can neither strip TLS nor
+# bounce the request to an arbitrary host.
 _OPENER = urllib.request.build_opener(_NoRedirect, urllib.request.HTTPSHandler(context=TLS_CONTEXT))
 
 
