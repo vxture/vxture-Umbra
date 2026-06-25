@@ -127,6 +127,8 @@ LOCALIZED_CONTENT_PREFIXES = (
     Path("portals/admin/messages"),
     # shared locale display names (native names are CJK localized content).
     Path("portals/packages/shared/src/locales.ts"),
+    # OIDC RP integration standard: Chinese spec kept verbatim (single-file exempt).
+    Path("docs/design/identity-app-integration-standard.md"),
 )
 
 
@@ -163,7 +165,7 @@ CHECKS: list[tuple[str, Path, list[str]]] = [
         [
             '${1:-}',
             "Checking environment value formats",
-            "CONSOLE_DOMAIN ADMIN_DOMAIN PASS_DOMAIN",
+            "CONSOLE_DOMAIN ADMIN_DOMAIN PAS_DOMAIN",
             "REALITY_SHORT_ID_LENGTH must be a positive even integer",
             "MARZBAN_SSL_CA_TYPE must be public or private",
             "SUBSCRIPTION_URL_PREFIX must be https://${SUB_DOMAIN}",
@@ -382,7 +384,7 @@ CHECKS: list[tuple[str, Path, list[str]]] = [
         "deploy verify checks every active certificate domain",
         Path("deploy/scripts/24-verify-deployment.sh"),
         [
-            'for domain in "$APEX_DOMAIN" "$WWW_DOMAIN" "$EDGE_DOMAIN" "$SUB_DOMAIN" "$CONSOLE_DOMAIN" "$ADMIN_DOMAIN" "$PASS_DOMAIN"; do',
+            'for domain in "$APEX_DOMAIN" "$WWW_DOMAIN" "$EDGE_DOMAIN" "$SUB_DOMAIN" "$CONSOLE_DOMAIN" "$ADMIN_DOMAIN" "$PAS_DOMAIN"; do',
             "cert valid until",
         ],
     ),
@@ -547,7 +549,7 @@ CHECKS: list[tuple[str, Path, list[str]]] = [
     ),
     (
         "account api Dockerfile supports local base image override",
-        Path("docker/ruyin-account-api.Dockerfile"),
+        Path("services/account/Dockerfile"),
         [
             "ARG PYTHON_BASE_IMAGE=python:3.12-alpine",
             "FROM ${PYTHON_BASE_IMAGE}",
@@ -555,7 +557,7 @@ CHECKS: list[tuple[str, Path, list[str]]] = [
     ),
     (
         "subproxy Dockerfile supports local base image override",
-        Path("docker/ruyin-subproxy.Dockerfile"),
+        Path("services/subproxy/Dockerfile"),
         [
             "ARG PYTHON_BASE_IMAGE=python:3.12-alpine",
             "FROM ${PYTHON_BASE_IMAGE}",

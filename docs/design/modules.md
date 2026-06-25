@@ -36,7 +36,7 @@ only on the admin vhost. See [`../specs/security.md`](../specs/security.md)
 | `03-vpn.conf.template` | `EDGE_DOMAIN` | Tombstone: valid cert + `return 444` (no web surface; node is REALITY on `:443`) |
 | `04-sub.conf.template` | `sub.ruyin.ai` | `umbra-subproxy:8080` for native Marzban `/sub/<token>` metadata normalization |
 | `05-console.conf.template` | `console.ruyin.ai` | `umbra-account-web:3220` + `umbra-account:3281` |
-| `06-pass.conf.template` | `pas.ruyin.ai` | `umbra-vaultwarden:80` |
+| `06-pas.conf.template` | `pas.ruyin.ai` | `umbra-vaultwarden:80` |
 | `07-admin.conf.template` | `admin.ruyin.ai` | `umbra-marzban:8000` + `/invites` to account web/API |
 
 ### Stream Config Spec

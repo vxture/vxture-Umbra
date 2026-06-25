@@ -94,7 +94,7 @@ EDGE_DOMAIN=vpn.ruyin.ai
 SUB_DOMAIN=sub.ruyin.ai
 CONSOLE_DOMAIN=console.ruyin.ai
 ADMIN_DOMAIN=admin.ruyin.ai
-PASS_DOMAIN=pas.ruyin.ai
+PAS_DOMAIN=pas.ruyin.ai
 
 # -- Paths -----------------------------------------------
 RUNTIME_DIR=/srv/umbra/runtime

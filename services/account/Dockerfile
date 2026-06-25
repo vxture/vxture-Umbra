@@ -7,7 +7,7 @@ WORKDIR /app
 # app-bff. Pure-Python, no build toolchain needed on alpine.
 RUN pip install --no-cache-dir redis==5.0.8
 
-COPY services/account/account.py /app/account.py
+COPY account.py /app/account.py
 
 ENV ACCOUNT_PORT=3281
 EXPOSE 3281

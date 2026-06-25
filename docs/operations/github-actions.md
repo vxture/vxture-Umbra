@@ -272,8 +272,8 @@ Authoritative path map (kept honest by the exhaustiveness guard below):
 | `portals/console/**` | rebuild `ruyin-console` |
 | `portals/admin/**` | rebuild `ruyin-admin` |
 | `brand/**` | rebuild `ruyin-website` + `ruyin-console` + `ruyin-admin` (brand build-context) |
-| `services/account/**`, `docker/ruyin-account-api.Dockerfile` | rebuild `ruyin-account-api` |
-| `services/subproxy/**`, `docker/ruyin-subproxy.Dockerfile` | rebuild `ruyin-subproxy` |
+| `services/account/**` (incl. its Dockerfile) | rebuild `ruyin-account-api` |
+| `services/subproxy/**` (incl. its Dockerfile) | rebuild `ruyin-subproxy` |
 | `docker/ruyin-nginx.Dockerfile` | rebuild `ruyin-nginx` |
 | `configs/**`, `deploy/**`, `docker-compose.yml` | deployable, rebuild nothing |
 | `docs/**`, `.claude/**`, `.github/**`, `scripts/**`, root `*.md` / `LICENSE` / dotfiles / `.env.example` | non-deployable, skip |

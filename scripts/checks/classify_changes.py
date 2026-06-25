@@ -82,9 +82,9 @@ def classify_file(path):
     if path.startswith("brand/"):
         # The brand build-context feeds all three portal images.
         return ("image", frozenset({"ruyin-website", "ruyin-console", "ruyin-admin"}))
-    if path.startswith("services/account/") or path == "docker/ruyin-account-api.Dockerfile":
+    if path.startswith("services/account/"):
         return ("image", frozenset({"ruyin-account-api"}))
-    if path.startswith("services/subproxy/") or path == "docker/ruyin-subproxy.Dockerfile":
+    if path.startswith("services/subproxy/"):
         return ("image", frozenset({"ruyin-subproxy"}))
     if path == "docker/ruyin-nginx.Dockerfile":
         return ("image", frozenset({"ruyin-nginx"}))

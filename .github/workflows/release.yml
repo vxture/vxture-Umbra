@@ -109,12 +109,12 @@ jobs:
             dockerfile: ./docker/ruyin-nginx.Dockerfile
             build_contexts: ""
           - image: ruyin-account-api
-            context: .
-            dockerfile: ./docker/ruyin-account-api.Dockerfile
+            context: ./services/account
+            dockerfile: ./services/account/Dockerfile
             build_contexts: ""
           - image: ruyin-subproxy
-            context: .
-            dockerfile: ./docker/ruyin-subproxy.Dockerfile
+            context: ./services/subproxy
+            dockerfile: ./services/subproxy/Dockerfile
             build_contexts: ""
 
     steps:

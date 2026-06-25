@@ -104,7 +104,7 @@ EDGE_DOMAIN=vpn.ruyin.ai             # VPN proxy node host (REALITY :443)
 SUB_DOMAIN=sub.ruyin.ai              # subscription endpoint
 CONSOLE_DOMAIN=console.ruyin.ai
 ADMIN_DOMAIN=admin.ruyin.ai
-PASS_DOMAIN=pas.ruyin.ai
+PAS_DOMAIN=pas.ruyin.ai
 
 # -- Marzban admin credentials --------------------------
 MARZBAN_ADMIN_USER=admin

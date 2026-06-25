@@ -163,7 +163,7 @@ if [[ -n "${OIDC_ISSUER:-}" ]]; then
   fi
   rm -f "$sso_headers"
 fi
-check_http "$PASS_DOMAIN"        "https://$PASS_DOMAIN"
+check_http "$PAS_DOMAIN"        "https://$PAS_DOMAIN"
 
 # SUB_DOMAIN only exposes Marzban native GET /sub/{token}.
 # Marzban returns 405 to HEAD (-I), so verification must use GET.
@@ -350,7 +350,7 @@ fi
 
 # -- TLS certificates ----------------------------------------------------------
 log_step "Certificate expiry check..."
-for domain in "$APEX_DOMAIN" "$WWW_DOMAIN" "$EDGE_DOMAIN" "$SUB_DOMAIN" "$CONSOLE_DOMAIN" "$ADMIN_DOMAIN" "$PASS_DOMAIN"; do
+for domain in "$APEX_DOMAIN" "$WWW_DOMAIN" "$EDGE_DOMAIN" "$SUB_DOMAIN" "$CONSOLE_DOMAIN" "$ADMIN_DOMAIN" "$PAS_DOMAIN"; do
   expiry=$(echo | openssl s_client -connect "$domain:443" -servername "$domain" 2>/dev/null \
     | openssl x509 -noout -enddate 2>/dev/null | cut -d= -f2 || echo "")
   if [[ -n "$expiry" ]]; then

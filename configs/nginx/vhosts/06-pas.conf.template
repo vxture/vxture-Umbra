@@ -1,10 +1,10 @@
 # pas.ruyin.ai - Vaultwarden password manager
 server {
     listen 8443 ssl proxy_protocol;
-    server_name {{ PASS_DOMAIN }};
+    server_name {{ PAS_DOMAIN }};
 
-    ssl_certificate     /etc/letsencrypt/live/{{ PASS_DOMAIN }}/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/{{ PASS_DOMAIN }}/privkey.pem;
+    ssl_certificate     /etc/letsencrypt/live/{{ PAS_DOMAIN }}/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/{{ PAS_DOMAIN }}/privkey.pem;
     include /etc/nginx/snippets/ssl-params.conf;
     include /etc/nginx/snippets/security-headers.conf;
 
