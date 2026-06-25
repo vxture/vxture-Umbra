@@ -26,6 +26,7 @@ import {
   persistTheme,
 } from "@umbra/shared/preferences";
 import { useTranslations } from "@umbra/shared/i18n";
+import { isOrganizationUser } from "@umbra/shared/user";
 import { useLocale } from "@/lib/locale-provider";
 import { ruyinBrand } from "@/lib/brand";
 import { logout, type SessionUser } from "@/lib/session";
@@ -128,7 +129,7 @@ export function UserDropdown({ user }: { user: SessionUser }) {
         : user.email || "";
   const verified = Boolean(user.emailVerified || user.phoneVerified);
   const role = primaryRole(user);
-  const isOrg = user.userType === "organization" || Boolean(user.orgId);
+  const isOrg = isOrganizationUser(user);
 
   // Single workspace line: "{org}.{workspace}" (e.g. vxture.workspace), falling
   // back to whichever part exists so personal tenants still show their workspace.
