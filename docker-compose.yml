@@ -50,9 +50,12 @@ services:
     environment:
       UVICORN_HOST: "0.0.0.0"
       UVICORN_PORT: "8000"
-      UVICORN_SSL_CERTFILE: "/var/lib/marzban/tls/cert.pem"
-      UVICORN_SSL_KEYFILE: "/var/lib/marzban/tls/key.pem"
-      UVICORN_SSL_CA_TYPE: "${MARZBAN_SSL_CA_TYPE:-public}"
+      # Port 8000 is internal-only (public TLS terminates at nginx:8443). Use the
+      # self-signed internal cert (SAN=umbra-marzban) from 13-generate-runtime-
+      # secrets.sh so account/subproxy can verify it; independent of the edge certs.
+      UVICORN_SSL_CERTFILE: "/var/lib/marzban/internal-tls/cert.pem"
+      UVICORN_SSL_KEYFILE: "/var/lib/marzban/internal-tls/key.pem"
+      UVICORN_SSL_CA_TYPE: "private"
       SQLALCHEMY_DATABASE_URL: "sqlite:////var/lib/marzban/db.sqlite3"
       XRAY_JSON: "/var/lib/marzban/xray_config.json"
       XRAY_EXECUTABLE_PATH: "/usr/local/bin/xray"
@@ -79,7 +82,10 @@ services:
       - umbra-marzban
     environment:
       MARZBAN_BASE_URL: "https://umbra-marzban:8000"
+      MARZBAN_CA_CERT: "/etc/umbra/marzban-ca.pem"
       SUB_PROFILE_PREFIX: "${SUB_PROFILE_PREFIX:-Ruyin}"
+    volumes:
+      - ${DATA_DIR}/marzban/internal-tls/cert.pem:/etc/umbra/marzban-ca.pem:ro
     networks:
       - umbra-net
     healthcheck:
@@ -129,6 +135,7 @@ services:
       ACCOUNT_ADMIN_PASSWORD: "${ACCOUNT_ADMIN_PASSWORD}"
       ACCOUNT_PORT: "3281"
       MARZBAN_BASE_URL: "https://umbra-marzban:8000"
+      MARZBAN_CA_CERT: "/etc/umbra/marzban-ca.pem"
       MARZBAN_ADMIN_USER: "${MARZBAN_ADMIN_USER}"
       MARZBAN_ADMIN_PASSWORD: "${MARZBAN_ADMIN_PASSWORD}"
       SUB_PROFILE_PREFIX: "${SUB_PROFILE_PREFIX:-Ruyin}"
@@ -136,6 +143,7 @@ services:
       RUYIN_COOKIE_DOMAIN: "${RUYIN_COOKIE_DOMAIN:-}"
     volumes:
       - ${DATA_DIR}/account:/var/lib/umbra-account
+      - ${DATA_DIR}/marzban/internal-tls/cert.pem:/etc/umbra/marzban-ca.pem:ro
     networks:
       - umbra-net
     healthcheck:
