@@ -86,6 +86,21 @@ INVITE_KEY = require_secret("ACCOUNT_INVITE_SECRET", INVITE_SECRET)
 TLS_CONTEXT = ssl._create_unverified_context()
 
 
+class _NoRedirect(urllib.request.HTTPRedirectHandler):
+    """Refuse HTTP redirects: the fixed internal Marzban upstream never
+    legitimately redirects these endpoints, so following a 3xx would be SSRF."""
+
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        return None
+
+
+# Every outbound call targets the fixed internal Marzban through this opener: it
+# refuses redirects, so a spoofed or compromised upstream cannot bounce the
+# request to an arbitrary host. (Verifying the chain against the internal Marzban
+# cert is a follow-up: it needs the cert SAN confirmed and a CA provisioned.)
+_OPENER = urllib.request.build_opener(_NoRedirect, urllib.request.HTTPSHandler(context=TLS_CONTEXT))
+
+
 def utcnow() -> dt.datetime:
     return dt.datetime.now(dt.timezone.utc).replace(microsecond=0)
 
@@ -308,6 +323,10 @@ def db() -> sqlite3.Connection:
     conn = sqlite3.connect(DB_PATH, timeout=15)
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA foreign_keys = ON")
+    # WAL lets readers proceed during a write; busy_timeout makes a writer wait
+    # for the lock instead of raising immediately under concurrent access.
+    conn.execute("PRAGMA journal_mode = WAL")
+    conn.execute("PRAGMA busy_timeout = 15000")
     return conn
 
 
@@ -474,7 +493,7 @@ def request_json(url: str, token: str | None = None, data: dict[str, Any] | None
         headers["Content-Type"] = "application/json"
         method = "POST"
     req = urllib.request.Request(url, data=body, headers=headers, method=method)
-    with urllib.request.urlopen(req, timeout=timeout, context=TLS_CONTEXT) as res:
+    with _OPENER.open(req, timeout=timeout) as res:
         raw = res.read()
         if not raw:
             return {}
@@ -484,7 +503,7 @@ def request_json(url: str, token: str | None = None, data: dict[str, Any] | None
 def marzban_login(username: str, password: str) -> str:
     data = urllib.parse.urlencode({"username": username, "password": password}).encode("utf-8")
     req = urllib.request.Request(f"{MARZBAN_BASE_URL}/api/admin/token", data=data, method="POST")
-    with urllib.request.urlopen(req, timeout=10, context=TLS_CONTEXT) as res:
+    with _OPENER.open(req, timeout=10) as res:
         payload = json.loads(res.read().decode("utf-8"))
     token = payload.get("access_token")
     if not isinstance(token, str) or not token:
