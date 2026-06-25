@@ -121,16 +121,6 @@ function broadcast(partial: Record<string, string>): void {
 
 // -- Apply (DOM) -------------------------------------------------------------
 
-export function applyTheme(theme: PrefTheme): void {
-  if (typeof document === "undefined") return;
-  const dark =
-    theme === "dark" ||
-    (theme === "system" &&
-      window.matchMedia("(prefers-color-scheme: dark)").matches);
-  document.documentElement.classList.toggle("dark", dark);
-  document.documentElement.style.colorScheme = dark ? "dark" : "light";
-}
-
 export function applyFontSize(size: PrefFontSize): void {
   if (typeof document === "undefined") return;
   document.documentElement.style.fontSize = FONT_SIZE_PX[size];
