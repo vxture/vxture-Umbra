@@ -246,6 +246,7 @@ render_file(
     configs_dir / "marzban" / "clash-subscription.j2",
     DATA_DIR / "marzban" / "templates" / "clash" / "default.yml",
     variables,
+    mode=0o600,
 )
 subprocess.run(
     [
