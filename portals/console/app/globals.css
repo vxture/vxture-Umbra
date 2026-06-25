@@ -681,6 +681,420 @@ body {
   font-weight: 650;
 }
 
+/* ===== Application center (console home) =====
+ * One launcher screen: a heading row + a card grid of subscribed apps. With a
+ * single app the grid collapses to one full-width card. Tones and surfaces are
+ * DS tokens only - this is layout/composition, not new primitives. */
+
+.appcenter {
+  display: grid;
+  gap: var(--vx-space-3xl);
+}
+
+.ac-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--vx-space-2xl);
+  flex-wrap: wrap;
+}
+
+.ac-head-meta {
+  min-width: 0;
+}
+
+.ac-title {
+  margin: 0;
+  font-family: var(--vx-font-cjk);
+  font-weight: 700;
+  font-size: var(--vx-typography-heading-2-size);
+  line-height: 1.2;
+  letter-spacing: 0.01em;
+  color: var(--vx-color-text-strong);
+}
+
+.ac-desc {
+  margin: var(--vx-space-xs) 0 0;
+  font-family: var(--vx-font-cjk);
+  font-size: var(--vx-typography-body-size);
+  line-height: 1.6;
+  color: var(--vx-color-text-muted);
+}
+
+.ac-head-tag {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--vx-space-xs);
+  padding: var(--vx-space-xs) var(--vx-space-md);
+  border-radius: var(--vx-radius-full);
+  background: var(--vx-color-primary-soft);
+  color: var(--vx-color-primary);
+  font-family: var(--vx-font-cjk);
+  font-weight: 600;
+  font-size: var(--vx-typography-body-sm-size);
+}
+
+.ac-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--vx-space-lg);
+}
+
+/* A single subscribed app stretches across the full row. */
+.ac-grid--single {
+  grid-template-columns: 1fr;
+}
+
+.ac-card {
+  --tone: var(--vx-color-brand-600);
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  display: flex;
+  flex-direction: column;
+  gap: var(--vx-space-md);
+  text-align: left;
+  min-height: 200px;
+  padding: var(--vx-space-2xl);
+  border: 1px solid var(--vx-color-border);
+  border-radius: var(--vx-radius-2xl);
+  background: var(--vx-color-surface);
+  box-shadow: var(--vx-shadow-sm);
+  transition:
+    box-shadow var(--vx-duration-moderate) var(--vx-ease-standard),
+    border-color var(--vx-duration-moderate) var(--vx-ease-standard),
+    transform var(--vx-duration-moderate) var(--vx-ease-standard);
+}
+
+.ac-card.is-bound:hover {
+  box-shadow: var(--vx-shadow-lg);
+  border-color: color-mix(in srgb, var(--tone) 34%, var(--vx-color-border));
+  transform: translateY(-3px);
+}
+
+/* Decorative background artwork: a soft tone bloom + an embedded glyph that
+   fades toward the text side. */
+.ac-card-art {
+  position: absolute;
+  inset: 0 0 0 auto;
+  width: 58%;
+  z-index: -1;
+  pointer-events: none;
+  overflow: hidden;
+  /* Glows sit at the right edge and fall off to transparent before mid-card, so
+     the artwork fades toward the text side without a separate luminance mask. */
+  background:
+    radial-gradient(70% 64% at 96% 8%, color-mix(in srgb, var(--tone) 24%, transparent), transparent 58%),
+    radial-gradient(58% 54% at 78% 94%, color-mix(in srgb, var(--vx-color-ai-cyan-500) 14%, transparent), transparent 64%);
+  opacity: 0.95;
+}
+
+.ac-card-art svg {
+  position: absolute;
+  top: 18px;
+  right: 22px;
+  transform: rotate(-8deg);
+  color: var(--tone);
+  opacity: 0.16;
+}
+
+.ac-card-head {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  min-width: 0;
+}
+
+.ac-card-lead {
+  flex-shrink: 0;
+  color: var(--tone);
+}
+
+.ac-card-name {
+  font-family: var(--vx-font-cjk);
+  font-weight: 600;
+  font-size: var(--vx-typography-heading-3-size);
+  color: var(--vx-color-text-strong);
+  letter-spacing: 0.01em;
+  min-width: 0;
+}
+
+/* Description indented to align under the title (lead width + gap). */
+.ac-card-desc {
+  margin: 0;
+  padding-left: calc(26px + 13px);
+  font-family: var(--vx-font-cjk);
+  font-size: var(--vx-typography-body-sm-size);
+  color: var(--vx-color-text-muted);
+  line-height: 1.65;
+  max-width: 90%;
+}
+
+.ac-card-foot {
+  margin-top: auto;
+  padding-top: var(--vx-space-lg);
+  border-top: 1px solid var(--vx-color-border-muted);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--vx-space-md);
+}
+
+.ac-card-status {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--vx-space-xs);
+  padding: var(--vx-space-xs) var(--vx-space-md);
+  border-radius: var(--vx-radius-full);
+  font-family: var(--vx-font-cjk);
+  font-weight: 600;
+  font-size: var(--vx-typography-body-sm-size);
+  background: color-mix(in srgb, var(--vx-color-success-600) 10%, transparent);
+  color: var(--vx-color-success-600);
+}
+
+/* Unbound: a neutral, muted pill instead of the success tone. */
+.ac-card-status.is-unbound {
+  background: var(--vx-color-surface-muted);
+  color: var(--vx-color-text-muted);
+}
+
+.ac-card-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  box-shadow: 0 0 0 3px color-mix(in srgb, currentColor 18%, transparent);
+}
+
+/* DS Button asChild renders an <a>; `a { color: inherit }` (DS base) would tint
+   the filled enter button dark. Re-assert the on-brand color at class
+   specificity, scoped to the card foot (same trick as the header actions). */
+.ac-card-foot .vx-btn--default {
+  color: var(--vx-control-on-brand);
+}
+
+/* ===== Page content framework (detail screens) =====
+ * Shared layout for a detail page: a title row (icon + title + desc), a row of
+ * stat cards, a hairline divider, then labelled content blocks. */
+
+.screen {
+  display: grid;
+  gap: var(--vx-space-2xl);
+}
+
+.tpl-head {
+  display: flex;
+  align-items: center;
+  gap: var(--vx-space-lg);
+}
+
+.tpl-head-ico {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--vx-color-primary);
+}
+
+.tpl-head-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.tpl-head-title {
+  margin: 0;
+  font-family: var(--vx-font-cjk);
+  font-weight: 700;
+  font-size: var(--vx-typography-heading-2-size);
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+  color: var(--vx-color-text-strong);
+}
+
+.tpl-head-desc {
+  margin: 0;
+  font-family: var(--vx-font-cjk);
+  font-size: var(--vx-typography-body-size);
+  line-height: 1.6;
+  color: var(--vx-color-text-muted);
+}
+
+.tpl-head-badge {
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+.statc-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--vx-space-lg);
+}
+
+.statc {
+  --tone: var(--vx-color-brand-600);
+  display: flex;
+  flex-direction: column;
+  gap: var(--vx-space-md);
+  padding: 17px 18px 16px;
+  border-radius: var(--vx-radius-xl);
+  background: var(--vx-color-surface);
+  border: 1px solid var(--vx-color-border);
+  border-top: 2px solid var(--tone);
+  box-shadow: var(--vx-shadow-sm);
+}
+
+.statc-titlerow {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.statc-ico {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--tone);
+}
+
+.statc-title {
+  flex: 1;
+  min-width: 0;
+  font-family: var(--vx-font-cjk);
+  font-weight: 600;
+  font-size: var(--vx-typography-body-size);
+  color: var(--vx-color-text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.statc-val {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--vx-space-sm);
+}
+
+.statc-num {
+  display: inline-block;
+  min-width: 0;
+  font-family: var(--vx-font-number);
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  font-size: var(--vx-typography-metric-lg-size);
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  color: var(--vx-color-text-strong);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+}
+
+/* Text-like values (status word, expiry date) read better at heading scale in
+   the CJK font rather than the large tabular metric size. */
+.statc-num.is-text {
+  font-family: var(--vx-font-cjk);
+  font-size: var(--vx-typography-heading-3-size);
+  letter-spacing: 0;
+}
+
+.statc-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  padding-top: var(--vx-space-md);
+  border-top: 1px dashed var(--vx-color-border-muted);
+}
+
+.statc-foot-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: var(--vx-radius-md);
+  background: color-mix(in srgb, var(--vx-color-text-primary) 6%, transparent);
+  white-space: nowrap;
+}
+
+.statc-foot-k {
+  font-family: var(--vx-font-cjk);
+  font-weight: 500;
+  font-size: var(--vx-typography-body-sm-size);
+  color: var(--vx-color-text-muted);
+}
+
+.statc-foot-v {
+  font-family: var(--vx-font-number);
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  font-size: var(--vx-typography-body-sm-size);
+  color: var(--vx-color-text-strong);
+}
+
+.tpl-divider {
+  height: 1px;
+  background: var(--vx-color-border-muted);
+}
+
+.tpl-block {
+  display: flex;
+  flex-direction: column;
+  gap: var(--vx-space-lg);
+}
+
+.tpl-block-hd {
+  display: flex;
+  align-items: center;
+  gap: var(--vx-space-md);
+}
+
+.tpl-block-ico {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--vx-color-primary);
+}
+
+.tpl-block-meta {
+  flex: 1;
+  min-width: 0;
+}
+
+.tpl-block-title {
+  font-family: var(--vx-font-cjk);
+  font-weight: 700;
+  font-size: var(--vx-typography-body-lg-size);
+  color: var(--vx-color-text-strong);
+}
+
+.tpl-block-sub {
+  margin-top: 2px;
+  font-family: var(--vx-font-cjk);
+  font-size: var(--vx-typography-body-sm-size);
+  line-height: 1.6;
+  color: var(--vx-color-text-muted);
+}
+
+@media (max-width: 1180px) {
+  .statc-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  .statc-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 /* Monospace URL / token display (DS has no code primitive). */
 
 .url-box {
