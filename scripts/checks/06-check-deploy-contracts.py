@@ -127,6 +127,8 @@ LOCALIZED_CONTENT_PREFIXES = (
     Path("portals/admin/messages"),
     # shared locale display names (native names are CJK localized content).
     Path("portals/packages/shared/src/locales.ts"),
+    # OIDC RP integration standard: Chinese spec kept verbatim (single-file exempt).
+    Path("docs/design/identity-app-integration-standard.md"),
 )
 
 
@@ -547,7 +549,7 @@ CHECKS: list[tuple[str, Path, list[str]]] = [
     ),
     (
         "account api Dockerfile supports local base image override",
-        Path("docker/ruyin-account-api.Dockerfile"),
+        Path("services/account/Dockerfile"),
         [
             "ARG PYTHON_BASE_IMAGE=python:3.12-alpine",
             "FROM ${PYTHON_BASE_IMAGE}",
@@ -555,7 +557,7 @@ CHECKS: list[tuple[str, Path, list[str]]] = [
     ),
     (
         "subproxy Dockerfile supports local base image override",
-        Path("docker/ruyin-subproxy.Dockerfile"),
+        Path("services/subproxy/Dockerfile"),
         [
             "ARG PYTHON_BASE_IMAGE=python:3.12-alpine",
             "FROM ${PYTHON_BASE_IMAGE}",

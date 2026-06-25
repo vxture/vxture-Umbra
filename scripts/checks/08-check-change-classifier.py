@@ -38,7 +38,7 @@ CASES = [
     ("brand fan-out", ["brand/logo.png"], True,
      ["ruyin-admin", "ruyin-console", "ruyin-website"]),
     ("account service", ["services/account/account.py"], True, ["ruyin-account-api"]),
-    ("account dockerfile", ["docker/ruyin-account-api.Dockerfile"], True, ["ruyin-account-api"]),
+    ("account dockerfile", ["services/account/Dockerfile"], True, ["ruyin-account-api"]),
     ("subproxy service", ["services/subproxy/subproxy.py"], True, ["ruyin-subproxy"]),
     ("nginx dockerfile", ["docker/ruyin-nginx.Dockerfile"], True, ["ruyin-nginx"]),
     ("configs only (deploy, no rebuild)", ["configs/nginx/nginx.conf"], True, []),

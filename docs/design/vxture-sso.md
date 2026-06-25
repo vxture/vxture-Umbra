@@ -3,7 +3,7 @@
 How ruyin.ai authenticates against the Vxture identity platform. ruyin is the
 first cross-domain application and integrates as a standard OIDC Relying Party.
 The authoritative external contract is
-[`identity-app-integration-standard.md`](../../identity-app-integration-standard.md)
+[`identity-app-integration-standard.md`](identity-app-integration-standard.md)
 (Vxture App Integration Standard v1.0); this document records how ruyin
 implements it in this repo.
 
