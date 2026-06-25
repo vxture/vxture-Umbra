@@ -230,7 +230,7 @@ services:
     container_name: umbra-vaultwarden
     restart: always
     environment:
-      DOMAIN: "https://${PASS_DOMAIN}"
+      DOMAIN: "https://${PAS_DOMAIN}"
       ADMIN_TOKEN: "${VAULTWARDEN_ADMIN_TOKEN}"
       LOG_LEVEL: "warn"
     volumes:

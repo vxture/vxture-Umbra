@@ -165,7 +165,7 @@ CHECKS: list[tuple[str, Path, list[str]]] = [
         [
             '${1:-}',
             "Checking environment value formats",
-            "CONSOLE_DOMAIN ADMIN_DOMAIN PASS_DOMAIN",
+            "CONSOLE_DOMAIN ADMIN_DOMAIN PAS_DOMAIN",
             "REALITY_SHORT_ID_LENGTH must be a positive even integer",
             "MARZBAN_SSL_CA_TYPE must be public or private",
             "SUBSCRIPTION_URL_PREFIX must be https://${SUB_DOMAIN}",
@@ -384,7 +384,7 @@ CHECKS: list[tuple[str, Path, list[str]]] = [
         "deploy verify checks every active certificate domain",
         Path("deploy/scripts/24-verify-deployment.sh"),
         [
-            'for domain in "$APEX_DOMAIN" "$WWW_DOMAIN" "$EDGE_DOMAIN" "$SUB_DOMAIN" "$CONSOLE_DOMAIN" "$ADMIN_DOMAIN" "$PASS_DOMAIN"; do',
+            'for domain in "$APEX_DOMAIN" "$WWW_DOMAIN" "$EDGE_DOMAIN" "$SUB_DOMAIN" "$CONSOLE_DOMAIN" "$ADMIN_DOMAIN" "$PAS_DOMAIN"; do',
             "cert valid until",
         ],
     ),

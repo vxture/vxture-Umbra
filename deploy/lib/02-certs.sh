@@ -28,7 +28,7 @@ umbra_collect_active_cert_domains() {
     "$SUB_DOMAIN" \
     "$CONSOLE_DOMAIN" \
     "$ADMIN_DOMAIN" \
-    "$PASS_DOMAIN"
+    "$PAS_DOMAIN"
 }
 
 umbra_collect_cert_domains() {
