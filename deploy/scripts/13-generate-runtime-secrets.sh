@@ -58,6 +58,9 @@ log_ok "ShortIds: $SID1  $SID2  $SID3  $SID4"
 
 log_step "Writing to $REALITY_FILE ..."
 
+# Create the private-key file 0600 from the start so there is no window where
+# the REALITY private key is world-readable between creation and chmod below.
+umask 077
 cat > "$REALITY_FILE" <<EOF
 {
   "private_key": "$PRIVATE_KEY",

@@ -841,6 +841,15 @@ CHECKS: list[tuple[str, Path, list[str]]] = [
         ],
     ),
     (
+        "runtime config renderer writes secret-bearing files with mode 0600",
+        Path("deploy/scripts/22-render-runtime-configs.py"),
+        [
+            '    DATA_DIR / "marzban" / "xray_config.json",\n    variables,\n    mode=0o600,',
+            '    RUNTIME_DIR / "hysteria" / "config.yaml",\n    variables,\n    mode=0o600,',
+            '    DATA_DIR / "marzban" / "templates" / "clash" / "default.yml",\n    variables,\n    mode=0o600,',
+        ],
+    ),
+    (
         "account web implements the OIDC RP callback",
         Path("portals/console/app/auth/callback/route.ts"),
         [
