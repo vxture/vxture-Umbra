@@ -609,7 +609,12 @@ def unbind_account(username: str) -> str:
                 "UPDATE app_bindings SET status = 'revoked', updated_at = ? WHERE resource_ref = ? AND status = 'active'",
                 (now, username),
             )
-            conn.execute("UPDATE accounts SET disabled = 1 WHERE username = ? AND disabled = 0", (username,))
+            # Disable AND free the UNIQUE username (append #id) so the freed USER
+            # name can be re-bound later, while this row is kept for audit.
+            conn.execute(
+                "UPDATE accounts SET disabled = 1, username = username || '#' || id WHERE username = ? AND disabled = 0",
+                (username,),
+            )
             conn.execute("UPDATE invites SET disabled = 1 WHERE username = ? AND disabled = 0", (username,))
             conn.commit()
         except Exception:
