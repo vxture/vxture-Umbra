@@ -18,7 +18,7 @@ const brandFont = Funnel_Display({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://ruyin.ai"),
+  metadataBase: new URL(ruyinBrand.siteUrl),
   title: `${ruyinBrand.fullName} ${ruyinBrand.productName}`,
   description: ruyinBrand.description,
   icons: {

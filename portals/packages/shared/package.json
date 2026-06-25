@@ -3,6 +3,8 @@
   "version": "0.0.0",
   "private": true,
   "exports": {
+    "./brand": "./src/brand.ts",
+    "./user": "./src/user.ts",
     "./health": "./src/health.ts",
     "./providers": "./src/providers.tsx",
     "./locale-provider": "./src/locale-provider.tsx",

@@ -19,6 +19,7 @@ import {
 } from "@umbra/shared/preferences";
 import { useLocale } from "@umbra/shared/locale-provider";
 import { useTranslations } from "@umbra/shared/i18n";
+import { isOrganizationUser } from "@umbra/shared/user";
 import type { VxtureUser } from "./types";
 
 type RoleKey = "owner" | "manager" | "member";
@@ -72,7 +73,7 @@ export function UserDropdown({ user }: { user: VxtureUser }) {
         : user.email || "";
   const verified = Boolean(user.emailVerified || user.phoneVerified);
   const role = primaryRole(user);
-  const isOrg = user.userType === "organization" || Boolean(user.orgId);
+  const isOrg = isOrganizationUser(user);
 
   const settings = (
     /* Quick settings - DS preference panel, row labels omitted. */
