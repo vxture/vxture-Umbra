@@ -1,6 +1,7 @@
 # Memory Index
 
 - [Repo + Brand Rename](repo-brand-rename.md) — vxture/umbra -> vxture/vxture-Umbra (2026-07-07); ruyin->umbra in code (OIDC/Docker/env/assets); ruyin.ai domains unchanged; website still shows "Ruyin" to users; DS brand CSS still ruyin.css in package
+- [Branch Divergence Prevention](branch-divergence-prevention.md) — PR #169 to wrong base caused main/develop split; fixed 2026-07-07: default branch=develop + CI guard rejects PRs to main (quality-gate fails); ruleset IDs: main=17155095 develop=17155096
 - [vxture Access Requires Authorization](vxture-access-requires-authorization.md) — any vxture access (even read-only Read/Grep/gh) needs explicit per-time user OK; default umbra-only (stricter than vxture G6)
 - [Production SSH Access](production-ssh-access.md) — stone@167.179.73.161 via ~/.ssh/vxtureworker03-vultr/vultr-access (-i required; default key + root denied); .env at /srv/umbra/etc/.env; zero-risk env-var rename = add-new -> deploy -> drop-old
 - [Invite/Binding Lifecycle + B5 Decisions](b5-invite-product-decisions.md) — invites PERSISTENT (NOT show-once); admin unbind = revoke_sub + detach + free username#id; user-side reset rotates token; dropped accounts password cols; keep subproxy bearer + hysteria2 shared pw (shipped+USER02-verified 2026-06-25)
