@@ -56,7 +56,7 @@ COMPONENT_CLASS_RE = re.compile(
 
 REQUIRED_LAYOUT_IMPORTS = (
     "@vxture/design-system/styles/globals.css",
-    "@vxture/design-system/styles/brands/umbra.css",
+    "@vxture/design-system/styles/brands/ruyin.css",
 )
 
 
