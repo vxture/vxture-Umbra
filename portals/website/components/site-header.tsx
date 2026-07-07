@@ -38,17 +38,15 @@ export function SiteHeader() {
       <div className="site-header-inner">
         {/* Logo + name link to the ruyin.ai homepage (website root). The studio
             tag reuses the DS pill class (no custom CSS). */}
-        <ShellBrand
-          href="/"
-          logoSrc={markSrc(theme)}
-          logoAlt=""
-          label={
-            <span className="site-brand-lockup">
-              <span className="site-brand-name">{umbraBrand.productDomain}</span>
-              <span className="site-brand-tag">vxture studio</span>
-            </span>
-          }
-        />
+        <div className="site-brand-lockup">
+          <ShellBrand
+            href="/"
+            logoSrc={markSrc(theme)}
+            logoAlt=""
+            label={<span className="site-brand-name">{umbraBrand.productDomain}</span>}
+          />
+          <a href="https://vxture.com" className="site-brand-tag" target="_blank" rel="noopener noreferrer">vxture studio</a>
+        </div>
 
         <div className="site-actions">
           {/* Grouped quick controls [theme | language | fullscreen], mirroring
