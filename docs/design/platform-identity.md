@@ -1,4 +1,4 @@
-﻿# Umbra Platform Identity and Multi-App Authorization
+# Umbra Platform Identity and Multi-App Authorization
 
 This document is the design for evolving the Umbra account portal from a single
 VPN binding into a platform identity that can authorize and bind multiple

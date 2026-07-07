@@ -1,4 +1,4 @@
-﻿# Brand Assets
+# Brand Assets
 
 `brand/` is the canonical source for Umbra visual assets. The project uses PNG
 and ICO files only for brand images. Do not add Umbra SVG brand assets.

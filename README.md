@@ -1,4 +1,4 @@
-﻿# Vxture Umbra
+# Vxture Umbra
 
 Production VPN edge node - SNI routing, VLESS+REALITY proxy, subscription delivery, password management, public website.
 

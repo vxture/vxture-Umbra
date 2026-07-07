@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Canonical Umbra brand metadata shared across all three portals (website,
  * console, admin). Each portal's lib/brand.ts spreads `umbraBrandCore` and
  * layers on its own surface-specific fields (e.g. the website's localized

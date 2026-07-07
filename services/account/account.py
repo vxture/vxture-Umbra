@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env python3
+#!/usr/bin/env python3
 """Umbra account portal.
 
 The portal is intentionally small and self-contained:

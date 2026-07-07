@@ -1,4 +1,4 @@
-﻿# ruyin.ai - Brand landing page (also the unified front door: its header reads
+# ruyin.ai - Brand landing page (also the unified front door: its header reads
 # the shared session and offers sign-in / workspace, so it proxies the account
 # API same-origin).
 server {

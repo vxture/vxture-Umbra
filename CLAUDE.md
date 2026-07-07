@@ -1,4 +1,4 @@
-﻿# Umbra Repository Standards
+# Umbra Repository Standards
 
 Authoritative working agreement for this repo. The goal is a clean, predictable
 branch and deploy flow with no direct human writes to protected branches.

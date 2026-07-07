@@ -1,4 +1,4 @@
-﻿# Vxture SSO Integration Design (OIDC RP)
+# Vxture SSO Integration Design (OIDC RP)
 
 How ruyin.ai authenticates against the Vxture identity platform. umbra is the
 first cross-domain application and integrates as a standard OIDC Relying Party.

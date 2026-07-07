@@ -1,4 +1,4 @@
-﻿import { ShellLegalFooter } from "@vxture/design-system";
+import { ShellLegalFooter } from "@vxture/design-system";
 import { umbraBrand } from "@/lib/brand";
 
 export function SiteFooter() {

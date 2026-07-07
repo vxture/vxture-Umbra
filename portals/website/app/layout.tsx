@@ -1,4 +1,4 @@
-﻿import type { Metadata } from "next";
+import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import { Funnel_Display } from "next/font/google";
 import { umbraBrand } from "@/lib/brand";
@@ -7,7 +7,7 @@ import { I18nProvider } from "@umbra/shared/i18n";
 import { messages } from "../messages";
 import { Providers } from "./providers";
 import "@vxture/design-system/styles/globals.css";
-import "@vxture/design-system/styles/brands/umbra.css";
+import "@vxture/design-system/styles/brands/ruyin.css";
 import "./globals.css";
 
 /** DS brand typeface (Funnel Display) wired to the DS brand-font loader slot. */

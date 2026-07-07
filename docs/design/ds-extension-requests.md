@@ -1,4 +1,4 @@
-﻿# Design System Extension Requests
+# Design System Extension Requests
 
 Status: proposed
 Consumers: Umbra portals (website, console, admin)

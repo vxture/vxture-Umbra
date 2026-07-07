@@ -1,4 +1,4 @@
-﻿# Umbra - Modules
+# Umbra - Modules
 
 Per-service specification: responsibility, configuration, volumes, environment variables.
 

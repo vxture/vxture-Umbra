@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env bash
+#!/usr/bin/env bash
 # Check all prerequisites before deployment.
 set -euo pipefail
 

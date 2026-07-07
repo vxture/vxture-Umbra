@@ -1,4 +1,4 @@
-﻿# Config Rendering
+# Config Rendering
 
 `deploy/scripts/22-render-runtime-configs.py` is the only config renderer.
 

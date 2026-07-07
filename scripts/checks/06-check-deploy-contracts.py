@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env python3
+#!/usr/bin/env python3
 """Static checks for high-risk deployment script contracts.
 
 This is not a shell parser. It verifies concrete safety guardrails that have

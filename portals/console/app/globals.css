@@ -1,4 +1,4 @@
-﻿/* ===== Console layout composition =====
+/* ===== Console layout composition =====
  * All design primitives (colors, typography, controls, cards, tables) come from
  * @vxture/design-system. This file holds layout-only composition. Do not add
  * colors, fonts, or component looks here - extend the DS package instead. See

@@ -1,4 +1,4 @@
-﻿# GitHub Actions CI/CD Design
+# GitHub Actions CI/CD Design
 
 This document defines the Umbra GitHub Actions deployment contract. It is based
 on the Vxture CI/CD design in `D:\MyWebSite\vxture\docs\deployment\05-ci-cd.md`,

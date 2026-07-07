@@ -1,4 +1,4 @@
-﻿import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { getOidcConfig } from "../lib/config";
 import { destroySession } from "../lib/session-store";
 import { clearSessionCookie } from "../lib/cookie";

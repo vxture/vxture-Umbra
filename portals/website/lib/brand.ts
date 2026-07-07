@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Website brand metadata. Shares `umbraBrandCore` with the console/admin
  * portals and adds the marketing-only localized wordmark and description. This
  * path is ASCII-exempt, so the localized (CJK) brand strings live here.

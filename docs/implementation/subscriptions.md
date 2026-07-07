@@ -1,4 +1,4 @@
-﻿# Subscription Implementation
+# Subscription Implementation
 
 Subscriptions must remain Marzban-native.
 

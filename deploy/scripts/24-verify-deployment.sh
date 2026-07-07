@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env bash
+#!/usr/bin/env bash
 # Post-deployment verification suite
 set -euo pipefail
 

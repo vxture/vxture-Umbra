@@ -1,4 +1,4 @@
-﻿# Umbra - Architecture
+# Umbra - Architecture
 
 ---
 

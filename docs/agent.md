@@ -1,4 +1,4 @@
-﻿# Umbra - Agent Entry Point
+# Umbra - Agent Entry Point
 
 > Master entry point for AI assistants (Claude Code, Codex, DeepSeek).
 > Read this first. Follow document links for detail.

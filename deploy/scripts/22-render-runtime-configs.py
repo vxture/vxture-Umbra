@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env python3
+#!/usr/bin/env python3
 """
 Render all configuration templates from configs/ into DATA_DIR.
 

@@ -1,4 +1,4 @@
-﻿# Repository Implementation
+# Repository Implementation
 
 Current top-level layout:
 

@@ -1,4 +1,4 @@
-﻿# Umbra - Deployment
+# Umbra - Deployment
 
 Complete guide for deploying a fresh Umbra node.
 

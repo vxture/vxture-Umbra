@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env python3
+#!/usr/bin/env python3
 """Render a docker compose override that pins every service to an image digest.
 
 Why: docker compose recreates a container when its service config changes, and

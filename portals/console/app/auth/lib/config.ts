@@ -1,4 +1,4 @@
-﻿/**
+/**
  * OIDC RP configuration for the umbra app-bff (Vxture App Integration Standard
  * v1.0). All values come from server-side env; nothing here is exposed to the
  * browser. Endpoint paths are the frozen contract relative to the issuer

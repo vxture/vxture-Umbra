@@ -1,4 +1,4 @@
-﻿# Product Spec
+# Product Spec
 
 Umbra is a single-node production VPN edge for the Umbra service.
 

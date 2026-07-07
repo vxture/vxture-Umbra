@@ -1,4 +1,4 @@
-﻿# Memory (pointer)
+# Memory (pointer)
 
 Claude Code's persistent project memory does NOT live here. It lives in two
 places, both outside this `docs/` tree:

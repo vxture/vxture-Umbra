@@ -1,4 +1,4 @@
-﻿# Umbra Admin Portal
+# Umbra Admin Portal
 
 Platform management surface for Umbra.
 

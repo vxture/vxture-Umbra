@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Server-side OIDC RP session store backed by Redis. Four key families:
  *   authreq:<state>  short-lived login->callback handshake (verifier, nonce).
  *   rpsess:<rpsid>   verified IDENTITY CLAIMS only (also read by account.py).

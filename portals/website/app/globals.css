@@ -1,4 +1,4 @@
-﻿:root {
+:root {
   /* Wide, open content track (stripe-like but wider, no divider lines). */
   --umbra-shell-max-width: 1680px;
   --umbra-shell-gutter: var(--vx-space-lg);

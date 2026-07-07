@@ -1,4 +1,4 @@
-﻿# Security Spec
+# Security Spec
 
 Security boundaries are part of the product contract.
 

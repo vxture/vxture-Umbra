@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env python3
+#!/usr/bin/env python3
 """Tests + exhaustiveness guard for classify_changes.py (run in quality-gate).
 
 Two checks:

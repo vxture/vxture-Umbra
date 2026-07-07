@@ -1,4 +1,4 @@
-﻿# Vxture 应用接入标准（OIDC RP）— 跨子域 + 跨域
+# Vxture 应用接入标准（OIDC RP）— 跨子域 + 跨域
 
 > 版本 v1.0（2026-06-18）。状态：**接口规范（对接基准）**，依据当前 `feat/identity-platform-rebuild` 生产代码核对。
 > 统一并取代分散的 [`identity-sso-p3-umbra-integration-contract.md`](identity-sso-p3-umbra-integration-contract.md)（跨域）与 [`identity-sso-p4-app-integration-contract.md`](identity-sso-p4-app-integration-contract.md)（子域 + provisioning）：本文是 app 接入的**单一标准**；provisioning（开通 webhook）属 commerce/OUT，单列见 §14。

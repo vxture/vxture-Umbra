@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env python3
+#!/usr/bin/env python3
 """Allow-list change classifier for the release pipeline (release.yml detect).
 
 Given a list of changed file paths (repo-root-relative), decide:

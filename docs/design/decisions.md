@@ -1,4 +1,4 @@
-﻿# Umbra - Design Decisions
+# Umbra - Design Decisions
 
 Rationale and constraints behind key architectural choices.
 

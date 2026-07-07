@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useTranslations } from "@umbra/shared/i18n";
 import { umbraBrand } from "@/lib/brand";

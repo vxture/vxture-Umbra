@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env python3
+#!/usr/bin/env python3
 """Thin Marzban subscription metadata normalizer.
 
 Public URL format stays Marzban-native: /sub/<token>.

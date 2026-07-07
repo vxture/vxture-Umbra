@@ -1,4 +1,4 @@
-﻿import { BgCanvas } from "@/components/bg-canvas";
+import { BgCanvas } from "@/components/bg-canvas";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { HeroSection } from "@/components/hero-section";

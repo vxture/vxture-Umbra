@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Hero signature wordmark ("Umbra" calligraphy) as an inline SVG. Inlining lets
  * it recolor instantly with the theme instead of swapping a per-theme PNG, which
  * reloaded an image and stuttered on every theme toggle. Per-theme look: light =
