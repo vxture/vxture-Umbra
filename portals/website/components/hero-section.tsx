@@ -28,7 +28,7 @@ export function HeroSection() {
           {umbraBrand.fullName}
         </h1>
         <p className="hero-lead">{t("lead")}</p>
-        <a className="hero-cta" href={umbraBrand.studioUrl}>
+        <a className="hero-cta" href="https://ruyin.vxture.com">
           {t("action")}
         </a>
       </section>
