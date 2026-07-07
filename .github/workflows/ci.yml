@@ -31,6 +31,13 @@ jobs:
     timeout-minutes: 15
 
     steps:
+      - name: Reject PRs targeting main
+        if: github.event_name == 'pull_request' && github.base_ref == 'main'
+        shell: bash
+        run: |
+          echo "::error::PRs must target 'develop', not 'main'. Main only advances via promote.yml fast-forward."
+          exit 1
+
       - name: Checkout
         uses: actions/checkout@v6
 
