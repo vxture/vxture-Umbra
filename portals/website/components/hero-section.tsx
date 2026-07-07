@@ -19,7 +19,7 @@ export function HeroSection() {
         <p className="hero-eyebrow">
           <span className="eyebrow-studio">Vxture Studio</span>
           <span className="eyebrow-sep"> | </span>
-          <span className="eyebrow-product">Umbra Agent</span>
+          <span className="eyebrow-product">Ruyin Agent</span>
         </p>
         <div className="hero-signature">
           <HeroSignature />

@@ -8,7 +8,8 @@ import { umbraBrandCore } from "@umbra/shared/brand";
 
 export const umbraBrand = {
   ...umbraBrandCore,
+  productName: "Ruyin",
   localName: "如影",
   fullName: "如影随形",
-  description: "Umbra - secure intelligent network access by vxture studio.",
+  description: "Ruyin - secure intelligent network access by vxture studio.",
 } as const;
