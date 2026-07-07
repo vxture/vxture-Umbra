@@ -141,12 +141,12 @@ done
 log_step "HTTPS endpoints..."
 
 check_http "$APEX_DOMAIN"        "https://$APEX_DOMAIN"
-check_http_body_contains "$APEX_DOMAIN Ruyin homepage" "https://$APEX_DOMAIN/" "VXTURE STUDIO"
+check_http_body_contains "$APEX_DOMAIN Umbra homepage" "https://$APEX_DOMAIN/" "VXTURE STUDIO"
 check_http "$WWW_DOMAIN"         "https://$WWW_DOMAIN"
 # EDGE_DOMAIN (vpn) display retired: vpn.ruyin.ai now falls through to the
 # catch-all (444), identical to any unknown host. The proxy node on :443 is
 # still verified by the port-open check below.
-check_http_body_contains "$CONSOLE_DOMAIN account home" "https://$CONSOLE_DOMAIN/" "Ruyin Account"
+check_http_body_contains "$CONSOLE_DOMAIN account home" "https://$CONSOLE_DOMAIN/" "Umbra Account"
 check_http "$CONSOLE_DOMAIN account login" "https://$CONSOLE_DOMAIN/login"
 check_http "$CONSOLE_DOMAIN account registration" "https://$CONSOLE_DOMAIN/register"
 if [[ -n "${OIDC_ISSUER:-}" ]]; then
@@ -182,7 +182,7 @@ if [[ -n "$latest_sub_file" ]]; then
     sub_headers_clean=$(mktemp)
     sub_body=$(mktemp)
     sub_code=$(curl_saved_subscription "$latest_sub_url" "$sub_headers" "$sub_body")
-    expected_title="${SUB_PROFILE_PREFIX:-Ruyin}-${latest_sub_user}"
+    expected_title="${SUB_PROFILE_PREFIX:-Umbra}-${latest_sub_user}"
 
     if [[ "$sub_code" == "200" ]]; then
       log_ok "Saved Marzban subscription URL works (GET) (200)"
@@ -219,7 +219,7 @@ fi
 # credential login + invite/subscription block). Marzban keeps /dashboard/ and
 # its API; Vault is an external jump.
 log_step "$ADMIN_DOMAIN admin..."
-check_http_body_contains "$ADMIN_DOMAIN admin app home" "https://$ADMIN_DOMAIN/" "Ruyin Admin"
+check_http_body_contains "$ADMIN_DOMAIN admin app home" "https://$ADMIN_DOMAIN/" "Umbra Admin"
 
 admin_root_headers="$(mktemp)"
 ADMIN_ROOT_CODE=$(curl -sk --max-time 10 -D "$admin_root_headers" -o /dev/null -w "%{http_code}" "https://$ADMIN_DOMAIN/" || true)

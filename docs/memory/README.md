@@ -5,7 +5,7 @@ places, both outside this `docs/` tree:
 
 - Live store: `~/.claude/projects/D--MyWebSite-vxturestudio-umbra/memory/`
   (loaded by AI assistants across sessions; `MEMORY.md` is its index).
-- Versioned copy: the same store is a git repo whose `origin` is `vxture/umbra`,
+- Versioned copy: the same store is a git repo whose `origin` is `vxture/vxture-Umbra`,
   pushed to the dedicated `claude-memory` branch (NOT merged into
   `develop`/`main`).
 

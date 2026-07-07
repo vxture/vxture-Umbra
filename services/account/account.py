@@ -48,14 +48,14 @@ MARZBAN_ADMIN_PASSWORD = os.environ.get("MARZBAN_ADMIN_PASSWORD", "")
 # service credential above only to read/manage subscriptions.
 ACCOUNT_ADMIN_USERNAME = os.environ.get("ACCOUNT_ADMIN_USERNAME", "")
 ACCOUNT_ADMIN_PASSWORD = os.environ.get("ACCOUNT_ADMIN_PASSWORD", "")
-PROFILE_PREFIX = (os.environ.get("SUB_PROFILE_PREFIX", "Ruyin").strip() or "Ruyin")
+PROFILE_PREFIX = (os.environ.get("SUB_PROFILE_PREFIX", "Umbra").strip() or "Umbra")
 PUBLIC_ACCOUNT_URL = os.environ.get("PUBLIC_ACCOUNT_URL", f"https://{os.environ.get('CONSOLE_DOMAIN', 'console.ruyin.ai')}").rstrip("/")
 # OIDC RP login entry on the console app-bff (it generates PKCE+state+nonce, then
 # redirects to accounts.vxture.com/oidc/authorize). Returned to anonymous clients.
 LOGIN_URL = f"{PUBLIC_ACCOUNT_URL}/auth/login"
 # Parent domain the session cookie is shared on (one login across ruyin.ai +
 # every *.ruyin.ai app). Logout must clear the cookie on this same domain.
-RUYIN_COOKIE_DOMAIN = os.environ.get("RUYIN_COOKIE_DOMAIN", "").strip()
+UMBRA_COOKIE_DOMAIN = os.environ.get("UMBRA_COOKIE_DOMAIN", "").strip()
 # OIDC RP session store. The console app-bff writes verified identity claims to
 # rpsess:<rpsid>; this service reads them to authenticate requests. Tokens stay
 # in the BFF and are never read here.
@@ -856,7 +856,7 @@ def page(title: str, body: str, *, narrow: bool = False) -> bytes:
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{html.escape(title)} - Ruyin</title>
+  <title>{html.escape(title)} - Umbra</title>
   <style>
     :root {{
       color-scheme: dark;
@@ -1134,15 +1134,15 @@ class AccountHandler(BaseHTTPRequestHandler):
         # Local cookie-clear fallback. The canonical logout is the console RP
         # route (POST /auth/logout), which also destroys the server-side session
         # and triggers global end_session. Here we just clear the opaque
-        # vx_rp_session cookie on the shared first-party domain (RUYIN_COOKIE_DOMAIN)
+        # vx_rp_session cookie on the shared first-party domain (UMBRA_COOKIE_DOMAIN)
         # and a host-only copy so a direct hit signs the browser out cleanly.
         body = b'{"status":"ok"}'
         self.send_response(200)
         self.send_header("Content-Type", "application/json; charset=utf-8")
         self.send_header("Cache-Control", "no-store")
         self.clear_cookie(RP_SESSION_COOKIE_NAME, path="/")
-        if RUYIN_COOKIE_DOMAIN:
-            self.clear_cookie(RP_SESSION_COOKIE_NAME, path="/", domain=RUYIN_COOKIE_DOMAIN)
+        if UMBRA_COOKIE_DOMAIN:
+            self.clear_cookie(RP_SESSION_COOKIE_NAME, path="/", domain=UMBRA_COOKIE_DOMAIN)
         self.send_header("Content-Length", str(len(body)))
         self.end_headers()
         self.wfile.write(body)

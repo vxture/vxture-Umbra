@@ -1,7 +1,7 @@
 # Vxture 应用接入标准（OIDC RP）— 跨子域 + 跨域
 
 > 版本 v1.0（2026-06-18）。状态：**接口规范（对接基准）**，依据当前 `feat/identity-platform-rebuild` 生产代码核对。
-> 统一并取代分散的 [`identity-sso-p3-ruyin-integration-contract.md`](identity-sso-p3-ruyin-integration-contract.md)（跨域）与 [`identity-sso-p4-app-integration-contract.md`](identity-sso-p4-app-integration-contract.md)（子域 + provisioning）：本文是 app 接入的**单一标准**；provisioning（开通 webhook）属 commerce/OUT，单列见 §14。
+> 统一并取代分散的 [`identity-sso-p3-umbra-integration-contract.md`](identity-sso-p3-umbra-integration-contract.md)（跨域）与 [`identity-sso-p4-app-integration-contract.md`](identity-sso-p4-app-integration-contract.md)（子域 + provisioning）：本文是 app 接入的**单一标准**；provisioning（开通 webhook）属 commerce/OUT，单列见 §14。
 > 术语：**IdP** = vxture 平台（issuer `https://accounts.vxture.com`，dev `http://localhost:3090`）；**RP/App** = 接入方（其后端 = app-bff）。
 > 适用范围：`realm=tenant` 的业务应用接入。operator（运营后台）不走本标准。
 
@@ -193,16 +193,16 @@ App 接入须由平台登记一行 `oidc_client`：
 | 项 | 值 |
 | --- | --- |
 | 模式 | **B 跨域** |
-| `client_id` | `ruyin` |
+| `client_id` | `umbra` |
 | `realm` | `tenant` |
-| `redirect_uri` | `https://ruyin.ai/auth/callback`（dev 由 `RUYIN_BASE_URL` 派生） |
+| `redirect_uri` | `https://ruyin.ai/auth/callback`（dev 由 `UMBRA_BASE_URL` 派生） |
 | `back_channel_logout_uri` | `https://ruyin.ai/auth/backchannel-logout`（必填） |
 | `post_logout_redirect_uri` | `https://ruyin.ai/...`（须登记） |
-| `allowed_scopes` | `openid profile ruyin` |
-| `product_ref` | **起步期不置**（不发 entitlement；ruyin 自有业务授权）。商业化后再置。 |
+| `allowed_scopes` | `openid profile umbra` |
+| `product_ref` | **起步期不置**（不发 entitlement；umbra 自有业务授权）。商业化后再置。 |
 
-**ruyin 落地待办（平台侧）**：① `seed-catalog.mjs` 加 `ruyin` oidc_client 行（含 back_channel/post_logout/scopes，redirect 由 `RUYIN_BASE_URL` 派生）；② `27-provision-client-secrets` 纳入 `ruyin`（生成 secret + hash）；③ 生产 `RUYIN_BASE_URL` 确认并落 `redirect_uris`。
-**ruyin 落地待办（ruyin 侧）**：按 §4 实现 5 个端点 + §6 验签 + §8 back-channel + §5 cookie 模型 + §9 刷新轮换。
+**umbra 落地待办（平台侧）**：① `seed-catalog.mjs` 加 `umbra` oidc_client 行（含 back_channel/post_logout/scopes，redirect 由 `UMBRA_BASE_URL` 派生）；② `27-provision-client-secrets` 纳入 `umbra`（生成 secret + hash）；③ 生产 `UMBRA_BASE_URL` 确认并落 `redirect_uris`。
+**umbra 落地待办（umbra 侧）**：按 §4 实现 5 个端点 + §6 验签 + §8 back-channel + §5 cookie 模型 + §9 刷新轮换。
 
 ---
 
@@ -213,7 +213,7 @@ App 接入须由平台登记一行 `oidc_client`：
 | `OIDC_ISSUER` | `https://accounts.vxture.com` |
 | `OIDC_CLIENT_ID` / `OIDC_CLIENT_SECRET` | 平台登记派发（secret 经 secret manager） |
 | `OIDC_REDIRECT_URI` | App 的 `/auth/callback`（须 = 登记白名单） |
-| `OIDC_SCOPES` | 如 `openid profile ruyin` |
+| `OIDC_SCOPES` | 如 `openid profile umbra` |
 | `OIDC_POST_LOGOUT_REDIRECT_URI` | end_session 回跳（dev 跨端口须显式设；prod issuer==accounts 默认即 `/logout`） |
 | `RP_SESSION_TTL` | RP 会话 TTL（建议 ≤ refresh TTL） |
 
@@ -235,5 +235,5 @@ App 接入须由平台登记一行 `oidc_client`：
 
 - **Provisioning（开通 webhook）= OUT**：属 commerce，当前 parked（#264）。需要业务空间开通编排时再按 [`identity-sso-p4-provisioning.md`](identity-sso-p4-provisioning.md) 落地；**本标准不含**。
 - **Entitlement 起步期不依赖**：commerce 未上线，建议 App 不置 `product_ref`、业务授权走 App 自有库；商业化后再启用 token `entitlement` 硬门控。
-- **跨域 SLO 可配置（D-AW）**：是否参与全域 back-channel logout 可逐 App 配置；ruyin 默认参与。
+- **跨域 SLO 可配置（D-AW）**：是否参与全域 back-channel logout 可逐 App 配置；umbra 默认参与。
 - 不在本标准内：operator 接入（运营后台，另案）、社交联邦（IdP 内部）、MFA（高权限入口，另案）。

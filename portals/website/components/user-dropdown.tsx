@@ -28,7 +28,7 @@ import {
 import { useTranslations } from "@umbra/shared/i18n";
 import { isOrganizationUser } from "@umbra/shared/user";
 import { useLocale } from "@/lib/locale-provider";
-import { ruyinBrand } from "@/lib/brand";
+import { umbraBrand } from "@/lib/brand";
 import { logout, type SessionUser } from "@/lib/session";
 
 type RoleKey = "owner" | "manager" | "member";
@@ -145,7 +145,7 @@ export function UserDropdown({ user }: { user: SessionUser }) {
       <MenuRow
         icon="user"
         label={t("profile")}
-        href={`${ruyinBrand.consoleUrl}/account`}
+        href={`${umbraBrand.consoleUrl}/account`}
       />
       {workspacePath ? (
         <MenuRow

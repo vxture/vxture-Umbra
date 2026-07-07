@@ -6,7 +6,7 @@ import { LocaleProvider } from "@/lib/locale-provider";
 import { PreferenceSync } from "@/components/preference-sync";
 
 /**
- * Root providers for the Ruyin website.
+ * Root providers for the Umbra website.
  *
  * - ThemeProvider from @vxture/design-system wraps next-themes and adds density.
  * - LocaleProvider manages en-US / zh-CN / ja-JP toggling (UmbraLocale superset of @vxture/shared).

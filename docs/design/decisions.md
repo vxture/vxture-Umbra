@@ -146,7 +146,7 @@ The public subscription domain is intentionally narrow:
 
 ### Node Naming
 
-All users see node name `vx-tokyo` (from `NODE_NAME` env var). Marzban's native response uses the raw username as the download filename, so Umbra routes `/sub/<token>` through `umbra-subproxy` to normalize client-visible metadata to `Ruyin-USERNAME`. Do not use `user.username` in the Clash template because Marzban does not expose per-user objects to that renderer. Real server hostname and UUID are never visible in subscription output.
+All users see node name `vx-tokyo` (from `NODE_NAME` env var). Marzban's native response uses the raw username as the download filename, so Umbra routes `/sub/<token>` through `umbra-subproxy` to normalize client-visible metadata to `Umbra-USERNAME`. Do not use `user.username` in the Clash template because Marzban does not expose per-user objects to that renderer. Real server hostname and UUID are never visible in subscription output.
 
 ---
 
@@ -469,7 +469,7 @@ BACKUP_DIR/*         chmod 600
 
 ### Layer 3: Identity Boundary - OIDC RP against accounts.vxture.com
 
-End-user identity is no longer the Marzban admin login. Ruyin is an OIDC
+End-user identity is no longer the Marzban admin login. Umbra is an OIDC
 Authorization-Code + PKCE(S256) Relying Party against the platform IdP at
 `accounts.vxture.com`. The console/account-web runs as an app-bff: it completes
 the code exchange server-side, stores the session in the `umbra-redis` session

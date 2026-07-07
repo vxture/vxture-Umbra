@@ -29,7 +29,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 LISTEN_HOST = os.environ.get("SUBPROXY_HOST", "0.0.0.0")
 LISTEN_PORT = int(os.environ.get("SUBPROXY_PORT", "8080"))
 MARZBAN_BASE_URL = os.environ.get("MARZBAN_BASE_URL", "https://umbra-marzban:8000").rstrip("/")
-PROFILE_PREFIX = (os.environ.get("SUB_PROFILE_PREFIX", "Ruyin").strip() or "Ruyin")
+PROFILE_PREFIX = (os.environ.get("SUB_PROFILE_PREFIX", "Umbra").strip() or "Umbra")
 
 TOKEN_PATH_RE = re.compile(r"^/sub/([^/\s]+)$")
 HOP_BY_HOP_HEADERS = {
@@ -50,7 +50,7 @@ def base64_title(title: str) -> str:
 
 
 def safe_filename(title: str) -> str:
-    return re.sub(r"[^A-Za-z0-9._-]+", "_", title).strip("._-") or "Ruyin"
+    return re.sub(r"[^A-Za-z0-9._-]+", "_", title).strip("._-") or "Umbra"
 
 
 def public_subscription_url(source: BaseHTTPRequestHandler) -> str:

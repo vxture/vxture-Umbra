@@ -6,7 +6,7 @@ services:
 
   # -- Nginx: Public SNI gateway + HTTP virtual hosts ---------------------------
   umbra-nginx:
-    image: ${IMAGE_REGISTRY}/${IMAGE_NAMESPACE}/ruyin-nginx:${IMAGE_TAG:-latest}
+    image: ${IMAGE_REGISTRY}/${IMAGE_NAMESPACE}/umbra-nginx:${IMAGE_TAG:-latest}
     container_name: umbra-nginx
     restart: always
     depends_on:
@@ -63,7 +63,7 @@ services:
       SUDO_USERNAME: "${MARZBAN_ADMIN_USER}"
       SUDO_PASSWORD: "${MARZBAN_ADMIN_PASSWORD}"
       XRAY_SUBSCRIPTION_URL_PREFIX: "${SUBSCRIPTION_URL_PREFIX}"
-      SUB_PROFILE_TITLE: "${SUB_PROFILE_TITLE:-Ruyin}"
+      SUB_PROFILE_TITLE: "${SUB_PROFILE_TITLE:-Umbra}"
       CUSTOM_TEMPLATES_DIRECTORY: "/var/lib/marzban/templates"
       CLASH_SUBSCRIPTION_TEMPLATE: "clash/default.yml"
     volumes:
@@ -73,9 +73,9 @@ services:
 
   # -- Subscription metadata normalizer ----------------------------------------
   # Public URL remains /sub/<token>. This service only normalizes response
-  # metadata so clients display Ruyin-USERNAME instead of raw Marzban filename.
+  # metadata so clients display Umbra-USERNAME instead of raw Marzban filename.
   umbra-subproxy:
-    image: ${IMAGE_REGISTRY}/${IMAGE_NAMESPACE}/ruyin-subproxy:${IMAGE_TAG:-latest}
+    image: ${IMAGE_REGISTRY}/${IMAGE_NAMESPACE}/umbra-subproxy:${IMAGE_TAG:-latest}
     container_name: umbra-subproxy
     restart: always
     depends_on:
@@ -83,7 +83,7 @@ services:
     environment:
       MARZBAN_BASE_URL: "https://umbra-marzban:8000"
       MARZBAN_CA_CERT: "/etc/umbra/marzban-ca.pem"
-      SUB_PROFILE_PREFIX: "${SUB_PROFILE_PREFIX:-Ruyin}"
+      SUB_PROFILE_PREFIX: "${SUB_PROFILE_PREFIX:-Umbra}"
     volumes:
       - ${DATA_DIR}/marzban/internal-tls/cert.pem:/etc/umbra/marzban-ca.pem:ro
     networks:
@@ -118,7 +118,7 @@ services:
 
   # -- Account Portal: invite-bound user subscription dashboard ----------------
   umbra-account:
-    image: ${IMAGE_REGISTRY}/${IMAGE_NAMESPACE}/ruyin-account-api:${IMAGE_TAG:-latest}
+    image: ${IMAGE_REGISTRY}/${IMAGE_NAMESPACE}/umbra-account-api:${IMAGE_TAG:-latest}
     container_name: umbra-account
     restart: always
     depends_on:
@@ -138,9 +138,9 @@ services:
       MARZBAN_CA_CERT: "/etc/umbra/marzban-ca.pem"
       MARZBAN_ADMIN_USER: "${MARZBAN_ADMIN_USER}"
       MARZBAN_ADMIN_PASSWORD: "${MARZBAN_ADMIN_PASSWORD}"
-      SUB_PROFILE_PREFIX: "${SUB_PROFILE_PREFIX:-Ruyin}"
+      SUB_PROFILE_PREFIX: "${SUB_PROFILE_PREFIX:-Umbra}"
       PUBLIC_ACCOUNT_URL: "https://${CONSOLE_DOMAIN}"
-      RUYIN_COOKIE_DOMAIN: "${RUYIN_COOKIE_DOMAIN:-}"
+      UMBRA_COOKIE_DOMAIN: "${UMBRA_COOKIE_DOMAIN:-}"
     volumes:
       - ${DATA_DIR}/account:/var/lib/umbra-account
       - ${DATA_DIR}/marzban/internal-tls/cert.pem:/etc/umbra/marzban-ca.pem:ro
@@ -155,7 +155,7 @@ services:
 
   # -- Account Web: OIDC RP / app-bff + invite-bound subscription UI ----------
   umbra-account-web:
-    image: ${IMAGE_REGISTRY}/${IMAGE_NAMESPACE}/ruyin-console:${IMAGE_TAG:-latest}
+    image: ${IMAGE_REGISTRY}/${IMAGE_NAMESPACE}/umbra-console:${IMAGE_TAG:-latest}
     container_name: umbra-account-web
     restart: always
     depends_on:
@@ -164,18 +164,18 @@ services:
     environment:
       PORT: "3220"
       # -- OIDC RP (Vxture App Integration Standard v1.0) ----------------------
-      # The console portal is ruyin's OIDC Authorization-Code + PKCE RP / app-bff.
+      # The console portal is umbra's OIDC Authorization-Code + PKCE RP / app-bff.
       # Tokens live server-side in Redis; the browser holds only vx_rp_session.
       OIDC_ISSUER: "${OIDC_ISSUER:-}"
-      OIDC_CLIENT_ID: "${OIDC_CLIENT_ID:-ruyin}"
+      OIDC_CLIENT_ID: "${OIDC_CLIENT_ID:-umbra}"
       OIDC_CLIENT_SECRET: "${OIDC_CLIENT_SECRET:-}"
       OIDC_REDIRECT_URI: "${OIDC_REDIRECT_URI:-}"
-      OIDC_SCOPES: "${OIDC_SCOPES:-openid profile email phone ruyin}"
+      OIDC_SCOPES: "${OIDC_SCOPES:-openid profile email phone umbra}"
       OIDC_POST_LOGOUT_REDIRECT_URI: "${OIDC_POST_LOGOUT_REDIRECT_URI:-}"
       REDIS_URL: "${REDIS_URL:-redis://umbra-redis:6379}"
       RP_SESSION_TTL: "${RP_SESSION_TTL:-2592000}"
       RP_SESSION_COOKIE_NAME: "${RP_SESSION_COOKIE_NAME:-vx_rp_session}"
-      # Opaque, token-less session cookie shared across ruyin's own first-party
+      # Opaque, token-less session cookie shared across umbra's own first-party
       # zone (apex + every *.ruyin.ai app) so one login covers the whole site.
       RP_SESSION_COOKIE_DOMAIN: "${RP_SESSION_COOKIE_DOMAIN:-}"
     networks:
@@ -187,9 +187,9 @@ services:
       retries: 3
       start_period: 20s
 
-  # -- Website: Ruyin public landing and self-built public pages ---------------
+  # -- Website: Umbra public landing and self-built public pages ---------------
   umbra-website:
-    image: ${IMAGE_REGISTRY}/${IMAGE_NAMESPACE}/ruyin-website:${IMAGE_TAG:-latest}
+    image: ${IMAGE_REGISTRY}/${IMAGE_NAMESPACE}/umbra-website:${IMAGE_TAG:-latest}
     container_name: umbra-website
     restart: always
     environment:
@@ -209,7 +209,7 @@ services:
   # /invites to umbra-account-web. This container is built and published so the
   # route split can be enabled without changing the image pipeline.
   umbra-admin:
-    image: ${IMAGE_REGISTRY}/${IMAGE_NAMESPACE}/ruyin-admin:${IMAGE_TAG:-latest}
+    image: ${IMAGE_REGISTRY}/${IMAGE_NAMESPACE}/umbra-admin:${IMAGE_TAG:-latest}
     container_name: umbra-admin
     restart: always
     environment:

@@ -58,7 +58,7 @@ export function useSession(): Session {
 }
 
 export function logout(): void {
-  // Local (ruyin-only) logout via a plain top-level GET navigation. /auth/logout
+  // Local (umbra-only) logout via a plain top-level GET navigation. /auth/logout
   // (served same-origin on the apex, proxied to the RP) destroys the RP session,
   // clears the cookie, and 303-redirects home. Navigation - not a form.submit() -
   // is reliable from inside the popover account menu, which unmounts on click and

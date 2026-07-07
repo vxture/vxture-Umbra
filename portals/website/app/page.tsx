@@ -10,7 +10,7 @@ import { HeroSection } from "@/components/hero-section";
  */
 export default function HomePage() {
   return (
-    <div id="ruyin-page-root" className="ruyin-page">
+    <div id="umbra-page-root" className="umbra-page">
       <BgCanvas />
       <SiteHeader />
       <HeroSection />

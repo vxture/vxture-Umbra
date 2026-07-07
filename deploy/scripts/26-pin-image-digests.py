@@ -3,14 +3,14 @@
 
 Why: docker compose recreates a container when its service config changes, and
 the image reference string is part of that config. The base compose file
-references owned images by a per-deploy tag (ruyin-*:sha-<commit>), so the
+references owned images by a per-deploy tag (umbra-*:sha-<commit>), so the
 string changes on every deploy and ALL owned containers are recreated even when
 their content is byte-for-byte identical. Pinning each service to an immutable
 @sha256 digest keeps the string stable across deploys whenever the digest is
 unchanged, so only services whose image actually changed are recreated.
 
 Resolution:
-- Owned images (ruyin-*) are pinned to the digest of the just-pulled deploy tag.
+- Owned images (umbra-*) are pinned to the digest of the just-pulled deploy tag.
   With build-layer caching, unchanged source yields an identical digest.
 - External images (e.g. marzban, vaultwarden) are pinned to the digest of the
   currently running container, so upstream :latest movement never silently
@@ -66,13 +66,13 @@ def _running_repo_digest(container: str) -> str:
 def main() -> None:
     registry = os.environ.get("IMAGE_REGISTRY", "")
     namespace = os.environ.get("IMAGE_NAMESPACE", "")
-    owned_prefix = f"{registry}/{namespace}/ruyin-" if registry and namespace else ""
+    owned_prefix = f"{registry}/{namespace}/umbra-" if registry and namespace else ""
 
     pinned: dict[str, str] = {}
     for name, ref in _service_images().items():
         if not ref:
             continue
-        is_owned = "/ruyin-" in ref or (bool(owned_prefix) and ref.startswith(owned_prefix))
+        is_owned = "/umbra-" in ref or (bool(owned_prefix) and ref.startswith(owned_prefix))
         if is_owned:
             digest = _repo_digest_of_ref(ref)
         else:

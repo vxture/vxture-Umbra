@@ -4,7 +4,7 @@
  *   rpsess:<rpsid>   verified IDENTITY CLAIMS only (also read by account.py).
  *   rptok:<rpsid>    OIDC token bundle (this BFF only; never leaves the server).
  *   sid:<sid>        SET of rpsid for back-channel logout (one central session
- *                    can map to several RP sessions across the ruyin zone).
+ *                    can map to several RP sessions across the umbra zone).
  * The browser only ever holds an opaque cookie pointing at <rpsid>.
  */
 import Redis from "ioredis";

@@ -92,27 +92,27 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - image: ruyin-website
+          - image: umbra-website
             context: ./portals
             dockerfile: ./portals/website/Dockerfile
             build_contexts: brand_context=./brand
-          - image: ruyin-console
+          - image: umbra-console
             context: ./portals
             dockerfile: ./portals/console/Dockerfile
             build_contexts: brand_context=./brand
-          - image: ruyin-admin
+          - image: umbra-admin
             context: ./portals
             dockerfile: ./portals/admin/Dockerfile
             build_contexts: brand_context=./brand
-          - image: ruyin-nginx
+          - image: umbra-nginx
             context: .
-            dockerfile: ./docker/ruyin-nginx.Dockerfile
+            dockerfile: ./docker/umbra-nginx.Dockerfile
             build_contexts: ""
-          - image: ruyin-account-api
+          - image: umbra-account-api
             context: ./services/account
             dockerfile: ./services/account/Dockerfile
             build_contexts: ""
-          - image: ruyin-subproxy
+          - image: umbra-subproxy
             context: ./services/subproxy
             dockerfile: ./services/subproxy/Dockerfile
             build_contexts: ""

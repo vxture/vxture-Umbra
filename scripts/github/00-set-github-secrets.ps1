@@ -1,5 +1,5 @@
 param(
-  [string]$Repo = "vxture/umbra",
+  [string]$Repo = "vxture/vxture-Umbra",
   [string]$EnvFile = "private/github-actions.local.env",
   [string]$EnvironmentName = "production",
   [switch]$DryRun

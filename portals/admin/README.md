@@ -1,6 +1,6 @@
-# Ruyin Admin Portal
+# Umbra Admin Portal
 
-Platform management surface for Ruyin.
+Platform management surface for Umbra.
 
 ## Functions
 
