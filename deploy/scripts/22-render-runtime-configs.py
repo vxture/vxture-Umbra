@@ -264,7 +264,7 @@ print("\n-- [REMOVED] Public VPN web surface -----------------------------------
 print("[SKIP] vpn.ruyin.ai web retired; unknown SNI falls through to 444 catch-all")
 
 print("\n-- Website app -----------------------------------------------------------")
-print("[SKIP] Ruyin website is served by umbra-website Next app")
+print("[SKIP] Umbra website is served by umbra-website Next app")
 
 print("\n-- Copying docs placeholder ---------------------------------------------")
 docs_src = REPO_DIR / "docs-site" / "html"

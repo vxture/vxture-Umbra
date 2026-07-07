@@ -9,7 +9,7 @@
 
 ```
 Name:       Vxture Umbra
-Repo:       vxture/umbra
+Repo:       vxture/vxture-Umbra
 Node:       vxture-edge-01
 User:       stone
 Version:    v1.0-production
@@ -32,7 +32,7 @@ Purpose:    Production overseas edge entry node
 | Service | Container | Domain | Purpose |
 |---------|-----------|--------|---------|
 | Nginx | `umbra-nginx` | gateway | SNI stream + HTTP virtual hosts |
-| Website | `umbra-website` | ruyin.ai | Ruyin public Next.js homepage |
+| Website | `umbra-website` | ruyin.ai | Umbra public Next.js homepage |
 | Marzban + Xray | `umbra-marzban` | sub.ruyin.ai, admin.ruyin.ai, REALITY ingress | VPN user management, subscription, bundled Xray subprocess |
 | Subscription Proxy | `umbra-subproxy` | internal | Normalizes subscription response metadata only |
 | Redis | `umbra-redis` | internal | OIDC RP server-side session store |
@@ -82,7 +82,7 @@ identity model - see [`design/platform-identity.md`](design/platform-identity.md
 | [`design/modules.md`](design/modules.md) | Per-service spec: config, volumes, ports, environment variables |
 | [`design/decisions.md`](design/decisions.md) | Design decisions: security model, B++ rules, subscription design |
 | [`design/platform-identity.md`](design/platform-identity.md) | Multi-app identity model: app bindings, invite app_key, identity broker |
-| [`design/vxture-sso.md`](design/vxture-sso.md) | Vxture SSO handoff contract for the Ruyin console (auth start, callback, verify) |
+| [`design/vxture-sso.md`](design/vxture-sso.md) | Vxture SSO handoff contract for the Umbra console (auth start, callback, verify) |
 | [`design/identity-app-integration-standard.md`](design/identity-app-integration-standard.md) | Vxture App Integration Standard v1.0 (OIDC RP contract). Chinese spec (single-file ASCII-exempt in `docs/`); upstream spec for `platform-identity.md` + `vxture-sso.md` |
 | [`implementation/repository.md`](implementation/repository.md) | Current repository layout and source-of-truth paths |
 | [`implementation/brand-assets.md`](implementation/brand-assets.md) | Brand asset spec: PNG/ICO source of truth, per-portal sync, build-time injection |

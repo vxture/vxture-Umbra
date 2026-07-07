@@ -90,7 +90,7 @@ Services:
     - proxies subscription traffic to umbra-subproxy:8080
 
   umbra-website
-    - Ruyin public Next website on :3210
+    - Umbra public Next website on :3210
     - consumes Vxture design-system as the design source
 
   umbra-marzban
@@ -110,7 +110,7 @@ Services:
     - talks to Marzban API and native subscription info endpoints
 
   umbra-account-web
-    - Ruyin console UI (Next.js) on :3220
+    - Umbra console UI (Next.js) on :3220
     - serves console.ruyin.ai and admin.ruyin.ai/invites
     - calls the umbra-account API for auth and invite state
 
@@ -182,7 +182,7 @@ implementation/repository.md; only the subset above ships to the server.
 | 8000 | Internal | umbra-marzban | Marzban API + admin + subscription |
 | 8080 | Internal | umbra-subproxy | Subscription metadata normalization |
 | 3281 | Internal | umbra-account | Invite-bound account portal |
-| 3210 | Internal | umbra-website | Ruyin public Next website |
+| 3210 | Internal | umbra-website | Umbra public Next website |
 | 3220 | Internal | umbra-account-web | User console and invite UI |
 | 3230 | Internal | umbra-admin | Platform admin surface (built, not yet routed) |
 | 6379 | Internal | umbra-redis | OIDC RP session store |
@@ -193,7 +193,7 @@ implementation/repository.md; only the subset above ships to the server.
 
 ## Backend Stack Direction
 
-Umbra currently has one Ruyin-owned business API: `umbra-account`, implemented
+Umbra currently has one Umbra-owned business API: `umbra-account`, implemented
 as `services/account/account.py`. It is a lightweight Python service for the
 edge-node phase. `umbra-subproxy` is not a business backend; it is a small
 metadata adapter for subscription responses.

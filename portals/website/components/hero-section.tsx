@@ -1,7 +1,7 @@
 "use client";
 
 import { useTranslations } from "@umbra/shared/i18n";
-import { ruyinBrand } from "@/lib/brand";
+import { umbraBrand } from "@/lib/brand";
 import { HeroSignature } from "@/components/hero-signature";
 
 /**
@@ -25,10 +25,10 @@ export function HeroSection() {
           <HeroSignature />
         </div>
         <h1 id="hero-title" className="hero-title">
-          {ruyinBrand.fullName}
+          {umbraBrand.fullName}
         </h1>
         <p className="hero-lead">{t("lead")}</p>
-        <a className="hero-cta" href={ruyinBrand.studioUrl}>
+        <a className="hero-cta" href={umbraBrand.studioUrl}>
           {t("action")}
         </a>
       </section>

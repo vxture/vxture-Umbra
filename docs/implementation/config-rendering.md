@@ -15,7 +15,7 @@ Do not run it with `bash`.
 - `.env`
 - `DATA_DIR/private/reality.json`
 - templates and static portal files under `configs/` and `portals/`
-- Ruyin website assets under `portals/website/public/` are served by the Next app container
+- Umbra website assets under `portals/website/public/` are served by the Next app container
 
 ## Template Syntax
 
@@ -48,7 +48,7 @@ password); `06-check-deploy-contracts.py` locks these modes.
 
 ## Website Assets
 
-The Ruyin public website is a Next app in `portals/website/`.
+The Umbra public website is a Next app in `portals/website/`.
 Nginx proxies `ruyin.ai` to the `umbra-website` container.
 `www.ruyin.ai` is a canonical redirect to `ruyin.ai`.
 
@@ -58,5 +58,5 @@ The site favicon lives at `portals/website/public/favicon.ico`.
 Use root-relative public URLs from Next components, for example:
 
 ```html
-<img src="/assets/brand/ruyin-symbol-dark.png" alt="">
+<img src="/assets/brand/umbra-symbol-dark.png" alt="">
 ```

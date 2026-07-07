@@ -1,5 +1,5 @@
 /**
- * OIDC RP configuration for the ruyin app-bff (Vxture App Integration Standard
+ * OIDC RP configuration for the umbra app-bff (Vxture App Integration Standard
  * v1.0). All values come from server-side env; nothing here is exposed to the
  * browser. Endpoint paths are the frozen contract relative to the issuer
  * (standard section 2), so we derive them rather than fetch discovery per call.
@@ -40,7 +40,7 @@ export function getOidcConfig(): OidcConfig | null {
   const clientSecret = (process.env.OIDC_CLIENT_SECRET || "").trim();
   if (!issuer || !clientSecret) return null;
 
-  const clientId = (process.env.OIDC_CLIENT_ID || "ruyin").trim();
+  const clientId = (process.env.OIDC_CLIENT_ID || "umbra").trim();
   const redirectUri = (process.env.OIDC_REDIRECT_URI || "").trim();
   const redisUrl = (process.env.REDIS_URL || "").trim();
   if (!clientId || !redirectUri || !redisUrl) return null;
@@ -52,7 +52,7 @@ export function getOidcConfig(): OidcConfig | null {
     clientId,
     clientSecret,
     redirectUri,
-    scopes: (process.env.OIDC_SCOPES || "openid profile email phone ruyin").trim(),
+    scopes: (process.env.OIDC_SCOPES || "openid profile email phone umbra").trim(),
     postLogoutRedirectUri: (process.env.OIDC_POST_LOGOUT_REDIRECT_URI || "").trim(),
     redisUrl,
     sessionTtlSeconds: Number.isFinite(ttl) && ttl > 0 ? ttl : 2592000,

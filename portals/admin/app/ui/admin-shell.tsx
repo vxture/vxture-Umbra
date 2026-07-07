@@ -24,7 +24,7 @@ import {
   persistTheme,
   type PrefTheme,
 } from "@umbra/shared/preferences";
-import { markSrc, ruyinBrand } from "../../lib/brand";
+import { markSrc, umbraBrand } from "../../lib/brand";
 import { useLocale } from "@umbra/shared/locale-provider";
 import { useTranslations } from "@umbra/shared/i18n";
 
@@ -137,7 +137,7 @@ export function AdminShell({
             />
             <span className="vx-shell-brand__label">
               <span className="site-brand-lockup">
-                <span className="site-brand-name">{ruyinBrand.productDomain}</span>
+                <span className="site-brand-name">{umbraBrand.productDomain}</span>
                 <span className="site-brand-tag">Operation Platform</span>
               </span>
             </span>
@@ -252,8 +252,8 @@ export function AdminShell({
       <ShellLegalFooter
         className="site-footer"
         innerClassName="site-footer-inner"
-        copyright={ruyinBrand.copyright}
-        links={ruyinBrand.legalLinks
+        copyright={umbraBrand.copyright}
+        links={umbraBrand.legalLinks
           .filter(([label]) =>
             /Terms of Service|Privacy Policy|Cookie Policy/.test(label),
           )

@@ -17,11 +17,11 @@ const brandFont = Funnel_Display({
 });
 
 export const metadata: Metadata = {
-  title: "Ruyin Admin",
-  description: "Ruyin VPN & password management",
+  title: "Umbra Admin",
+  description: "Umbra VPN & password management",
   icons: {
     icon: "/favicon.ico",
-    apple: "/assets/brand/ruyin-symbol-dark.png",
+    apple: "/assets/brand/umbra-symbol-dark.png",
   },
 };
 

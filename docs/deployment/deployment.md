@@ -252,8 +252,8 @@ Do not run it with `bash deploy/scripts/22-render-runtime-configs.py`; it is a P
 | `configs/xray/config.json.template` | `DATA_DIR/marzban/xray_config.json` |
 
 Also injects REALITY keys into Xray/Marzban config and renders the Clash subscription template.
-The Ruyin public website is built as the `umbra-website` Next.js service and
-served through `01-ruyin.conf.template`; it is not copied into `DATA_DIR`.
+The Umbra public website is built as the `umbra-website` Next.js service and
+served through `01-umbra.conf.template`; it is not copied into `DATA_DIR`.
 
 ### `23-start-docker-services.sh`
 
