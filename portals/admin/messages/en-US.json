@@ -1,4 +1,4 @@
-{
+﻿{
   "shell": {
     "navVpn": "VPN access",
     "navPass": "Password security",
@@ -71,7 +71,7 @@
     ],
     "loginEyebrow": "Admin access",
     "loginTitle": "Sign in",
-    "loginSub": "Use your Ruyin management credential to continue.",
+    "loginSub": "Use your Umbra management credential to continue.",
     "loginUsername": "Admin username",
     "loginPassword": "Admin password",
     "loginSubmit": "Sign in",

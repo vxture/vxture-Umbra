@@ -1,9 +1,9 @@
-import type { Metadata } from "next";
+﻿import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import { Funnel_Display } from "next/font/google";
 import { preferenceBootstrapScript } from "@umbra/shared/preferences";
 import "@vxture/design-system/styles/globals.css";
-import "@vxture/design-system/styles/brands/ruyin.css";
+import "@vxture/design-system/styles/brands/umbra.css";
 import "./globals.css";
 import { Providers } from "@umbra/shared/providers";
 import { I18nProvider } from "@umbra/shared/i18n";
@@ -17,11 +17,11 @@ const brandFont = Funnel_Display({
 });
 
 export const metadata: Metadata = {
-  title: "Ruyin Admin",
-  description: "Ruyin VPN & password management",
+  title: "Umbra Admin",
+  description: "Umbra VPN & password management",
   icons: {
     icon: "/favicon.ico",
-    apple: "/assets/brand/ruyin-symbol-dark.png",
+    apple: "/assets/brand/umbra-symbol-dark.png",
   },
 };
 

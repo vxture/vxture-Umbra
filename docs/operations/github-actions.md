@@ -1,4 +1,4 @@
-# GitHub Actions CI/CD Design
+﻿# GitHub Actions CI/CD Design
 
 This document defines the Umbra GitHub Actions deployment contract. It is based
 on the Vxture CI/CD design in `D:\MyWebSite\vxture\docs\deployment\05-ci-cd.md`,
@@ -189,7 +189,7 @@ Inputs:
 | `target` | yes | `main` | Promotion target branch |
 | `expected_sha` | yes | `abc123...` | Expected source SHA from `origin/develop` |
 | `release_confirmed` | yes for `main` | `true` | Confirms production release approval |
-| `release_note` | yes for `main` | `Ruyin portal update` | Audit note for production release |
+| `release_note` | yes for `main` | `Umbra portal update` | Audit note for production release |
 
 Current Umbra scope only needs `develop -> main`. If `beta` is introduced later,
 extend this workflow instead of creating an unrelated release path.
@@ -268,13 +268,13 @@ Authoritative path map (kept honest by the exhaustiveness guard below):
 
 | Changed path | Result |
 |---|---|
-| `portals/website/**` | rebuild `ruyin-website` |
-| `portals/console/**` | rebuild `ruyin-console` |
-| `portals/admin/**` | rebuild `ruyin-admin` |
-| `brand/**` | rebuild `ruyin-website` + `ruyin-console` + `ruyin-admin` (brand build-context) |
-| `services/account/**` (incl. its Dockerfile) | rebuild `ruyin-account-api` |
-| `services/subproxy/**` (incl. its Dockerfile) | rebuild `ruyin-subproxy` |
-| `docker/ruyin-nginx.Dockerfile` | rebuild `ruyin-nginx` |
+| `portals/website/**` | rebuild `umbra-website` |
+| `portals/console/**` | rebuild `umbra-console` |
+| `portals/admin/**` | rebuild `umbra-admin` |
+| `brand/**` | rebuild `umbra-website` + `umbra-console` + `umbra-admin` (brand build-context) |
+| `services/account/**` (incl. its Dockerfile) | rebuild `umbra-account-api` |
+| `services/subproxy/**` (incl. its Dockerfile) | rebuild `umbra-subproxy` |
+| `docker/umbra-nginx.Dockerfile` | rebuild `umbra-nginx` |
 | `configs/**`, `deploy/**`, `docker-compose.yml` | deployable, rebuild nothing |
 | `docs/**`, `.claude/**`, `.github/**`, `scripts/**`, root `*.md` / `LICENSE` / dotfiles / `.env.example` | non-deployable, skip |
 
@@ -326,12 +326,12 @@ Registry targets:
 
 | Target container | ACR repository in namespace `vxture` | GHCR repository | Source |
 |---|---|---|---|
-| `umbra-website` | `ruyin-website` | `ghcr.io/vxture/ruyin-website` | `portals/website/Dockerfile` |
-| `umbra-account-web` | `ruyin-console` | `ghcr.io/vxture/ruyin-console` | `portals/console/Dockerfile` |
-| `umbra-admin` | `ruyin-admin` | `ghcr.io/vxture/ruyin-admin` | `portals/admin/Dockerfile` |
-| `umbra-nginx` | `ruyin-nginx` | `ghcr.io/vxture/ruyin-nginx` | dedicated Dockerfile required |
-| `umbra-account` | `ruyin-account-api` | `ghcr.io/vxture/ruyin-account-api` | dedicated Dockerfile required |
-| `umbra-subproxy` | `ruyin-subproxy` | `ghcr.io/vxture/ruyin-subproxy` | dedicated Dockerfile required |
+| `umbra-website` | `umbra-website` | `ghcr.io/vxture/vxture-Umbra-website` | `portals/website/Dockerfile` |
+| `umbra-account-web` | `umbra-console` | `ghcr.io/vxture/vxture-Umbra-console` | `portals/console/Dockerfile` |
+| `umbra-admin` | `umbra-admin` | `ghcr.io/vxture/vxture-Umbra-admin` | `portals/admin/Dockerfile` |
+| `umbra-nginx` | `umbra-nginx` | `ghcr.io/vxture/vxture-Umbra-nginx` | dedicated Dockerfile required |
+| `umbra-account` | `umbra-account-api` | `ghcr.io/vxture/vxture-Umbra-account-api` | dedicated Dockerfile required |
+| `umbra-subproxy` | `umbra-subproxy` | `ghcr.io/vxture/vxture-Umbra-subproxy` | dedicated Dockerfile required |
 
 The first three images use the portal Dockerfiles. `umbra-admin` is the target
 container name for the `portals/admin` Next.js app. The last three images use
@@ -342,7 +342,7 @@ Build matrix fields:
 
 | Field | Meaning |
 |---|---|
-| `name` | Logical image name, for example `ruyin-website` |
+| `name` | Logical image name, for example `umbra-website` |
 | `context` | Docker build context |
 | `dockerfile` | Dockerfile path |
 | `container` | Runtime container name |
@@ -383,9 +383,9 @@ Example shape:
 ```yaml
 services:
   umbra-website:
-    image: ${IMAGE_REGISTRY}/${IMAGE_NAMESPACE}/ruyin-website:${IMAGE_TAG:-latest}
+    image: ${IMAGE_REGISTRY}/${IMAGE_NAMESPACE}/umbra-website:${IMAGE_TAG:-latest}
   umbra-account-web:
-    image: ${IMAGE_REGISTRY}/${IMAGE_NAMESPACE}/ruyin-console:${IMAGE_TAG:-latest}
+    image: ${IMAGE_REGISTRY}/${IMAGE_NAMESPACE}/umbra-console:${IMAGE_TAG:-latest}
 ```
 
 `IMAGE_REGISTRY` should point to GHCR on production. The deploy script may fall

@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import type { FormEvent, ReactNode } from "react";
 import { useEffect, useState } from "react";
@@ -15,7 +15,7 @@ import {
 import type { IconName, StatusBadgeTone } from "@vxture/design-system";
 import type { UmbraLocale } from "@umbra/shared/locales";
 import { AdminShell } from "./admin-shell";
-import { ruyinBrand } from "../../lib/brand";
+import { umbraBrand } from "../../lib/brand";
 import { useLocale } from "@umbra/shared/locale-provider";
 import { useTranslations } from "@umbra/shared/i18n";
 import type { AdminInvitesPayload, AdminUserRow } from "./types";
@@ -236,7 +236,7 @@ export function AdminApp() {
             <aside className="admin-login-aside">
               <div className="admin-login-aside-text">
                 <p className="admin-login-eyebrow">{m("loginAsideEyebrow")}</p>
-                <h2 className="admin-login-aside-title">{ruyinBrand.productName}</h2>
+                <h2 className="admin-login-aside-title">{umbraBrand.productName}</h2>
                 <p className="admin-login-aside-lead">{m("loginAsideLead")}</p>
               </div>
               <ul className="admin-login-features">

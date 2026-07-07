@@ -1,4 +1,4 @@
-# Design System Extension Requests
+﻿# Design System Extension Requests
 
 Status: proposed
 Consumers: Umbra portals (website, console, admin)
@@ -241,7 +241,7 @@ Reference: `portals/{website,console}/.../site-header|shell.tsx`,
 Gap: the legal footer bar (fixed content track, top hairline, copyright + a few
 policy links) is per-portal CSS (`.site-footer` / `.site-footer-inner`) wrapping
 `ShellLegalFooter`. Sibling to #1 SiteHeader: ship a `SiteFooter` that owns the
-bar layout + the `--ruyin-shell-margin-x` content track, so no portal CSS is
+bar layout + the `--umbra-shell-margin-x` content track, so no portal CSS is
 needed to position or size it.
 
 Reference: `portals/website/components/site-footer.tsx` + each portal's
@@ -283,7 +283,7 @@ Reference: `portals/website/components/user-dropdown.tsx`,
 
 ## Notes on tokens and theme
 
-- `brands/ruyin.css` must expose the brand gradient token (`--vx-gradient-brand`)
+- `brands/umbra.css` must expose the brand gradient token (`--vx-gradient-brand`)
   and route the brand font through the existing loader slot
   (`--vx-font-loader-brand`, already wired in Umbra `layout.tsx`).
 - All requested components must honor light/dark and the density tokens.

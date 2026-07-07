@@ -1,4 +1,4 @@
-# Umbra - Modules
+﻿# Umbra - Modules
 
 Per-service specification: responsibility, configuration, volumes, environment variables.
 
@@ -31,7 +31,7 @@ only on the admin vhost. See [`../specs/security.md`](../specs/security.md)
 | Template | Domain | Upstream |
 |----------|--------|---------|
 | `00-default.conf.template` | catch-all | ACME challenge and default 404/redirect behavior |
-| `01-ruyin.conf.template` | `ruyin.ai` | `umbra-website:3210` Next public website |
+| `01-umbra.conf.template` | `ruyin.ai` | `umbra-website:3210` Next public website |
 | `02-www.conf.template` | `www.ruyin.ai` | 301 canonical redirect to `ruyin.ai` |
 | `03-vpn.conf.template` | `EDGE_DOMAIN` | Tombstone: valid cert + `return 444` (no web surface; node is REALITY on `:443`) |
 | `04-sub.conf.template` | `sub.ruyin.ai` | `umbra-subproxy:8080` for native Marzban `/sub/<token>` metadata normalization |
@@ -237,7 +237,7 @@ This file is rendered from `configs/marzban/clash-subscription.j2` - it contains
 `umbra-subproxy` is internal-only and sits between nginx and Marzban for
 `/sub/<token>`. It does not convert subscription formats. It normalizes the
 response filename, `profile-title` header, and YAML `#profile-title` to
-`Ruyin-USERNAME`.
+`Umbra-USERNAME`.
 This is a narrow edge adapter and can remain Python while it stays small.
 
 ### Docker Config
@@ -359,7 +359,7 @@ Self-contained Python stdlib HTTP service with SQLite state in
 `DATA_DIR/account/account.db` for VPN-specific cache (binding to Marzban user,
 subscription URL); authoritative identity is the platform IdP and session state
 lives in `umbra-redis`. This is the current lightweight edge-node
-implementation. New formal Ruyin business backends should be implemented with
+implementation. New formal Umbra business backends should be implemented with
 NestJS; migrate this account API when account, invite, billing, audit, or admin
 workflows exceed the current single-file service scope.
 

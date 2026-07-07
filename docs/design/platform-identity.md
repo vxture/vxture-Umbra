@@ -1,6 +1,6 @@
-# Ruyin Platform Identity and Multi-App Authorization
+﻿# Umbra Platform Identity and Multi-App Authorization
 
-This document is the design for evolving the Ruyin account portal from a single
+This document is the design for evolving the Umbra account portal from a single
 VPN binding into a platform identity that can authorize and bind multiple
 application systems (VPN today, Vault and others later). VPN is the first and
 only implemented application; the Vault card is present but disabled. The admin
@@ -167,7 +167,7 @@ External: accounts.vxture.com (OIDC IdP; issues RS256 id/access/refresh tokens)
 
 ### Authentication and session (one identity across subdomains)
 
-ruyin is an OIDC Authorization-Code + PKCE(S256) RP against accounts.vxture.com
+umbra is an OIDC Authorization-Code + PKCE(S256) RP against accounts.vxture.com
 (see `vxture-sso.md` and [`identity-app-integration-standard.md`](identity-app-integration-standard.md)). The console
 portal (`umbra-account-web`) is the app-bff: tokens live server-side in Redis and
 the browser only ever holds an opaque `vx_rp_session` cookie.
@@ -232,7 +232,7 @@ APPS = [
 ```
 
 `secondaryAuth` flows through to the session payload and the card UI, reserving
-a place for applications that require their own login on top of the Ruyin
+a place for applications that require their own login on top of the Umbra
 identity (handled case by case later).
 
 ## Decisions

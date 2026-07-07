@@ -1,4 +1,4 @@
-# ruyin.ai - Brand landing page (also the unified front door: its header reads
+﻿# ruyin.ai - Brand landing page (also the unified front door: its header reads
 # the shared session and offers sign-in / workspace, so it proxies the account
 # API same-origin).
 server {
@@ -27,7 +27,7 @@ server {
     }
 
     # OIDC RP endpoints live in umbra-account-web. The registered redirect_uri /
-    # back_channel_logout_uri are on the apex (RUYIN_BASE_URL=https://ruyin.ai),
+    # back_channel_logout_uri are on the apex (UMBRA_BASE_URL=https://ruyin.ai),
     # so the apex must serve /auth/* even though the marketing site is the root.
     location ^~ /auth/ {
         limit_req zone=auth_flow burst=30 nodelay;

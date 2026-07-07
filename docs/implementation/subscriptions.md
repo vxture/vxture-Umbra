@@ -1,4 +1,4 @@
-# Subscription Implementation
+﻿# Subscription Implementation
 
 Subscriptions must remain Marzban-native.
 
@@ -21,12 +21,12 @@ It forwards `GET /sub/<token>` to Marzban, reads `/sub/<token>/info` to get the
 username, and normalizes client-visible metadata:
 
 ```text
-content-disposition: attachment; filename=Ruyin-USER01
-profile-title: base64:<Ruyin-USER01>
-#profile-title: Ruyin-USER01
+content-disposition: attachment; filename=Umbra-USER01
+profile-title: base64:<Umbra-USER01>
+#profile-title: Umbra-USER01
 ```
 
-The unquoted `filename=Ruyin-USER01` is intentional. Some clients display
+The unquoted `filename=Umbra-USER01` is intentional. Some clients display
 Marzban's quoted filename literally or with escape slashes, such as
 `\"USER01\`.
 
@@ -97,8 +97,8 @@ The subscription title prefix comes from `SUB_PROFILE_PREFIX`. Marzban still
 receives `SUB_PROFILE_TITLE` as an upstream fallback:
 
 ```yaml
-SUB_PROFILE_PREFIX: "${SUB_PROFILE_PREFIX:-Ruyin}"
-SUB_PROFILE_TITLE: "${SUB_PROFILE_TITLE:-Ruyin}"
+SUB_PROFILE_PREFIX: "${SUB_PROFILE_PREFIX:-Umbra}"
+SUB_PROFILE_TITLE: "${SUB_PROFILE_TITLE:-Umbra}"
 ```
 
 Proxy node names remain controlled by Marzban and `NODE_NAME`.

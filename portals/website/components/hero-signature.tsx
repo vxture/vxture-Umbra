@@ -1,13 +1,13 @@
-/**
- * Hero signature wordmark ("Ruyin" calligraphy) as an inline SVG. Inlining lets
+﻿/**
+ * Hero signature wordmark ("Umbra" calligraphy) as an inline SVG. Inlining lets
  * it recolor instantly with the theme instead of swapping a per-theme PNG, which
  * reloaded an image and stuttered on every theme toggle. Per-theme look: light =
  * solid brand blue via currentColor; dark = a luminous cool-blue metallic
- * gradient (the #ruyin-hero-dark-fill gradient below, applied by
+ * gradient (the #umbra-hero-dark-fill gradient below, applied by
  * .dark .hero-signature-art in globals.css) that glows against the dark navy
  * background while staying in the brand hue. Decorative: the accessible name is
  * the sr-only <h1> in hero-section.tsx, so this is aria-hidden. Source:
- * brand/ruyin-hero.svg.
+ * brand/umbra-hero.svg.
  */
 export function HeroSignature() {
   return (
@@ -23,7 +23,7 @@ export function HeroSignature() {
         {/* Dark-theme fill: a luminous cool-blue metallic gradient built from DS
             brand-scale tokens, so it stays in sync with the palette and needs no
             raw colors. Highlight -> vivid -> deep -> highlight gives the sheen. */}
-        <linearGradient id="ruyin-hero-dark-fill" x1="0%" y1="0%" x2="100%" y2="100%">
+        <linearGradient id="umbra-hero-dark-fill" x1="0%" y1="0%" x2="100%" y2="100%">
           <stop offset="0%" stopColor="var(--vx-color-brand-200)" />
           <stop offset="40%" stopColor="var(--vx-color-brand-400)" />
           <stop offset="58%" stopColor="var(--vx-color-brand-500)" />

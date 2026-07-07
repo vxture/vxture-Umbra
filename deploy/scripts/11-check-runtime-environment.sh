@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+﻿#!/usr/bin/env bash
 # Check all prerequisites before deployment.
 set -euo pipefail
 
@@ -155,8 +155,8 @@ if [[ "${VXTURE_NPM_REGISTRY:-}" == *"npm.pkg.github.com"* ]]; then
   fi
 fi
 
-# -- OIDC RP (required: ruyin login depends on it) -----------------------------
-# ruyin authenticates only via the OIDC Authorization-Code + PKCE RP against
+# -- OIDC RP (required: umbra login depends on it) -----------------------------
+# umbra authenticates only via the OIDC Authorization-Code + PKCE RP against
 # accounts.vxture.com, so the issuer, client secret, redirect, and session store
 # must all be present and well-formed.
 if [[ "${OIDC_ISSUER:-}" =~ ^https?://[^[:space:]]+$ ]]; then

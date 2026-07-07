@@ -1,4 +1,4 @@
-{
+﻿{
   "shell": {
     "navVpn": "科学上网",
     "navPass": "密码安全",
@@ -71,7 +71,7 @@
     ],
     "loginEyebrow": "管理员登录",
     "loginTitle": "登录",
-    "loginSub": "使用您的 Ruyin 管理凭据继续。",
+    "loginSub": "使用您的 Umbra 管理凭据继续。",
     "loginUsername": "管理员用户名",
     "loginPassword": "管理员密码",
     "loginSubmit": "登录",

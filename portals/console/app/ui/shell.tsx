@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useState, type ReactNode } from "react";
 import {
@@ -17,7 +17,7 @@ import { persistTheme, type PrefTheme } from "@umbra/shared/preferences";
 import { useLocale } from "@umbra/shared/locale-provider";
 import { useTranslations } from "@umbra/shared/i18n";
 import { UMBRA_LOCALE_OPTIONS } from "@umbra/shared/locales";
-import { markSrc, ruyinBrand } from "../../lib/brand";
+import { markSrc, umbraBrand } from "../../lib/brand";
 import { TenantPanel } from "./tenant-panel";
 import { UserDropdown } from "./user-dropdown";
 import type { VxtureUser } from "./types";
@@ -61,12 +61,12 @@ export function Shell({
           {/* Logo + name link to the ruyin.ai homepage (not the console root).
               The studio tag reuses the DS pill class (no custom CSS). */}
           <ShellBrand
-            href={ruyinBrand.siteUrl}
+            href={umbraBrand.siteUrl}
             logoSrc={markSrc(theme)}
             logoAlt=""
             label={
               <span className="site-brand-lockup">
-                <span className="site-brand-name">{ruyinBrand.productDomain}</span>
+                <span className="site-brand-name">{umbraBrand.productDomain}</span>
                 <span className="site-brand-tag">vxture studio</span>
               </span>
             }
@@ -124,8 +124,8 @@ export function Shell({
       <ShellLegalFooter
         className="site-footer"
         innerClassName="site-footer-inner"
-        copyright={ruyinBrand.copyright}
-        links={ruyinBrand.legalLinks
+        copyright={umbraBrand.copyright}
+        links={umbraBrand.legalLinks
           .filter(([label]) =>
             /Terms of Service|Privacy Policy|Cookie Policy/.test(label),
           )

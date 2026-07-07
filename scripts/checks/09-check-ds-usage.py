@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+﻿#!/usr/bin/env python3
 """Design-system usage guardrail for the Umbra portals.
 
 The portals must consume @vxture/design-system completely: DS React components
@@ -56,7 +56,7 @@ COMPONENT_CLASS_RE = re.compile(
 
 REQUIRED_LAYOUT_IMPORTS = (
     "@vxture/design-system/styles/globals.css",
-    "@vxture/design-system/styles/brands/ruyin.css",
+    "@vxture/design-system/styles/brands/umbra.css",
 )
 
 

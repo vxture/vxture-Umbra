@@ -1,4 +1,4 @@
-# Umbra Repository Standards
+﻿# Umbra Repository Standards
 
 Authoritative working agreement for this repo. The goal is a clean, predictable
 branch and deploy flow with no direct human writes to protected branches.
@@ -27,7 +27,7 @@ linear history.
 
 ## Branch protection (GitHub Rulesets, not legacy protection)
 
-Enforced via repo Rulesets (`gh api repos/vxture/umbra/rulesets`). Legacy
+Enforced via repo Rulesets (`gh api repos/vxture/vxture-Umbra/rulesets`). Legacy
 `branches/*/protection` returns 404 - do not look there.
 
 - `develop` ("Umbra develop quality gate"): require PR (0 approvals), require

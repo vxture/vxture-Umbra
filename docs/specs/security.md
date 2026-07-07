@@ -1,4 +1,4 @@
-# Security Spec
+﻿# Security Spec
 
 Security boundaries are part of the product contract.
 
@@ -32,7 +32,7 @@ Marzban may show a different token after console refresh. Tokens are opaque subs
 
 ## Account Portal
 
-`console.ruyin.ai` is the user-facing account console. User identity flows through OIDC: ruyin is an OIDC Authorization-Code + PKCE (S256) Relying Party against `accounts.vxture.com` (the platform IdP). The console/account-web runs as an app-bff. Authoritative specs: `docs/design/vxture-sso.md` (OIDC flow, session store, cookie model, token verification) and `docs/design/platform-identity.md` (identity and `app_bindings` schema).
+`console.ruyin.ai` is the user-facing account console. User identity flows through OIDC: umbra is an OIDC Authorization-Code + PKCE (S256) Relying Party against `accounts.vxture.com` (the platform IdP). The console/account-web runs as an app-bff. Authoritative specs: `docs/design/vxture-sso.md` (OIDC flow, session store, cookie model, token verification) and `docs/design/platform-identity.md` (identity and `app_bindings` schema).
 
 No tokens are exposed to the browser. The app-bff exchanges the auth code server-side, verifies the RS256 JWT via JWKS (iss/aud/exp/nonce checks), and persists the session in the `umbra-redis` server-side session store. The browser receives only an opaque `vx_rp_session` cookie (`Domain=.ruyin.ai`, shared across `*.ruyin.ai`). The retired custom cross-domain token handoff (the `ctx` JSON `start` param) must not return.
 

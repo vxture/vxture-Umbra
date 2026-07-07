@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+﻿#!/usr/bin/env python3
 """Static checks for high-risk deployment script contracts.
 
 This is not a shell parser. It verifies concrete safety guardrails that have
@@ -13,29 +13,29 @@ from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 RELEASE_WORKFLOW = ".github/workflows/release.yml"
-EXPECTED_RUYIN_IMAGES = {
-    "ruyin-account-api",
-    "ruyin-admin",
-    "ruyin-console",
-    "ruyin-nginx",
-    "ruyin-subproxy",
-    "ruyin-website",
+EXPECTED_UMBRA_IMAGES = {
+    "umbra-account-api",
+    "umbra-admin",
+    "umbra-console",
+    "umbra-nginx",
+    "umbra-subproxy",
+    "umbra-website",
 }
 EXPECTED_COMPOSE_IMAGES = {
-    "${IMAGE_REGISTRY}/${IMAGE_NAMESPACE}/ruyin-account-api:${IMAGE_TAG:-latest}",
-    "${IMAGE_REGISTRY}/${IMAGE_NAMESPACE}/ruyin-admin:${IMAGE_TAG:-latest}",
-    "${IMAGE_REGISTRY}/${IMAGE_NAMESPACE}/ruyin-console:${IMAGE_TAG:-latest}",
-    "${IMAGE_REGISTRY}/${IMAGE_NAMESPACE}/ruyin-nginx:${IMAGE_TAG:-latest}",
-    "${IMAGE_REGISTRY}/${IMAGE_NAMESPACE}/ruyin-subproxy:${IMAGE_TAG:-latest}",
-    "${IMAGE_REGISTRY}/${IMAGE_NAMESPACE}/ruyin-website:${IMAGE_TAG:-latest}",
+    "${IMAGE_REGISTRY}/${IMAGE_NAMESPACE}/umbra-account-api:${IMAGE_TAG:-latest}",
+    "${IMAGE_REGISTRY}/${IMAGE_NAMESPACE}/umbra-admin:${IMAGE_TAG:-latest}",
+    "${IMAGE_REGISTRY}/${IMAGE_NAMESPACE}/umbra-console:${IMAGE_TAG:-latest}",
+    "${IMAGE_REGISTRY}/${IMAGE_NAMESPACE}/umbra-nginx:${IMAGE_TAG:-latest}",
+    "${IMAGE_REGISTRY}/${IMAGE_NAMESPACE}/umbra-subproxy:${IMAGE_TAG:-latest}",
+    "${IMAGE_REGISTRY}/${IMAGE_NAMESPACE}/umbra-website:${IMAGE_TAG:-latest}",
 }
 EXPECTED_COMPOSE_SERVICE_IMAGES = {
-    "umbra-account": "${IMAGE_REGISTRY}/${IMAGE_NAMESPACE}/ruyin-account-api:${IMAGE_TAG:-latest}",
-    "umbra-account-web": "${IMAGE_REGISTRY}/${IMAGE_NAMESPACE}/ruyin-console:${IMAGE_TAG:-latest}",
-    "umbra-admin": "${IMAGE_REGISTRY}/${IMAGE_NAMESPACE}/ruyin-admin:${IMAGE_TAG:-latest}",
-    "umbra-nginx": "${IMAGE_REGISTRY}/${IMAGE_NAMESPACE}/ruyin-nginx:${IMAGE_TAG:-latest}",
-    "umbra-subproxy": "${IMAGE_REGISTRY}/${IMAGE_NAMESPACE}/ruyin-subproxy:${IMAGE_TAG:-latest}",
-    "umbra-website": "${IMAGE_REGISTRY}/${IMAGE_NAMESPACE}/ruyin-website:${IMAGE_TAG:-latest}",
+    "umbra-account": "${IMAGE_REGISTRY}/${IMAGE_NAMESPACE}/umbra-account-api:${IMAGE_TAG:-latest}",
+    "umbra-account-web": "${IMAGE_REGISTRY}/${IMAGE_NAMESPACE}/umbra-console:${IMAGE_TAG:-latest}",
+    "umbra-admin": "${IMAGE_REGISTRY}/${IMAGE_NAMESPACE}/umbra-admin:${IMAGE_TAG:-latest}",
+    "umbra-nginx": "${IMAGE_REGISTRY}/${IMAGE_NAMESPACE}/umbra-nginx:${IMAGE_TAG:-latest}",
+    "umbra-subproxy": "${IMAGE_REGISTRY}/${IMAGE_NAMESPACE}/umbra-subproxy:${IMAGE_TAG:-latest}",
+    "umbra-website": "${IMAGE_REGISTRY}/${IMAGE_NAMESPACE}/umbra-website:${IMAGE_TAG:-latest}",
 }
 ROOT_OWNED_DEPLOY_DEPENDENCIES = (
     Path("docker-compose.yml"),
@@ -370,7 +370,7 @@ CHECKS: list[tuple[str, Path, list[str]]] = [
             "umbra-account-web",
             "check_http_body_contains",
             "VXTURE STUDIO",
-            "Ruyin Account",
+            "Umbra Account",
             "$CONSOLE_DOMAIN account home",
             "$CONSOLE_DOMAIN account login",
             "$CONSOLE_DOMAIN account registration",
@@ -500,7 +500,7 @@ CHECKS: list[tuple[str, Path, list[str]]] = [
         Path("docker-compose.yml"),
         [
             "umbra-subproxy:",
-            "ruyin-subproxy",
+            "umbra-subproxy",
             "SUB_PROFILE_PREFIX",
         ],
     ),
@@ -509,9 +509,9 @@ CHECKS: list[tuple[str, Path, list[str]]] = [
         Path("docker-compose.yml"),
         [
             "umbra-account:",
-            "ruyin-account-api",
+            "umbra-account-api",
             "umbra-account-web:",
-            "ruyin-console",
+            "umbra-console",
             "ACCOUNT_SESSION_SECRET",
             "ACCOUNT_INVITE_SECRET",
             "ACCOUNT_ADMIN_USERNAME",
@@ -529,19 +529,19 @@ CHECKS: list[tuple[str, Path, list[str]]] = [
         "compose includes six Umbra-owned ACR image repositories",
         Path("docker-compose.yml"),
         [
-            "${IMAGE_REGISTRY}/${IMAGE_NAMESPACE}/ruyin-nginx:${IMAGE_TAG:-latest}",
-            "${IMAGE_REGISTRY}/${IMAGE_NAMESPACE}/ruyin-subproxy:${IMAGE_TAG:-latest}",
-            "${IMAGE_REGISTRY}/${IMAGE_NAMESPACE}/ruyin-account-api:${IMAGE_TAG:-latest}",
-            "${IMAGE_REGISTRY}/${IMAGE_NAMESPACE}/ruyin-console:${IMAGE_TAG:-latest}",
-            "${IMAGE_REGISTRY}/${IMAGE_NAMESPACE}/ruyin-website:${IMAGE_TAG:-latest}",
-            "${IMAGE_REGISTRY}/${IMAGE_NAMESPACE}/ruyin-admin:${IMAGE_TAG:-latest}",
+            "${IMAGE_REGISTRY}/${IMAGE_NAMESPACE}/umbra-nginx:${IMAGE_TAG:-latest}",
+            "${IMAGE_REGISTRY}/${IMAGE_NAMESPACE}/umbra-subproxy:${IMAGE_TAG:-latest}",
+            "${IMAGE_REGISTRY}/${IMAGE_NAMESPACE}/umbra-account-api:${IMAGE_TAG:-latest}",
+            "${IMAGE_REGISTRY}/${IMAGE_NAMESPACE}/umbra-console:${IMAGE_TAG:-latest}",
+            "${IMAGE_REGISTRY}/${IMAGE_NAMESPACE}/umbra-website:${IMAGE_TAG:-latest}",
+            "${IMAGE_REGISTRY}/${IMAGE_NAMESPACE}/umbra-admin:${IMAGE_TAG:-latest}",
             "umbra-admin:",
             'PORT: "3230"',
         ],
     ),
     (
         "runtime Dockerfiles support local base image overrides",
-        Path("docker/ruyin-nginx.Dockerfile"),
+        Path("docker/umbra-nginx.Dockerfile"),
         [
             "ARG NGINX_BASE_IMAGE=nginx:alpine",
             "FROM ${NGINX_BASE_IMAGE}",
@@ -620,13 +620,13 @@ CHECKS: list[tuple[str, Path, list[str]]] = [
             ".github/workflows/promote.yml",
             RELEASE_WORKFLOW,
             "docker-build",
-            "ruyin-website",
-            "ruyin-console",
-            "ruyin-admin",
+            "umbra-website",
+            "umbra-console",
             "umbra-admin",
-            "ruyin-nginx",
-            "ruyin-account-api",
-            "ruyin-subproxy",
+            "umbra-admin",
+            "umbra-nginx",
+            "umbra-account-api",
+            "umbra-subproxy",
             "ALIYUN_ACR_REGISTRY",
             "ALIYUN_ACR_NAMESPACE",
             "Required validations before push:",
@@ -667,7 +667,7 @@ CHECKS: list[tuple[str, Path, list[str]]] = [
         Path("scripts/github/00-set-github-secrets.ps1"),
         [
             'param(',
-            '$Repo = "vxture/umbra"',
+            '$Repo = "vxture/vxture-Umbra"',
             '$EnvFile = "private/github-actions.local.env"',
             '$EnvironmentName = "production"',
             "Read-LocalEnvFile",
@@ -695,12 +695,12 @@ CHECKS: list[tuple[str, Path, list[str]]] = [
             "${{ github.sha }}",
             "ghcr.io/${{ env.GHCR_NAMESPACE }}/${{ matrix.image }}:latest",
             "${{ env.ACR_REGISTRY }}/${{ env.ACR_NAMESPACE }}/${{ matrix.image }}:latest",
-            "ruyin-website",
-            "ruyin-console",
-            "ruyin-admin",
-            "ruyin-nginx",
-            "ruyin-account-api",
-            "ruyin-subproxy",
+            "umbra-website",
+            "umbra-console",
+            "umbra-admin",
+            "umbra-nginx",
+            "umbra-account-api",
+            "umbra-subproxy",
             "brand_context=./brand",
             "npm_token=${{ secrets.NODE_AUTH_TOKEN }}",
             "ALIYUN_ACR_REGISTRY",
@@ -793,7 +793,7 @@ CHECKS: list[tuple[str, Path, list[str]]] = [
             "_running_repo_digest",
             "RepoDigests",
             "IMAGE_REGISTRY",
-            "ruyin-",
+            "umbra-",
         ],
     ),
     (
@@ -1044,7 +1044,7 @@ CHECKS: list[tuple[str, Path, list[str]]] = [
         [
             "curl_saved_subscription",
             "for attempt in 1 2 3 4 5",
-            "expected_title=\"${SUB_PROFILE_PREFIX:-Ruyin}-${latest_sub_user}\"",
+            "expected_title=\"${SUB_PROFILE_PREFIX:-Umbra}-${latest_sub_user}\"",
             "content-disposition",
             "Subscription name normalized",
         ],
@@ -1390,7 +1390,7 @@ def check_compose_owned_image_mapping() -> list[str]:
             continue
 
         image_match = re.match(
-            r"^    image: (\$\{IMAGE_REGISTRY\}/\$\{IMAGE_NAMESPACE\}/ruyin-[a-z-]+:\$\{IMAGE_TAG:-latest\})\s*$",
+            r"^    image: (\$\{IMAGE_REGISTRY\}/\$\{IMAGE_NAMESPACE\}/umbra-[a-z-]+:\$\{IMAGE_TAG:-latest\})\s*$",
             line,
         )
         if current_service and image_match:
@@ -1416,12 +1416,12 @@ def check_compose_owned_image_mapping() -> list[str]:
 
 def check_docker_build_image_matrix() -> list[str]:
     text = read(PROJECT_ROOT / RELEASE_WORKFLOW)
-    matrix_images = set(re.findall(r"^\s+- image: (ruyin-[a-z-]+)\s*$", text, flags=re.MULTILINE))
+    matrix_images = set(re.findall(r"^\s+- image: (umbra-[a-z-]+)\s*$", text, flags=re.MULTILINE))
     problems: list[str] = []
-    if matrix_images != EXPECTED_RUYIN_IMAGES:
+    if matrix_images != EXPECTED_UMBRA_IMAGES:
         problems.append(
             "docker-build matrix images must be exactly "
-            f"{sorted(EXPECTED_RUYIN_IMAGES)!r}; got {sorted(matrix_images)!r}"
+            f"{sorted(EXPECTED_UMBRA_IMAGES)!r}; got {sorted(matrix_images)!r}"
         )
 
     required_tag_patterns = (
@@ -1534,7 +1534,7 @@ def check_brand_assets_use_png_and_ico() -> list[str]:
     )
 
     # The hero wordmark is rendered as an inline-SVG React component (themed via
-    # currentColor for instant theme switching); brand/ruyin-hero.svg is its
+    # currentColor for instant theme switching); brand/umbra-hero.svg is its
     # source-of-record and is the one allowed SVG. All other brand assets that are
     # served as <img> / favicon / og:image must stay raster (PNG/ICO).
     svg_files: list[str] = []
@@ -1543,19 +1543,19 @@ def check_brand_assets_use_png_and_ico() -> list[str]:
             svg_files.extend(
                 path.relative_to(PROJECT_ROOT).as_posix()
                 for path in root.rglob("*.svg")
-                if path.name != "ruyin-hero.svg"
+                if path.name != "umbra-hero.svg"
             )
     if svg_files:
-        problems.append(f"Ruyin brand assets must be PNG/ICO, not SVG: {svg_files!r}")
+        problems.append(f"Umbra brand assets must be PNG/ICO, not SVG: {svg_files!r}")
 
-    # ruyin-hero-light.png is kept as the og:image / twitter:image (social cards
-    # need a raster image). ruyin-hero-dark.png is retired: the on-page hero is now
+    # umbra-hero-light.png is kept as the og:image / twitter:image (social cards
+    # need a raster image). umbra-hero-dark.png is retired: the on-page hero is now
     # the inline SVG, so a dark hero raster is no longer needed.
     required = (
         PROJECT_ROOT / "brand/favicon.ico",
-        PROJECT_ROOT / "brand/ruyin-hero-light.png",
-        PROJECT_ROOT / "brand/ruyin-symbol-dark.png",
-        PROJECT_ROOT / "brand/ruyin-symbol-light.png",
+        PROJECT_ROOT / "brand/umbra-hero-light.png",
+        PROJECT_ROOT / "brand/umbra-symbol-dark.png",
+        PROJECT_ROOT / "brand/umbra-symbol-light.png",
     )
     missing = [path.relative_to(PROJECT_ROOT).as_posix() for path in required if not path.exists()]
     if missing:

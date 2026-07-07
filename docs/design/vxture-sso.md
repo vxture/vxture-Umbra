@@ -1,27 +1,27 @@
-# Vxture SSO Integration Design (OIDC RP)
+﻿# Vxture SSO Integration Design (OIDC RP)
 
-How ruyin.ai authenticates against the Vxture identity platform. ruyin is the
+How ruyin.ai authenticates against the Vxture identity platform. umbra is the
 first cross-domain application and integrates as a standard OIDC Relying Party.
 The authoritative external contract is
 [`identity-app-integration-standard.md`](identity-app-integration-standard.md)
-(Vxture App Integration Standard v1.0); this document records how ruyin
+(Vxture App Integration Standard v1.0); this document records how umbra
 implements it in this repo.
 
 ## Status
 
-ruyin is an **OIDC Authorization-Code + PKCE(S256) RP** against
+umbra is an **OIDC Authorization-Code + PKCE(S256) RP** against
 `accounts.vxture.com` (the single identity center for the whole product).
 
-- `client_id`: `ruyin`, `realm`: `tenant`, mode B (cross-domain).
+- `client_id`: `umbra`, `realm`: `tenant`, mode B (cross-domain).
 - `redirect_uri`: `https://ruyin.ai/auth/callback`.
 - `back_channel_logout_uri`: `https://ruyin.ai/auth/backchannel-logout`.
-- `scopes`: `openid profile ruyin`.
+- `scopes`: `openid profile umbra`.
 
 > Host note: the platform registers the APEX as the RP base (standard section 11:
-> `RUYIN_BASE_URL=https://ruyin.ai`), and the IdP strictly whitelists the
+> `UMBRA_BASE_URL=https://ruyin.ai`), and the IdP strictly whitelists the
 > `redirect_uri`, so it must be `https://ruyin.ai/auth/callback`. The OIDC RP
 > endpoints physically run in `umbra-account-web`, so nginx serves `/auth/*` on
-> the apex by proxying to that container (`01-ruyin.conf.template`), while the
+> the apex by proxying to that container (`01-umbra.conf.template`), while the
 > marketing site stays at `/` and `/api/account/` proxies to `umbra-account`.
 > `console.ruyin.ai` also serves `/auth/*` (its catch-all proxies to the same
 > container), but the registered callback host is the apex.
@@ -40,18 +40,18 @@ have been removed.
 
 ## Goals
 
-- Let a user start login from any ruyin surface and authenticate at
-  accounts.vxture.com without ruyin implementing a login UI.
+- Let a user start login from any umbra surface and authenticate at
+  accounts.vxture.com without umbra implementing a login UI.
 - Keep all OIDC tokens server-side; the browser sees only an opaque session
   cookie.
 - Verify every token (id/access/logout) with RS256 + JWKS (iss/aud/exp/nonce).
-- Support refresh rotation. Ruyin's own logout button is local (ruyin-only);
-  global logout still reaches ruyin inbound via back-channel logout.
+- Support refresh rotation. Umbra's own logout button is local (umbra-only);
+  global logout still reaches umbra inbound via back-channel logout.
 - One login shared across ruyin.ai and every *.ruyin.ai app.
 
 ## Non-Goals
 
-- Do not implement a separate ruyin identity provider or store Vxture passwords.
+- Do not implement a separate umbra identity provider or store Vxture passwords.
 - Do not expose OIDC tokens or the client secret to the browser.
 - Do not depend on cross-registered-domain cookie sharing or iframe/XHR silent
   authorization.
@@ -63,7 +63,7 @@ have been removed.
 | `GET /auth/login` | Generate PKCE(S256) + state + nonce, store the authreq in Redis, top-level redirect to `{issuer}/oidc/authorize`. Honors an allowlisted `returnTo` and carries an `invite` through. |
 | `GET /auth/callback` | Validate state, fetch+delete the authreq, exchange the code (with the PKCE verifier), verify id_token (nonce) + access_token, create the RP session, set the opaque cookie, redirect to `returnTo` (or `/register?invite=`). |
 | `GET /auth/session` | Resolve the opaque cookie to identity claims; refresh the access token server-side when near expiry (rotating the refresh token); tear the session down if the refresh family is revoked. |
-| `POST /auth/logout` | Local (ruyin-only) logout: destroy the RP session, clear the cookie, redirect to the ruyin home. Does NOT call `end_session`, so the central session and other apps stay signed in (next ruyin login is therefore silent). |
+| `POST /auth/logout` | Local (umbra-only) logout: destroy the RP session, clear the cookie, redirect to the umbra home. Does NOT call `end_session`, so the central session and other apps stay signed in (next umbra login is therefore silent). |
 | `POST /auth/backchannel-logout` | Verify the `logout_token` (RS256, backchannel-logout event, `sid`, no `nonce`) and destroy every RP session for that central `sid`. |
 
 The RP library lives under `portals/console/app/auth/lib/`
@@ -87,7 +87,7 @@ Four key families in `umbra-redis`:
 - `rptok:<rpsid>` - the OIDC token bundle (access/refresh/access_exp/id_claims).
   **Console BFF only**; never read by the account service or the browser.
 - `sid:<sid>` - SET of `rpsid` for back-channel logout (one central session can
-  map to several RP sessions across the ruyin zone).
+  map to several RP sessions across the umbra zone).
 
 ## Pending upstream claims (requested from accounts.vxture.com)
 
@@ -107,8 +107,8 @@ expected (they ride the existing tenant context); confirm during provisioning.
 - `vx_rp_session`: opaque random id pointing at the server-side session;
   `HttpOnly; Secure; SameSite=Lax; Path=/`, `Domain=.ruyin.ai` (host-only in
   dev). No tokens or claims in the browser.
-- The standard's `__Host-` isolation intent is preserved: ruyin's cookie never
-  reaches vxture.com and `vx_sid` never reaches ruyin. Within ruyin's own
+- The standard's `__Host-` isolation intent is preserved: umbra's cookie never
+  reaches vxture.com and `vx_sid` never reaches umbra. Within umbra's own
   first-party zone the cookie is deliberately parent-scoped so one login covers
   apex + every *.ruyin.ai app.
 
@@ -116,7 +116,7 @@ expected (they ride the existing tenant context); confirm during provisioning.
 
 For id_token / access_token / logout_token: `alg` must be RS256 (reject
 `none`/HS*); resolve `kid` from `{issuer}/oidc/jwks` (cached, one refresh on
-miss); `iss === https://accounts.vxture.com`; `aud === ruyin`; `exp` with 60s
+miss); `iss === https://accounts.vxture.com`; `aud === umbra`; `exp` with 60s
 skew; id_token `nonce` must equal the request nonce; logout_token must carry the
 backchannel-logout event + `sid` and must not carry `nonce`.
 
@@ -124,10 +124,10 @@ backchannel-logout event + `sid` and must not carry `nonce`.
 
 ```env
 OIDC_ISSUER=https://accounts.vxture.com
-OIDC_CLIENT_ID=ruyin
+OIDC_CLIENT_ID=umbra
 OIDC_CLIENT_SECRET=<provisioned via secret manager; never committed>
 OIDC_REDIRECT_URI=https://ruyin.ai/auth/callback
-OIDC_SCOPES=openid profile email phone ruyin
+OIDC_SCOPES=openid profile email phone umbra
 OIDC_POST_LOGOUT_REDIRECT_URI=https://ruyin.ai/
 REDIS_URL=redis://umbra-redis:6379
 RP_SESSION_TTL=2592000
@@ -142,7 +142,7 @@ deploy runtime check (`11-check-runtime-environment.sh`) enforces this.
 
 ```text
 Browser
-  -> GET ruyin surface (anonymous) -> GET console.ruyin.ai/auth/login
+  -> GET umbra surface (anonymous) -> GET console.ruyin.ai/auth/login
 
 Account web (RP)
   -> generate PKCE(S256) + state + nonce; store authreq:<state> in Redis
@@ -165,8 +165,8 @@ Account web (RP)
 Identity and VPN entitlement remain separate:
 
 1. The user signs in via OIDC.
-2. Inside ruyin, the signed-in user enters a one-time invite code.
-3. ruyin binds the Vxture account id (`sub`) to the target Marzban user and
+2. Inside umbra, the signed-in user enters a one-time invite code.
+3. umbra binds the Vxture account id (`sub`) to the target Marzban user and
    reveals the subscription URL.
 
 Invite-link handling:

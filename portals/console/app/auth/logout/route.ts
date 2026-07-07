@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+﻿import { NextRequest, NextResponse } from "next/server";
 import { getOidcConfig } from "../lib/config";
 import { destroySession } from "../lib/session-store";
 import { clearSessionCookie } from "../lib/cookie";
@@ -9,14 +9,14 @@ export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
 /**
- * Global (SSO) logout. ruyin and vxture are one first-party suite behind a single
- * IdP, so signing out of ruyin signs the user out everywhere: we destroy this RP
+ * Global (SSO) logout. umbra and vxture are one first-party suite behind a single
+ * IdP, so signing out of umbra signs the user out everywhere: we destroy this RP
  * session + clear the opaque cookie, then top-level redirect to the IdP
  * end_session endpoint. The IdP destroys the central vx_sid session (logs the
  * user out of vxture and every sibling app), revokes the session's tokens, and
  * fan-outs back-channel logout to every client of the session (so future apps are
  * covered automatically); it then redirects back to post_logout_redirect_uri
- * (ruyin home). No id_token_hint is needed - the IdP identifies the session by its
+ * (umbra home). No id_token_hint is needed - the IdP identifies the session by its
  * own vx_sid cookie on the top-level redirect. Falls back to a local-only logout
  * (land on home) when no post-logout URI is configured (e.g. dev), so the user is
  * never stranded on the IdP.
@@ -42,7 +42,7 @@ async function handleLogout(request: NextRequest): Promise<NextResponse> {
 
   // Global logout: hand off to the IdP end_session (kills vx_sid + back-channel
   // fan-out). Without a post-logout URI (dev), degrade to local-only: land on the
-  // ruyin apex home instead of stranding the user on the IdP.
+  // umbra apex home instead of stranding the user on the IdP.
   const apex = cfg.cookieDomain.replace(/^\./, "").trim();
   const apexHome = apex ? `https://${apex}/` : new URL("/", request.nextUrl.origin).toString();
   const dest = cfg.postLogoutRedirectUri ? buildEndSessionUrl(cfg, randomToken()) : apexHome;

@@ -1,4 +1,4 @@
-/* ===== Admin layout composition =====
+﻿/* ===== Admin layout composition =====
  * The admin portal wears the same chrome as the marketing site and tenant
  * console: a fixed glass-on-scroll header, a content-aligned legal footer, and
  * DS Shell* controls. This file holds layout-only composition - all colors,
@@ -9,13 +9,13 @@
 
 :root {
   /* Fixed header height (matches the website + console portals). */
-  --ruyin-header-height: 64px;
+  --umbra-header-height: 64px;
   /* Content track shared by header inner, main, and footer inner. Matches the
      website + console portals so the chrome aligns identically across portals. */
-  --ruyin-shell-max-width: 1680px;
+  --umbra-shell-max-width: 1680px;
   /* Outer page inset for the fixed header/footer bars - mirrors the website +
      console portals (48px outer margin + 32px inner padding). 16px on mobile. */
-  --ruyin-shell-margin-x: 48px;
+  --umbra-shell-margin-x: 48px;
 }
 
 * {
@@ -53,11 +53,11 @@ a {
   /* Align the content box to the SAME inset as the header/footer bars - mirrors
      the website + console portals so the whitespace is identical at every width. */
   width: 100%;
-  max-width: calc(var(--ruyin-shell-max-width) + 2 * var(--ruyin-shell-margin-x));
+  max-width: calc(var(--umbra-shell-max-width) + 2 * var(--umbra-shell-margin-x));
   margin: 0 auto;
   padding:
-    calc(var(--ruyin-header-height) + var(--vx-space-xl))
-    var(--ruyin-shell-margin-x)
+    calc(var(--umbra-header-height) + var(--vx-space-xl))
+    var(--umbra-shell-margin-x)
     var(--vx-space-3xl);
 }
 
@@ -69,7 +69,7 @@ a {
   left: 0;
   z-index: 50;
   width: 100%;
-  padding-inline: var(--ruyin-shell-margin-x);
+  padding-inline: var(--umbra-shell-margin-x);
   background: color-mix(in srgb, var(--vx-color-surface) 0%, transparent);
   transition:
     background var(--vx-duration-moderate) var(--vx-ease-standard),
@@ -84,10 +84,10 @@ a {
 }
 
 .site-header-inner {
-  width: min(100%, var(--ruyin-shell-max-width));
-  min-height: var(--ruyin-header-height);
+  width: min(100%, var(--umbra-shell-max-width));
+  min-height: var(--umbra-header-height);
   margin: 0 auto;
-  /* No inner gutter - content sits on the --ruyin-shell-margin-x track, so the
+  /* No inner gutter - content sits on the --umbra-shell-margin-x track, so the
      header has identical left/right whitespace to the website + console. */
   padding: 0;
   display: flex;
@@ -171,15 +171,15 @@ a {
   position: relative;
   z-index: 2;
   flex: 0 0 auto;
-  padding-inline: var(--ruyin-shell-margin-x);
+  padding-inline: var(--umbra-shell-margin-x);
 }
 
 .site-footer-inner {
-  width: min(100%, var(--ruyin-shell-max-width));
+  width: min(100%, var(--umbra-shell-max-width));
   min-height: 48px;
   border-top: 1px solid var(--vx-color-border);
   margin: 0 auto;
-  /* Same --ruyin-shell-margin-x track as the header/body (and website/console). */
+  /* Same --umbra-shell-margin-x track as the header/body (and website/console). */
   padding: 0;
   /* Compact 12px legal text, matching the website + console footers. */
   font-size: 0.75rem;
@@ -700,7 +700,7 @@ a {
 
 @media (max-width: 640px) {
   :root {
-    --ruyin-shell-margin-x: 16px;
+    --umbra-shell-margin-x: 16px;
   }
 
   /* Stack the copyright above the legal links on narrow screens - mirrors the

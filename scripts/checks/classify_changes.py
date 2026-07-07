@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+﻿#!/usr/bin/env python3
 """Allow-list change classifier for the release pipeline (release.yml detect).
 
 Given a list of changed file paths (repo-root-relative), decide:
@@ -26,12 +26,12 @@ import sys
 # Image names, kept in sync with the release.yml build matrix and
 # docker-compose.yml.
 ALL_IMAGES = (
-    "ruyin-account-api",
-    "ruyin-admin",
-    "ruyin-console",
-    "ruyin-nginx",
-    "ruyin-subproxy",
-    "ruyin-website",
+    "umbra-account-api",
+    "umbra-admin",
+    "umbra-console",
+    "umbra-nginx",
+    "umbra-subproxy",
+    "umbra-website",
 )
 
 # Root-level files that ship nothing to the runtime (build/repo metadata and
@@ -66,11 +66,11 @@ def classify_file(path):
     """
     # A: image-relevant paths (build context / Dockerfile inputs).
     if path.startswith("portals/website/"):
-        return ("image", frozenset({"ruyin-website"}))
+        return ("image", frozenset({"umbra-website"}))
     if path.startswith("portals/console/"):
-        return ("image", frozenset({"ruyin-console"}))
+        return ("image", frozenset({"umbra-console"}))
     if path.startswith("portals/admin/"):
-        return ("image", frozenset({"ruyin-admin"}))
+        return ("image", frozenset({"umbra-admin"}))
     if path.startswith("portals/packages/") or path in {
         "portals/package.json",
         "portals/package-lock.json",
@@ -78,16 +78,16 @@ def classify_file(path):
     }:
         # Workspace root manifests + internal shared package(s) feed all three
         # portal images (npm workspaces; @umbra/shared is hoisted into each).
-        return ("image", frozenset({"ruyin-website", "ruyin-console", "ruyin-admin"}))
+        return ("image", frozenset({"umbra-website", "umbra-console", "umbra-admin"}))
     if path.startswith("brand/"):
         # The brand build-context feeds all three portal images.
-        return ("image", frozenset({"ruyin-website", "ruyin-console", "ruyin-admin"}))
+        return ("image", frozenset({"umbra-website", "umbra-console", "umbra-admin"}))
     if path.startswith("services/account/"):
-        return ("image", frozenset({"ruyin-account-api"}))
+        return ("image", frozenset({"umbra-account-api"}))
     if path.startswith("services/subproxy/"):
-        return ("image", frozenset({"ruyin-subproxy"}))
-    if path == "docker/ruyin-nginx.Dockerfile":
-        return ("image", frozenset({"ruyin-nginx"}))
+        return ("image", frozenset({"umbra-subproxy"}))
+    if path == "docker/umbra-nginx.Dockerfile":
+        return ("image", frozenset({"umbra-nginx"}))
 
     # B: deployable, no image rebuild.
     if path.startswith(_DEPLOY_PREFIXES) or path in _DEPLOY_FILES:

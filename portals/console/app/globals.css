@@ -1,4 +1,4 @@
-/* ===== Console layout composition =====
+﻿/* ===== Console layout composition =====
  * All design primitives (colors, typography, controls, cards, tables) come from
  * @vxture/design-system. This file holds layout-only composition. Do not add
  * colors, fonts, or component looks here - extend the DS package instead. See
@@ -7,19 +7,19 @@
 
 :root {
   /* Fixed header height (matches the website portal). */
-  --ruyin-header-height: 64px;
+  --umbra-header-height: 64px;
   /* Content track shared by header inner, main, and footer inner. Matches the
      website portal (1680px) so the chrome aligns identically. */
-  --ruyin-shell-max-width: 1680px;
+  --umbra-shell-max-width: 1680px;
   /* Outer page inset for the fixed header/footer bars - mirrors the website
      portal (48px outer margin + 32px inner padding). Drops to 16px on mobile. */
-  --ruyin-shell-margin-x: 48px;
+  --umbra-shell-margin-x: 48px;
 }
 
 /* Shell + layout */
 
 /* Page column: pins the footer to the viewport bottom on short pages (mirrors
-   the website portal's .ruyin-page). The fixed header is out of flow, so only
+   the website portal's .umbra-page). The fixed header is out of flow, so only
    main grows to fill the remaining height. */
 .app-page {
   display: flex;
@@ -31,14 +31,14 @@
   /* Grow to push the footer to the bottom when content is short. */
   flex: 1 0 auto;
   /* Align the content box to the SAME inset as the header/footer bars: an outer
-     page margin (--ruyin-shell-margin-x) on a 1680 track, matching the website
+     page margin (--umbra-shell-margin-x) on a 1680 track, matching the website
      portal exactly so the whitespace is identical at every width. */
   width: 100%;
-  max-width: calc(var(--ruyin-shell-max-width) + 2 * var(--ruyin-shell-margin-x));
+  max-width: calc(var(--umbra-shell-max-width) + 2 * var(--umbra-shell-margin-x));
   margin: 0 auto;
   padding:
-    calc(var(--ruyin-header-height) + var(--vx-space-xl))
-    var(--ruyin-shell-margin-x)
+    calc(var(--umbra-header-height) + var(--vx-space-xl))
+    var(--umbra-shell-margin-x)
     var(--vx-space-3xl);
 }
 
@@ -56,7 +56,7 @@ body {
   left: 0;
   z-index: 50;
   width: 100%;
-  padding-inline: var(--ruyin-shell-margin-x);
+  padding-inline: var(--umbra-shell-margin-x);
   background: color-mix(in srgb, var(--vx-color-surface) 0%, transparent);
   transition:
     background var(--vx-duration-moderate) var(--vx-ease-standard),
@@ -71,10 +71,10 @@ body {
 }
 
 .site-header-inner {
-  width: min(100%, var(--ruyin-shell-max-width));
-  min-height: var(--ruyin-header-height);
+  width: min(100%, var(--umbra-shell-max-width));
+  min-height: var(--umbra-header-height);
   margin: 0 auto;
-  /* No inner gutter - content sits on the same --ruyin-shell-margin-x track as
+  /* No inner gutter - content sits on the same --umbra-shell-margin-x track as
      the website header (brand/actions at 48px), so the two portals' headers have
      identical left/right whitespace. The body + footer below use the same track. */
   padding: 0;
@@ -429,15 +429,15 @@ body {
   position: relative;
   z-index: 2;
   flex: 0 0 auto;
-  padding-inline: var(--ruyin-shell-margin-x);
+  padding-inline: var(--umbra-shell-margin-x);
 }
 
 .site-footer-inner {
-  width: min(100%, var(--ruyin-shell-max-width));
+  width: min(100%, var(--umbra-shell-max-width));
   min-height: 48px;
   border-top: 1px solid var(--vx-color-border);
   margin: 0 auto;
-  /* Same --ruyin-shell-margin-x track as the header/body (and the website). */
+  /* Same --umbra-shell-margin-x track as the header/body (and the website). */
   padding: 0;
   /* Compact legal band - match the website footer's 0.75rem (12px) text. */
   font-size: 0.75rem;
@@ -1120,7 +1120,7 @@ body {
 
 @media (max-width: 640px) {
   :root {
-    --ruyin-shell-margin-x: 16px;
+    --umbra-shell-margin-x: 16px;
   }
 
   /* Stack the copyright above the legal links on narrow screens - mirrors the

@@ -1,4 +1,4 @@
-# Repository Implementation
+﻿# Repository Implementation
 
 Current top-level layout:
 
@@ -64,7 +64,7 @@ root compose file.
   helpers from `@vxture/shared`. Umbra does not define its own design system.
 - Brand PNG/ICO assets have a single source of truth under `brand/`; see
   [`brand-assets.md`](brand-assets.md). Do not deploy Vxture brand files as
-  Ruyin assets.
+  Umbra assets.
 - The invite admin UI currently lives in `portals/console`; it moves to
   `portals/admin` only after nginx routing and deploy checks are ready.
 
@@ -76,7 +76,7 @@ these over the Docker network.
 
 | Port | Service | Purpose |
 |------|---------|---------|
-| 3210 | `portals/website` (`umbra-website`) | Ruyin public website |
+| 3210 | `portals/website` (`umbra-website`) | Umbra public website |
 | 3220 | `portals/console` (`umbra-account-web`) | User console and invite UI |
 | 3281 | `services/account` (`umbra-account`) | Lightweight account/invite API |
 

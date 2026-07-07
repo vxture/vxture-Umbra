@@ -1,13 +1,13 @@
-import type { Metadata } from "next";
+﻿import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import { Funnel_Display } from "next/font/google";
-import { ruyinBrand } from "@/lib/brand";
+import { umbraBrand } from "@/lib/brand";
 import { preferenceBootstrapScript } from "@umbra/shared/preferences";
 import { I18nProvider } from "@umbra/shared/i18n";
 import { messages } from "../messages";
 import { Providers } from "./providers";
 import "@vxture/design-system/styles/globals.css";
-import "@vxture/design-system/styles/brands/ruyin.css";
+import "@vxture/design-system/styles/brands/umbra.css";
 import "./globals.css";
 
 /** DS brand typeface (Funnel Display) wired to the DS brand-font loader slot. */
@@ -18,27 +18,27 @@ const brandFont = Funnel_Display({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL(ruyinBrand.siteUrl),
-  title: `${ruyinBrand.fullName} ${ruyinBrand.productName}`,
-  description: ruyinBrand.description,
+  metadataBase: new URL(umbraBrand.siteUrl),
+  title: `${umbraBrand.fullName} ${umbraBrand.productName}`,
+  description: umbraBrand.description,
   icons: {
     icon: "/favicon.ico",
-    apple: "/assets/brand/ruyin-symbol-dark.png",
+    apple: "/assets/brand/umbra-symbol-dark.png",
     shortcut: "/favicon.ico",
   },
   openGraph: {
-    title: `${ruyinBrand.productName} - ${ruyinBrand.fullName}`,
-    description: ruyinBrand.description,
-    siteName: ruyinBrand.productName,
-    images: [{ url: "/assets/brand/ruyin-hero-light.png", width: 720, height: 360 }],
+    title: `${umbraBrand.productName} - ${umbraBrand.fullName}`,
+    description: umbraBrand.description,
+    siteName: umbraBrand.productName,
+    images: [{ url: "/assets/brand/umbra-hero-light.png", width: 720, height: 360 }],
     locale: "en_US",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: `${ruyinBrand.productName} - ${ruyinBrand.fullName}`,
-    description: ruyinBrand.description,
-    images: ["/assets/brand/ruyin-hero-light.png"],
+    title: `${umbraBrand.productName} - ${umbraBrand.fullName}`,
+    description: umbraBrand.description,
+    images: ["/assets/brand/umbra-hero-light.png"],
   },
 };
 

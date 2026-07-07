@@ -1,12 +1,12 @@
-:root {
+﻿:root {
   /* Wide, open content track (stripe-like but wider, no divider lines). */
-  --ruyin-shell-max-width: 1680px;
-  --ruyin-shell-gutter: var(--vx-space-lg);
+  --umbra-shell-max-width: 1680px;
+  --umbra-shell-gutter: var(--vx-space-lg);
   /* Fixed band heights: header 64 + hero (fills) + footer 48 = one viewport. */
-  --ruyin-header-height: 64px;
-  --ruyin-footer-height: 48px;
+  --umbra-header-height: 64px;
+  --umbra-footer-height: 48px;
   /* Header/footer side inset = outer margin (48px) + inner padding (32px). */
-  --ruyin-shell-margin-x: 48px;
+  --umbra-shell-margin-x: 48px;
 }
 
 html,
@@ -33,7 +33,7 @@ a {
 /* Strict three-band homepage. The bands are in normal flow (header and footer
  * own a fixed height; the hero flexes), so the hero is exactly
  * 100dvh - header - footer with no overlap and no page scroll on desktop. */
-.ruyin-page {
+.umbra-page {
   position: relative;
   min-height: 100dvh;
   display: flex;
@@ -59,15 +59,15 @@ a {
 .site-header {
   position: relative;
   z-index: 2;
-  flex: 0 0 var(--ruyin-header-height);
+  flex: 0 0 var(--umbra-header-height);
   width: 100%;
-  padding-inline: var(--ruyin-shell-margin-x);
+  padding-inline: var(--umbra-shell-margin-x);
   background: transparent;
 }
 
 .site-header-inner {
-  width: min(100%, var(--ruyin-shell-max-width));
-  height: var(--ruyin-header-height);
+  width: min(100%, var(--umbra-shell-max-width));
+  height: var(--umbra-header-height);
   margin: 0 auto;
   padding: 0;
   display: flex;
@@ -306,7 +306,7 @@ a {
      inset and the shell margin used by header/footer. Preferred value is
      half the leftover space around a comfortable 1100px lockup. */
   padding-block: var(--vx-space-2xl);
-  padding-inline: clamp(16px, calc((100vw - 1100px)/2), var(--ruyin-shell-margin-x));
+  padding-inline: clamp(16px, calc((100vw - 1100px)/2), var(--umbra-shell-margin-x));
 }
 
 /* Soft radial wash centred on the lockup so the hero lifts off the moving
@@ -326,9 +326,9 @@ a {
 
 .hero {
   /* Keep the hero visually bounded while centering it in the same content
-     track as the header/footer (--ruyin-shell-max-width). The 1100px value
+     track as the header/footer (--umbra-shell-max-width). The 1100px value
      remains the visual lockup limit inside the wider track. */
-  width: min(100%, var(--ruyin-shell-max-width));
+  width: min(100%, var(--umbra-shell-max-width));
   max-width: 1100px;
   display: grid;
   justify-items: center;
@@ -336,7 +336,7 @@ a {
   gap: var(--vx-space-lg);
 }
 
-/* Hero kicker: "Vxture Studio | Ruyin Agent" - studio name in the secondary
+/* Hero kicker: "Vxture Studio | Umbra Agent" - studio name in the secondary
    text color, product name in the brand primary, separator muted. Wide tracking
    and uppercase read as a refined eyebrow. */
 .hero-eyebrow {
@@ -380,7 +380,7 @@ a {
    the inline SVG; here we just point fill at it). next-themes sets .dark on
    <html>. */
 .dark .hero-signature-art {
-  fill: url(#ruyin-hero-dark-fill);
+  fill: url(#umbra-hero-dark-fill);
 }
 
 /* Visual title is the signature artwork; keep an accessible text title for SR /
@@ -462,12 +462,12 @@ a {
   position: relative;
   z-index: 2;
   flex: 0 0 auto;
-  padding-inline: var(--ruyin-shell-margin-x);
+  padding-inline: var(--umbra-shell-margin-x);
 }
 
 .site-footer-inner {
-  width: min(100%, var(--ruyin-shell-max-width));
-  min-height: var(--ruyin-footer-height);
+  width: min(100%, var(--umbra-shell-max-width));
+  min-height: var(--umbra-footer-height);
   /* Top hairline matches the footer content width, not the full viewport. */
   border-top: 1px solid var(--vx-color-border);
   margin: 0 auto;
@@ -482,19 +482,19 @@ a {
 
 @media (min-width: 640px) {
   :root {
-    --ruyin-shell-gutter: var(--vx-space-xl);
+    --umbra-shell-gutter: var(--vx-space-xl);
   }
 }
 
 @media (min-width: 1024px) {
   :root {
-    --ruyin-shell-gutter: var(--vx-space-2xl);
+    --umbra-shell-gutter: var(--vx-space-2xl);
   }
 }
 
 @media (max-width: 640px) {
   :root {
-    --ruyin-shell-margin-x: 16px;
+    --umbra-shell-margin-x: 16px;
   }
 
   .hero-signature {

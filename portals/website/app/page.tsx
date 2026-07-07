@@ -1,4 +1,4 @@
-import { BgCanvas } from "@/components/bg-canvas";
+﻿import { BgCanvas } from "@/components/bg-canvas";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { HeroSection } from "@/components/hero-section";
@@ -10,7 +10,7 @@ import { HeroSection } from "@/components/hero-section";
  */
 export default function HomePage() {
   return (
-    <div id="ruyin-page-root" className="ruyin-page">
+    <div id="umbra-page-root" className="umbra-page">
       <BgCanvas />
       <SiteHeader />
       <HeroSection />

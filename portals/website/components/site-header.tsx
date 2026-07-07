@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import {
   Button,
@@ -12,17 +12,17 @@ import type { Locale } from "@vxture/shared";
 import { persistTheme, type PrefTheme } from "@umbra/shared/preferences";
 import { useTranslations } from "@umbra/shared/i18n";
 import { UMBRA_LOCALE_OPTIONS } from "@umbra/shared/locales";
-import { ruyinBrand, markSrc } from "@/lib/brand";
+import { umbraBrand, markSrc } from "@/lib/brand";
 import { useLocale } from "@/lib/locale-provider";
 import { useSession } from "@/lib/session";
 import { UserDropdown } from "@/components/user-dropdown";
 
 /** Element the fullscreen toggle expands; the homepage root carries this id. */
-const PAGE_FULLSCREEN_ID = "ruyin-page-root";
+const PAGE_FULLSCREEN_ID = "umbra-page-root";
 
 function authStartUrl(): string {
-  const returnTo = encodeURIComponent(ruyinBrand.siteUrl);
-  return `${ruyinBrand.siteUrl}/auth/login?returnTo=${returnTo}`;
+  const returnTo = encodeURIComponent(umbraBrand.siteUrl);
+  return `${umbraBrand.siteUrl}/auth/login?returnTo=${returnTo}`;
 }
 
 export function SiteHeader() {
@@ -34,7 +34,7 @@ export function SiteHeader() {
   const user = session.user;
 
   return (
-    <header className="site-header" aria-label={ruyinBrand.productName}>
+    <header className="site-header" aria-label={umbraBrand.productName}>
       <div className="site-header-inner">
         {/* Logo + name link to the ruyin.ai homepage (website root). The studio
             tag reuses the DS pill class (no custom CSS). */}
@@ -44,7 +44,7 @@ export function SiteHeader() {
           logoAlt=""
           label={
             <span className="site-brand-lockup">
-              <span className="site-brand-name">{ruyinBrand.productDomain}</span>
+              <span className="site-brand-name">{umbraBrand.productDomain}</span>
               <span className="site-brand-tag">vxture studio</span>
             </span>
           }
@@ -88,7 +88,7 @@ export function SiteHeader() {
           {session.status === "loading" ? null : session.status === "active" && user ? (
             <>
               <Button variant="ghost" className="site-workspace-btn" asChild>
-                <a href={ruyinBrand.consoleUrl}>{t("workspace")}</a>
+                <a href={umbraBrand.consoleUrl}>{t("workspace")}</a>
               </Button>
               <UserDropdown user={user} />
             </>

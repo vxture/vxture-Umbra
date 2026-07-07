@@ -1,8 +1,8 @@
-# admin.ruyin.ai - Platform management console (umbra-admin) + Marzban + Vault.
+﻿# admin.ruyin.ai - Platform management console (umbra-admin) + Marzban + Vault.
 # The admin app owns the site root behind its own built-in credential login and
 # renders the invite/subscription block. Marzban keeps its dashboard/API/static/
 # sub paths (catch-all); the admin app's "VPN console" block jumps to /dashboard/.
-# Vault is an external jump. Invite administration is guarded by the Ruyin account
+# Vault is an external jump. Invite administration is guarded by the Umbra account
 # API built-in admin credential (independent of Marzban auth).
 server {
     listen 8443 ssl proxy_protocol;

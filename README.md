@@ -1,4 +1,4 @@
-# Vxture Umbra
+﻿# Vxture Umbra
 
 Production VPN edge node - SNI routing, VLESS+REALITY proxy, subscription delivery, password management, public website.
 
@@ -14,7 +14,7 @@ Production VPN edge node - SNI routing, VLESS+REALITY proxy, subscription delive
 |--------|---------|
 | `ruyin.ai` / `www.ruyin.ai` | Brand landing page (Next.js) |
 | `vpn.ruyin.ai` | VPN proxy node host (REALITY on `:443`); no web surface |
-| `sub.ruyin.ai` | Marzban subscription endpoint with `Ruyin-USERNAME` display names |
+| `sub.ruyin.ai` | Marzban subscription endpoint with `Umbra-USERNAME` display names |
 | `console.ruyin.ai` | User self-service console |
 | `admin.ruyin.ai` | Marzban console *(Marzban login)* |
 | `admin.ruyin.ai/invites` | Invite console for binding existing Marzban users |
@@ -43,8 +43,8 @@ local service debugging only.
 
 | Port | Service | URL |
 |------|---------|-----|
-| 3210 | Ruyin website | `http://localhost:3210` |
-| 3220 | Ruyin console | `http://localhost:3220` |
+| 3210 | Umbra website | `http://localhost:3210` |
+| 3220 | Umbra console | `http://localhost:3220` |
 | 3281 | Account API | `http://localhost:3281` |
 
 Reserve `3210`, `3220`, and `3281` for Umbra. If local Vxture SSO origin checks
@@ -67,7 +67,7 @@ ssh root@<server-ip>
 Clone the repo and bootstrap the server (installs Docker, creates admin user, copies SSH keys):
 
 ```bash
-git clone https://github.com/vxture/umbra.git /srv/umbra/deploy
+git clone https://github.com/vxture/vxture-Umbra.git /srv/umbra/deploy
 bash /srv/umbra/deploy/deploy/server.sh init
 ```
 
@@ -192,7 +192,7 @@ curl -sk -o /tmp/sub.yaml -w "%{http_code}\n" 'https://sub.ruyin.ai/sub/<token>'
 
 Expected: `200`. `curl -I` sends HEAD and Marzban responds `405 Method Not Allowed`.
 
-Clash subscription files and response headers are normalized to `Ruyin-USERNAME`, for example `Ruyin-USER01`, while the proxy node name remains `NODE_NAME`.
+Clash subscription files and response headers are normalized to `Umbra-USERNAME`, for example `Umbra-USER01`, while the proxy node name remains `NODE_NAME`.
 
 User-facing subscription access is handled by `https://console.ruyin.ai`. The console shows the locally bound subscription URL, provides a copy-only field, and resets the stored URL from Marzban only when the user clicks `Reset subscription URL`. Admins open `https://admin.ruyin.ai/invites`, sign in with the Marzban admin account, and generate a one-time invite link for an existing Marzban user such as `USER08`. The invite console shows the same stored URL for bound users and uses the same reset action, so admin and user views stay aligned. The invite link binds only that user code; the registrant cannot choose another `USER**` value.
 
