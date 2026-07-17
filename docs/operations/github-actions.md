@@ -471,10 +471,10 @@ Docker build:
 |---|---|
 | `GITHUB_TOKEN` | GHCR push token provided by GitHub Actions |
 | `NODE_AUTH_TOKEN` | Build-time package token for private `@vxture/*` packages |
-| `ALIYUN_ACR_REGISTRY` | ACR registry host |
-| `ALIYUN_ACR_NAMESPACE` | ACR namespace, currently `vxture` |
-| `ALIYUN_ACR_USERNAME` | ACR login username |
-| `ALIYUN_ACR_PASSWORD` | ACR login password or token |
+| `ALIYUN_ACR_REGISTRY` | ACR registry host (Actions **variable**, org level; read via `vars.*`) |
+| `ALIYUN_ACR_NAMESPACE` | ACR namespace, currently `vx-platform` (Actions **variable**, repo level; read via `vars.*`) |
+| `ALIYUN_ACR_USERNAME` | ACR login username (org-level secret) |
+| `ALIYUN_ACR_PASSWORD` | ACR login password or token (org-level secret) |
 
 Deployment:
 
@@ -517,7 +517,12 @@ assumes the design above is already implemented. The secrets are listed under
 [Repository Rulesets](#repository-rulesets) above; this section does not repeat
 them. Deploy secrets (`DEPLOY_HOST`, `DEPLOY_USER`, `DEPLOY_SSH_KEY`,
 `DEPLOY_PORT`, `DEPLOY_REPO_DIR`, `DEPLOY_KNOWN_HOSTS`) belong on the GitHub
-environment named `production`; keep the remaining secrets at repository scope.
+environment named `production`. Since 2026-07-17 the shared credentials
+(`NODE_AUTH_TOKEN`, `PROMOTION_TOKEN`, `ALIYUN_ACR_USERNAME`,
+`ALIYUN_ACR_PASSWORD`) live at the vxture org level, and the non-sensitive ACR
+coordinates are Actions variables: `ALIYUN_ACR_REGISTRY` (org variable) and
+`ALIYUN_ACR_NAMESPACE` (repo variable, `vx-platform`). Workflows must read
+those two via `vars.*`, not `secrets.*`.
 
 ### Operator local env file and helper script
 
