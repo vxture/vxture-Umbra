@@ -217,14 +217,21 @@ jobs:
           set -euo pipefail
           # The image's source did not change this revision, so do not rebuild
           # (a rebuild would mint a new digest and force a pointless container
-          # recreate on deploy). Copy the existing :latest manifest to the
-          # immutable per-commit deploy tag; the digest is preserved, so the
-          # deploy keeps the running container.
+          # recreate on deploy). Copy the canonical GHCR :latest manifest to the
+          # immutable per-commit deploy tag in BOTH registries; the digest is
+          # preserved, so the deploy keeps the running container. Sourcing the
+          # ACR copy from GHCR (instead of ACR's own :latest) keeps ACR in
+          # lockstep with GHCR and seeds an empty ACR after a registry or
+          # namespace migration, when ACR has no :latest to retag from.
+          src="ghcr.io/${GHCR_NAMESPACE}/${IMAGE}:latest"
           for repo in \
             "ghcr.io/${GHCR_NAMESPACE}/${IMAGE}" \
             "${ACR_REGISTRY}/${ACR_NAMESPACE}/${IMAGE}"; do
-            echo "Retagging ${repo}:latest -> ${repo}:${IMAGE_TAG}"
-            docker buildx imagetools create -t "${repo}:${IMAGE_TAG}" "${repo}:latest"
+            echo "Retagging ${src} -> ${repo}:${IMAGE_TAG} + ${repo}:latest"
+            docker buildx imagetools create \
+              -t "${repo}:${IMAGE_TAG}" \
+              -t "${repo}:latest" \
+              "$src"
           done
 
   deploy:
