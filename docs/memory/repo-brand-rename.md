@@ -8,11 +8,12 @@ Applied 2026-07-07 via PR #169 (code) and direct `gh api` call (GitHub repo rena
 
 ## GitHub repo rename
 
-`vxture/umbra` -> `vxture/vxture-Umbra`.
-Remote URL: `https://github.com/vxture/vxture-Umbra.git`.
-GitHub redirects old URLs automatically.
+`vxture/umbra` -> `vxture/vxture-Umbra` (2026-07-07), then lowercased to
+`vxture/vxture-umbra` (2026-07-17, direct `gh repo rename`).
+Remote URL: `https://github.com/vxture/vxture-umbra.git`.
+GitHub redirects old URLs automatically (repo slugs are case-insensitive).
 
-Use `vxture/vxture-Umbra` in all `gh` commands, CLAUDE.md ruleset queries,
+Use `vxture/vxture-umbra` in all `gh` commands, CLAUDE.md ruleset queries,
 and any scripts referencing the repo slug.
 
 ## Internal brand rename: ruyin -> umbra

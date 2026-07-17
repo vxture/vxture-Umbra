@@ -27,7 +27,7 @@ linear history.
 
 ## Branch protection (GitHub Rulesets, not legacy protection)
 
-Enforced via repo Rulesets (`gh api repos/vxture/vxture-Umbra/rulesets`). Legacy
+Enforced via repo Rulesets (`gh api repos/vxture/vxture-umbra/rulesets`). Legacy
 `branches/*/protection` returns 404 - do not look there.
 
 - `develop` ("Umbra develop quality gate"): require PR (0 approvals), require

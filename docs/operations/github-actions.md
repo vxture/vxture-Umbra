@@ -326,12 +326,12 @@ Registry targets:
 
 | Target container | ACR repository in namespace `vxture` | GHCR repository | Source |
 |---|---|---|---|
-| `umbra-website` | `umbra-website` | `ghcr.io/vxture/vxture-Umbra-website` | `portals/website/Dockerfile` |
-| `umbra-account-web` | `umbra-console` | `ghcr.io/vxture/vxture-Umbra-console` | `portals/console/Dockerfile` |
-| `umbra-admin` | `umbra-admin` | `ghcr.io/vxture/vxture-Umbra-admin` | `portals/admin/Dockerfile` |
-| `umbra-nginx` | `umbra-nginx` | `ghcr.io/vxture/vxture-Umbra-nginx` | dedicated Dockerfile required |
-| `umbra-account` | `umbra-account-api` | `ghcr.io/vxture/vxture-Umbra-account-api` | dedicated Dockerfile required |
-| `umbra-subproxy` | `umbra-subproxy` | `ghcr.io/vxture/vxture-Umbra-subproxy` | dedicated Dockerfile required |
+| `umbra-website` | `umbra-website` | `ghcr.io/vxture/umbra-website` | `portals/website/Dockerfile` |
+| `umbra-account-web` | `umbra-console` | `ghcr.io/vxture/umbra-console` | `portals/console/Dockerfile` |
+| `umbra-admin` | `umbra-admin` | `ghcr.io/vxture/umbra-admin` | `portals/admin/Dockerfile` |
+| `umbra-nginx` | `umbra-nginx` | `ghcr.io/vxture/umbra-nginx` | dedicated Dockerfile required |
+| `umbra-account` | `umbra-account-api` | `ghcr.io/vxture/umbra-account-api` | dedicated Dockerfile required |
+| `umbra-subproxy` | `umbra-subproxy` | `ghcr.io/vxture/umbra-subproxy` | dedicated Dockerfile required |
 
 The first three images use the portal Dockerfiles. `umbra-admin` is the target
 container name for the `portals/admin` Next.js app. The last three images use

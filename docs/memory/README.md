@@ -5,7 +5,7 @@ places, both outside this `docs/` tree:
 
 - Live store: `~/.claude/projects/D--MyWebSite-vxturestudio-umbra/memory/`
   (loaded by AI assistants across sessions; `MEMORY.md` is its index).
-- Versioned copy: the same store is a git repo whose `origin` is `vxture/vxture-Umbra`,
+- Versioned copy: the same store is a git repo whose `origin` is `vxture/vxture-umbra`,
   pushed to the dedicated `claude-memory` branch (NOT merged into
   `develop`/`main`).
 
@@ -17,6 +17,6 @@ duplicated here.
 
 | Mirror file | Subject |
 |---|---|
-| [`repo-brand-rename.md`](repo-brand-rename.md) | GitHub rename vxture/umbra -> vxture/vxture-Umbra + ruyin->umbra brand rename (2026-07-07) |
+| [`repo-brand-rename.md`](repo-brand-rename.md) | GitHub rename vxture/umbra -> vxture-umbra + ruyin->umbra brand rename (2026-07-07, lowercased 2026-07-17) |
 
 When a mirror and an authoritative doc disagree, the authoritative doc wins.
