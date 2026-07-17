@@ -9,7 +9,7 @@
 
 ```
 Name:       Vxture Umbra
-Repo:       vxture/vxture-Umbra
+Repo:       vxture/vxture-umbra
 Node:       vxture-edge-01
 User:       stone
 Version:    v1.0-production

@@ -667,7 +667,7 @@ CHECKS: list[tuple[str, Path, list[str]]] = [
         Path("scripts/github/00-set-github-secrets.ps1"),
         [
             'param(',
-            '$Repo = "vxture/vxture-Umbra"',
+            '$Repo = "vxture/vxture-umbra"',
             '$EnvFile = "private/github-actions.local.env"',
             '$EnvironmentName = "production"',
             "Read-LocalEnvFile",

@@ -67,7 +67,7 @@ ssh root@<server-ip>
 Clone the repo and bootstrap the server (installs Docker, creates admin user, copies SSH keys):
 
 ```bash
-git clone https://github.com/vxture/vxture-Umbra.git /srv/umbra/deploy
+git clone https://github.com/vxture/vxture-umbra.git /srv/umbra/deploy
 bash /srv/umbra/deploy/deploy/server.sh init
 ```
 
